@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import './Login.css';
+import './_Login.scss';
 import Auth from './Auth';
 import { Redirect } from 'react-router';
 import ReactModal from 'react-responsive-modal';
@@ -92,7 +92,7 @@ class Login extends Component {
        
                         </div>
                         <form className="form" onSubmit={this.handleLogin}>
-                        <p className="mt-1">ברוכים הבאים לקריאיטוש!</p>
+                        <p className="mt-1">ברוכים הבאים !</p>
                             <div className='form-group'>
                                 <input className="form-control" type='email' ref='email' placeholder='מייל' required />
                             </div>
