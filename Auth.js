@@ -13,8 +13,7 @@ const Auth={
     return this._isAuthenticated;
 
   },
-  authFetch(url) {
-
+  authFetch(url, metaDate = {}) {
     let accessToken = localStorage.getItem('accessToken');
     console.log("authFetch given accessToken:", accessToken);
     if (accessToken === null) {
@@ -26,7 +25,7 @@ const Auth={
       } else {
         url += "?access_token=" + accessToken;
       }
-      return fetch(url);
+      return fetch(url, metaDate);
     }
   },
 
