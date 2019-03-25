@@ -40,7 +40,8 @@ class Login extends Component {
             }
             if (isAuthenticated === true) {
                 { this.props.navHeader() };
-
+                if (this.props.postLoginCb)
+                    this.props.postLoginCb();
                 this.setState({ redirTo: '/' });
 
             }
@@ -58,8 +59,8 @@ class Login extends Component {
         switch (event.target.id) {
             case "registerPrivateName":
                 {
-                    if (/[0-9]/.test(val)){
-                        event.target.value=val.substring(0,val.length-1);
+                    if (/[0-9]/.test(val)) {
+                        event.target.value = val.substring(0, val.length - 1);
                         this.setState({ realm: { text: "Name cannot contain digits!", isvalid: false } });
                         return;
                     }
@@ -143,8 +144,8 @@ class Login extends Component {
         e.preventDefault();
         if (!(this.state.realm.isvalid && this.state.username.isvalid &&
             this.state.password && this.state.email.isvalid)) {
-                alert("one of the fields is invalid");
-                return false;
+            alert("one of the fields is invalid");
+            return false;
         }
         let fd = new FormData(document.getElementById("registrationForm"));
         var payload = {};
