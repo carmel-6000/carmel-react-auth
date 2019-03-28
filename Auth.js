@@ -10,9 +10,6 @@ const Auth = {
     return this._isAuthenticated;
 
   },
-  getUserId() {
-    return { userId: localStorage.getItem("userId"), userRole: localStorage.getItem("userRole") };
-  },
   authFetch(url, payload = null) {
     let accessToken = localStorage.getItem('accessToken');
     console.log("authFetch given accessToken:", accessToken);
@@ -48,14 +45,12 @@ const Auth = {
 
           this._isAuthenticated = false;
           localStorage.setItem('accessToken', '');
-          localStorage.setItem('userId', '');
           localStorage.setItem('com', '')
           return cb(false);
         } else {
 
           this._isAuthenticated = true;
           localStorage.setItem('accessToken', res.id);
-          localStorage.setItem('userId', res.userId);
           localStorage.setItem('com', res.compArr)
           return cb(true)
         }
@@ -65,7 +60,6 @@ const Auth = {
   logout(cb) {
     console.log("log out!")
     localStorage.removeItem('accessToken');
-    localStorage.removeItem('userId');
     localStorage.removeItem('com')
     this._isAuthenticated = false;
     if (cb)
