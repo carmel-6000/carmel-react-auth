@@ -44,38 +44,13 @@ class Login extends Component {
         this.setState({ registerModal: !this.state.registerModal });
     }
 
-    register = (e) => {
+    register(e){
         e.preventDefault();
         let fd = new FormData(document.getElementById("registrationForm"));
-        var payload = {};
-        fd.forEach(function (value, key) {
-            payload[key] = value;
-        });
-        fetch('/api/Users', {
-            headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-            method: "POST",
-            body: JSON.stringify(payload)
-        }).then((res => res.json()))
-            .then(res => {
-                if (!res.error) {
-                    console.log("User registered!!", res);
-                    alert("You are now a student in Creathush!")
-                    return false;
-                }
-                else {
-                    if (res.error.code)
-                        alert(res.error.message)
-                    else if (res.error.details.codes.email[0] = "uniqueness")
-                        alert("This email is alredy registered in our system.")
-
-                }
-            }).catch(error => {
-                console.log("error!!", error);
-                // alert()
-            })
-
+        Auth.register(fd, 'Login successed!!');
     }
 
+    
     render() {
         console.log("this state", this.state)
         if (this.state.redirTo != false) {

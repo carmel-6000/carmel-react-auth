@@ -53,12 +53,49 @@ const Auth={
         
     }); 
   },
+
+
   logout(cb){
 
     localStorage.removeItem('accessToken','');
     this._isAuthenticated=false;
     return;
-  }
+  },
+  register(fd, message) {
+    // e.preventDefault();
+    // let fd = new FormData(document.getElementById("registrationForm"));
+    var payload = {};
+    fd.forEach(function (value, key) {
+        payload[key] = value;
+    });
+
+
+    
+    fetch('/api/Users', {
+        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+        method: "POST",
+        body: JSON.stringify(payload)
+    }).then((res => res.json()))
+        .then(res => {
+            if (!res.error) {
+                console.log("User registered!!", res);
+                alert(message)
+                return false;
+            }
+            else {
+                if (res.error.code)
+                    alert(res.error.message)
+                else if (res.error.details.codes.email[0] = "uniqueness")
+                    alert("This email is alredy registered in our system.")
+
+            }
+        }).catch(error => {
+            console.log("error!!", error);
+            // alert()
+        })
+
+}
+
 
 }
 
