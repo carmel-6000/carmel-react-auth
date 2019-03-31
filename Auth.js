@@ -1,7 +1,4 @@
-import React from "react";
-import { Redirect } from 'react-router';
-
-const Auth={
+const Auth = {
 
   _isAuthenticated:false,
   
@@ -13,8 +10,7 @@ const Auth={
     return this._isAuthenticated;
 
   },
-  authFetch(url) {
-
+  authFetch(url, payload = null) {
     let accessToken = localStorage.getItem('accessToken');
     console.log("authFetch given accessToken:", accessToken);
     if (accessToken === null) {
@@ -26,14 +22,20 @@ const Auth={
       } else {
         url += "?access_token=" + accessToken;
       }
-      return fetch(url);
+      if (payload)
+        return fetch(url, payload);
+      else return fetch(url);
     }
+  },
+  getRoutingCode() {
+    return localStorage.getItem('com');
   },
 
   authenticate(email,pw,cb){
 
-    fetch('/api/Users/login', {method: 'POST',headers: {'Accept': 'application/json','Content-Type': 'application/json'},
-        body: JSON.stringify({email: email, password: pw})
+    fetch('/api/CustomUsers/login/', {
+      method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, password: pw })
     })
 
     .then(response=>{return response.json()}).then(res=> {
@@ -41,29 +43,30 @@ const Auth={
         console.log("res",res);
         if (res.error){
 
-            this._isAuthenticated=false;
-            localStorage.setItem('accessToken','');
-            return cb(false);
-        }else{
+          this._isAuthenticated = false;
+          localStorage.setItem('accessToken', '');
+          localStorage.setItem('com', '')
+          return cb(false);
+        } else {
 
-            this._isAuthenticated=true;    
-            localStorage.setItem('accessToken',res.id);
-            return cb(true)
+          this._isAuthenticated = true;
+          localStorage.setItem('accessToken', res.id);
+          localStorage.setItem('com', res.compArr)
+          return cb(true)
         }
         
     }); 
   },
-
-
-  logout(cb){
-
-    localStorage.removeItem('accessToken','');
-    this._isAuthenticated=false;
+  logout(cb) {
+    console.log("log out!")
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('com')
+    this._isAuthenticated = false;
+    if (cb)
+      cb();
     return;
   },
   register(fd, message) {
-    // e.preventDefault();
-    // let fd = new FormData(document.getElementById("registrationForm"));
     var payload = {};
     fd.forEach(function (value, key) {
         payload[key] = value;

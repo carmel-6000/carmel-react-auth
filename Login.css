@@ -34,3 +34,9 @@ input{display:inline-block;
     font-size:1.2em;
 
 }
+
+.validationError{
+    color:red;
+    opacity: 0.65;
+    font-size: 17px;
+}
