@@ -33,7 +33,7 @@ const Auth = {
 
   authenticate(email,pw,cb){
 
-    fetch('/api/CustomUsers/login/', {
+    fetch('/api/CustomUsers/elogin/', {
       method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email, password: pw })
     })
