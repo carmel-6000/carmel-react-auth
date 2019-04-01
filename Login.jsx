@@ -84,7 +84,7 @@ class Login extends Component {
                         this.setState({ email: { text: "Sould contain only one @.", isvalid: false } });
                         return;
                     }
-                    if (/^[a-zA-Z0-9]+@[a-zA-Z0-9]+\.[A-Za-z]+$/.test(val) && !this.state.email.isvalid) {
+                    if (/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(val) && !this.state.email.isvalid) {
                         this.setState({ email: { text: "", isvalid: true } });
                         return;
                     }
@@ -151,7 +151,7 @@ class Login extends Component {
         Auth.register(fd, 'Login successed!!');
     }
 
-    
+
     render() {
         if (this.state.redirTo != false) {
             return (<Redirect to={{
