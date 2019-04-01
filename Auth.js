@@ -74,7 +74,7 @@ const Auth = {
 
 
     
-    fetch('/api/Users', {
+    fetch('/api/CustomUsers', {
         headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
         method: "POST",
         body: JSON.stringify(payload)
