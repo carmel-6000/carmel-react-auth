@@ -182,7 +182,7 @@ class Login extends Component {
                             </div>
                         </form>
                         <div className='frow'>
-                            <p onClick={this.openRegModal}>לא רשומים? הירשמו עכשיו!</p>
+                            <p className="registerLink" onClick={this.openRegModal}>לא רשומים? הירשמו עכשיו!</p>
                             <ReactModal closeOnOverlayClick shouldCloseOnEsc showCloseIcon open={this.state.registerModal} center onClose={this.openRegModal}>
                                 <form className="form" id="registrationForm" style={{ textAlign: 'center' }} onSubmit={this.register}>
                                     <p className="mt-3">מלאו את הפרטים הבאים</p>
