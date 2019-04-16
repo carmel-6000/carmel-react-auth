@@ -30,6 +30,9 @@ const Auth = {
   getRoutingCode() {
     return localStorage.getItem('com');
   },
+  getUserId(){
+    return eval(localStorage.getItem('avpr').replace(/\D/g,''));
+  },
 
   authenticate(email,pw,cb){
 
@@ -48,10 +51,11 @@ const Auth = {
           localStorage.setItem('com', '')
           return cb(false);
         } else {
-
+let string="qwertyuiopasdfghjklzxcvbnmASDGDFG".split('').sort(function(){return 0.5-Math.random()}).join('');
           this._isAuthenticated = true;
           localStorage.setItem('accessToken', res.id);
-          localStorage.setItem('com', res.compArr)
+          localStorage.setItem('com', res.compArr);
+          localStorage.setItem('avpr',string+res.userId+"jgfiogfgzfaazipof");
           return cb(true)
         }
         
