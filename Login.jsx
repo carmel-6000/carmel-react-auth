@@ -75,7 +75,7 @@ class Login extends Component {
                         return;
                     }
                     else
-                        this.setState({ realm: { text: "name must be at least 4 chars and limited for 20.", isvalid: false } });
+                        this.setState({ realm: { text: "Name must be at least 4 chars and limited for 20.", isvalid: false } });
                 }
             case "registerEmail":
                 {
@@ -119,19 +119,19 @@ class Login extends Component {
                         return;
                     }
                     if (!/[A-Z]/.test(val)) {
-                        this.setState({ password: { text: " password must contain at least one uppercase letter", isvalid: false } });
+                        this.setState({ password: { text: "Password must contain at least one uppercase letter", isvalid: false } });
                         return;
                     }
                     if (!/[a-z]/.test(val)) {
-                        this.setState({ password: { text: "password must contain at least one lowercase letter (a-z)", isvalid: false } });
+                        this.setState({ password: { text: "Password must contain at least one lowercase letter (a-z)", isvalid: false } });
                         return;
                     }
                     if (!/[!@#$%^&()]/.test(val)) {
-                        this.setState({ password: { text: "password should contain one of the following carachters: !@#$%^&() ", isvalid: false } });
+                        this.setState({ password: { text: "Password should contain one of the following carachters: !@#$%^&() ", isvalid: false } });
                         return;
                     }
                     if (!/[0-9]/.test(val)) {
-                        this.setState({ password: { text: "password must contain digits.", isvalid: false } });
+                        this.setState({ password: { text: "Password must contain digits.", isvalid: false } });
                         return;
                     }
                     break;
@@ -144,7 +144,7 @@ class Login extends Component {
         e.preventDefault();
         if (!(this.state.realm.isvalid && this.state.username.isvalid &&
             this.state.password && this.state.email.isvalid)) {
-            alert("one of the fields is invalid");
+            alert("One of the fields is invalid");
             return false;
         }
         let fd = new FormData(document.getElementById("registrationForm"));
@@ -154,9 +154,7 @@ class Login extends Component {
 
     render() {
         if (this.state.redirTo != false) {
-            return (<Redirect to={{
-                pathname: '/home', state: this.state
-            }} />);
+            return (<Redirect to={{pathname: '/', state: this.state}} />);
 
         } else
             return (
@@ -216,7 +214,6 @@ class Login extends Component {
                 </div>
             )
     }
-
 }
 
 export default Login;

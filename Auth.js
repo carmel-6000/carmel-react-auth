@@ -5,14 +5,49 @@ const Auth = {
   isAuthenticated(){
     
     let at=localStorage.getItem('accessToken');
-    console.log("access token?",at);
+    //console.log("access token?",at);
     this._isAuthenticated= at!==null;
     return this._isAuthenticated;
 
   },
+
+  
+
+  jsonify(res){
+    if (res && res.ok){
+      return res.json();
+    }else{
+      console.log("Could not fetch data from server, make sure your server is running? (2)");
+      return new Promise((resolve,reject)=>{
+        reject([]);
+      });
+    }
+  },
+
+  authFetchJsonify(url, payload = null) {
+    let _this=this;
+    let accessToken = localStorage.getItem('accessToken');
+
+    if (accessToken === null) {
+      return fetch(url, payload).then(_this.jsonify);
+    } 
+
+    if (url.includes("?")) {
+      url += "&access_token=" + accessToken;
+    } else {
+      url += "?access_token=" + accessToken;
+    }
+
+    if (payload) return fetch(url, payload).then(_this.jsonify);
+    
+    return fetch(url).then(_this.jsonify);
+    
+  },
+
+
   authFetch(url, payload = null) {
     let accessToken = localStorage.getItem('accessToken');
-    console.log("authFetch given accessToken:", accessToken);
+    //console.log("authFetch given accessToken:", accessToken);
     if (accessToken === null) {
       return url;
     } else {
@@ -41,17 +76,23 @@ const Auth = {
       body: JSON.stringify({ email: email, password: pw })
     })
 
+    .catch(err=>{
+      console.log("Server response err",err);
+      return cb(false);
+    })
     .then(response=>{return response.json()}).then(res=> {
 
-        console.log("res",res);
+        
         if (res.error){
 
           this._isAuthenticated = false;
-          localStorage.setItem('accessToken', '');
-          localStorage.setItem('com', '')
+          //localStorage.setItem('accessToken', '');
+          //localStorage.setItem('com', '')
           return cb(false);
+
         } else {
-let string="qwertyuiopasdfghjklzxcvbnmASDGDFG".split('').sort(function(){return 0.5-Math.random()}).join('');
+
+          let string="qwertyuiopasdfghjklzxcvbnmASDGDFG".split('').sort(function(){return 0.5-Math.random()}).join('');
           this._isAuthenticated = true;
           localStorage.setItem('accessToken', res.id);
           localStorage.setItem('com', res.compArr);
@@ -62,7 +103,7 @@ let string="qwertyuiopasdfghjklzxcvbnmASDGDFG".split('').sort(function(){return 
     }); 
   },
   logout(cb) {
-    console.log("log out!")
+    //console.log("log out!")
     localStorage.removeItem('accessToken');
     localStorage.removeItem('com')
     this._isAuthenticated = false;
