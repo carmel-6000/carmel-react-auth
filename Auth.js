@@ -1,36 +1,36 @@
 const Auth = {
 
-  _isAuthenticated:false,
-  
-  isAuthenticated(){
-    
-    let at=localStorage.getItem('accessToken');
+  _isAuthenticated: false,
+
+  isAuthenticated() {
+
+    let at = localStorage.getItem('accessToken');
     //console.log("access token?",at);
-    this._isAuthenticated= at!==null;
+    this._isAuthenticated = at !== null;
     return this._isAuthenticated;
 
   },
 
-  
 
-  jsonify(res){
-    if (res && res.ok){
+
+  jsonify(res) {
+    if (res && res.ok) {
       return res.json();
-    }else{
+    } else {
       console.log("Could not fetch data from server, make sure your server is running? (2)");
-      return new Promise((resolve,reject)=>{
+      return new Promise((resolve, reject) => {
         reject([]);
       });
     }
   },
 
   authFetchJsonify(url, payload = null) {
-    let _this=this;
+    let _this = this;
     let accessToken = localStorage.getItem('accessToken');
 
     if (accessToken === null) {
       return fetch(url, payload).then(_this.jsonify);
-    } 
+    }
 
     if (url.includes("?")) {
       url += "&access_token=" + accessToken;
@@ -39,9 +39,9 @@ const Auth = {
     }
 
     if (payload) return fetch(url, payload).then(_this.jsonify);
-    
+
     return fetch(url).then(_this.jsonify);
-    
+
   },
 
 
@@ -65,25 +65,19 @@ const Auth = {
   getRoutingCode() {
     return localStorage.getItem('com');
   },
-  getUserId(){
-    return eval(localStorage.getItem('avpr').replace(/\D/g,''));
+  getUserId() {
+    return eval(localStorage.getItem('avpr').replace(/\D/g, ''));
   },
-
-  authenticate(email,pw,cb){
-
-    fetch('/api/CustomUsers/elogin/', {
-      method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email, password: pw })
-    })
-
-    .catch(err=>{
-      console.log("Server response err",err);
+  
+  afterAuthenticate(promise, cb) {
+    promise.catch(err => {
+      console.log("Server response err", err);
       return cb(false);
     })
-    .then(response=>{return response.json()}).then(res=> {
+      .then(response => { return response.json() }).then(res => {
 
-        
-        if (res.error){
+
+        if (res.error) {
 
           this._isAuthenticated = false;
           //localStorage.setItem('accessToken', '');
@@ -92,15 +86,25 @@ const Auth = {
 
         } else {
 
-          let string="qwertyuiopasdfghjklzxcvbnmASDGDFG".split('').sort(function(){return 0.5-Math.random()}).join('');
+          let string = "qwertyuiopasdfghjklzxcvbnmASDGDFG".split('').sort(function () { return 0.5 - Math.random() }).join('');
           this._isAuthenticated = true;
           localStorage.setItem('accessToken', res.id);
           localStorage.setItem('com', res.compArr);
-          localStorage.setItem('avpr',string+res.userId+"jgfiogfgzfaazipof");
+          localStorage.setItem('avpr', string + res.userId + "jgfiogfgzfaazipof");
           return cb(true)
         }
-        
-    }); 
+
+      });
+  },
+
+  authenticate(email, pw, cb) {
+    const promise = fetch('/api/CustomUsers/elogin/', {
+      method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, password: pw })
+    });
+    return this.afterAuthenticate(promise, cb);
+
+
   },
   logout(cb) {
     //console.log("log out!")
@@ -114,35 +118,35 @@ const Auth = {
   register(fd, message) {
     var payload = {};
     fd.forEach(function (value, key) {
-        payload[key] = value;
+      payload[key] = value;
     });
 
 
-    
+
     fetch('/api/CustomUsers', {
-        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-        method: "POST",
-        body: JSON.stringify(payload)
+      headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+      method: "POST",
+      body: JSON.stringify(payload)
     }).then((res => res.json()))
-        .then(res => {
-            if (!res.error) {
-                console.log("User registered!!", res);
-                alert(message)
-                return false;
-            }
-            else {
-                if (res.error.code)
-                    alert(res.error.message)
-                else if (res.error.details.codes.email[0] = "uniqueness")
-                    alert("This email is alredy registered in our system.")
+      .then(res => {
+        if (!res.error) {
+          console.log("User registered!!", res);
+          alert(message)
+          return false;
+        }
+        else {
+          if (res.error.code)
+            alert(res.error.message)
+          else if (res.error.details.codes.email[0] = "uniqueness")
+            alert("This email is alredy registered in our system.")
 
-            }
-        }).catch(error => {
-            console.log("error!!", error);
-            // alert()
-        })
+        }
+      }).catch(error => {
+        console.log("error!!", error);
+        // alert()
+      })
 
-}
+  }
 
 
 }
