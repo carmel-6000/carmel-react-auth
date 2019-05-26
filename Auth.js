@@ -97,7 +97,7 @@ const Auth = {
           localStorage.setItem('accessToken', res.id);
           localStorage.setItem('com', res.compArr);
           localStorage.setItem('avpr',string+res.userId+"jgfiogfgzfaazipof");
-          return cb(true)
+          return cb(true,res)
         }
         
     }); 
