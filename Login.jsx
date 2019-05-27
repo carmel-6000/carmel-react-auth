@@ -30,15 +30,15 @@ class Login extends Component {
         let email = this.refs.email.value;
         let pw = this.refs.pw.value;
         this.setState({ isLoading: true });
-
-        Auth.authenticate(email, pw, (isAuthenticated, role) => {
+        
+        Auth.authenticate(email, pw, (res, role) => {
 
             this.setState({ isLoading: false });
-            if (isAuthenticated === false) {
-                alert("Login Failed, \n Try again");
+            if (res.success === false) {
+                console.log("login failed with error", res.msg);
                 return;
             }
-            if (isAuthenticated === true) {
+            if (res.success === true) {
                 { this.props.navHeader() };
                 if (this.props.postLoginCb)
                     this.props.postLoginCb();
@@ -144,7 +144,7 @@ class Login extends Component {
         e.preventDefault();
         if (!(this.state.realm.isvalid && this.state.username.isvalid &&
             this.state.password && this.state.email.isvalid)) {
-            alert("One of the fields is invalid");
+            console.log("One of the fields is invalid");
             return false;
         }
         let fd = new FormData(document.getElementById("registrationForm"));

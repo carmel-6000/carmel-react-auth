@@ -1,3 +1,14 @@
+const AsyncTools = {
+    
+  to(promise) {
+      return promise.then(data => {
+          return [null, data];
+      })
+          .catch(err => [err]);
+  }
+  
+}
+
 const Auth = {
 
   _isAuthenticated: false,
@@ -68,32 +79,26 @@ const Auth = {
   getUserId() {
     return eval(localStorage.getItem('avpr').replace(/\D/g, ''));
   },
-  
+
   afterAuthenticate(promise, cb) {
     promise.catch(err => {
       console.log("Server response err", err);
       return cb(false);
     })
       .then(response => { return response.json() }).then(res => {
-
-
         if (res.error) {
-
           this._isAuthenticated = false;
           //localStorage.setItem('accessToken', '');
           //localStorage.setItem('com', '')
-          return cb(false);
-
-        } else {
-
-          let string = "qwertyuiopasdfghjklzxcvbnmASDGDFG".split('').sort(function () { return 0.5 - Math.random() }).join('');
-          this._isAuthenticated = true;
-          localStorage.setItem('accessToken', res.id);
-          localStorage.setItem('com', res.compArr);
-          localStorage.setItem('avpr', string + res.userId + "jgfiogfgzfaazipof");
-          return cb(true)
+          return cb({ success: false, msg: res.error });
         }
 
+        let string = "qwertyuiopasdfghjklzxcvbnmASDGDFG".split('').sort(function () { return 0.5 - Math.random() }).join('');
+        this._isAuthenticated = true;
+        localStorage.setItem('accessToken', res.id);
+        localStorage.setItem('com', res.compArr);
+        localStorage.setItem('avpr', string + res.userId + "jgfiogfgzfaazipof");
+        return cb({ success: true });
       });
   },
 
@@ -131,21 +136,42 @@ const Auth = {
       .then(res => {
         if (!res.error) {
           console.log("User registered!!", res);
-          alert(message)
+          console.log(message)
           return false;
         }
         else {
           if (res.error.code)
-            alert(res.error.message)
+            console.log(res.error.message)
           else if (res.error.details.codes.email[0] = "uniqueness")
-            alert("This email is alredy registered in our system.")
+            console.log("This email is alredy registered in our system.")
 
         }
       }).catch(error => {
         console.log("error!!", error);
-        // alert()
       })
 
+  },
+  async registerAsync(fd, message) {
+    var payload = {};
+    fd.forEach(function (value, key) {
+      payload[key] = value;
+    });
+
+    let res = await fetch('/api/CustomUsers', {
+      headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      let [err, res2] = await AsyncTools.to(res.json());
+      if (err) {
+        return { error: err, ok: false };
+      }
+      return { error: res2.error.details ? Object.values(res2.error.details.messages) : Object.values(res2.error.code), ok: false };
+    }
+
+    return { ok: true };
   }
 
 
