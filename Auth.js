@@ -1,13 +1,4 @@
-const AsyncTools = {
-
-  to(promise) {
-    return promise.then(data => {
-      return [null, data];
-    })
-      .catch(err => [err]);
-  }
-
-}
+import AsyncTools from '../tools/AsyncTools';
 
 const Auth = {
 
