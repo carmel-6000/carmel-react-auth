@@ -1,4 +1,4 @@
-import AsyncTools from '../carmel-tools/AsyncTools';
+import AsyncTools from '../tools/AsyncTools';
 
 const Auth = {
 
