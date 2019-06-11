@@ -1,4 +1,4 @@
-import AsyncTools from '../tools/AsyncTools';
+import AsyncTools from '../carmel-tools/AsyncTools';
 
 const Auth = {
 
@@ -25,6 +25,26 @@ const Auth = {
       });
     }
   },
+
+  superAuthFetch(url,payload=null){
+
+    let accessToken = localStorage.getItem('accessToken');
+   
+    if (accessToken === null) {
+      return url;
+    }
+
+    if (url.includes("?")) {
+        url += "&access_token=" + accessToken;
+    } else {
+        url += "?access_token=" + accessToken;
+    }
+
+    return AsyncTools.superFetch(url,payload);
+
+  },
+
+  
 
   authFetchJsonify(url, payload = null) {
     let _this = this;
@@ -64,6 +84,7 @@ const Auth = {
       else return fetch(url);
     }
   },
+  
   getRoutingCode() {
     return localStorage.getItem('com');
   },
