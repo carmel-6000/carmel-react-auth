@@ -1,4 +1,4 @@
-
+import AsyncTools from '../tools/AsyncTools';
 
 const Auth = {
 
@@ -25,6 +25,26 @@ const Auth = {
       });
     }
   },
+
+  superAuthFetch(url,payload=null){
+
+    let accessToken = localStorage.getItem('accessToken');
+   
+    if (accessToken === null) {
+      return url;
+    }
+
+    if (url.includes("?")) {
+        url += "&access_token=" + accessToken;
+    } else {
+        url += "?access_token=" + accessToken;
+    }
+
+    return AsyncTools.superFetch(url,payload);
+
+  },
+
+  
 
   authFetchJsonify(url, payload = null) {
     let _this = this;
@@ -64,13 +84,14 @@ const Auth = {
       else return fetch(url);
     }
   },
+  
   getRoutingCode() {
     return localStorage.getItem('com');
   },
   getUserId() {
     return eval(localStorage.getItem('avpr').replace(/\D/g, ''));
   },
-  
+
   afterAuthenticate(promise, cb) {
     promise.catch(err => {
       console.log("Server response err", err);
@@ -83,19 +104,18 @@ const Auth = {
 
   afterResponseAuth(res, cb){
     if (res.error) {
-
       this._isAuthenticated = false;
-      return cb(false);
-
-    } else {
-
-      let string = "qwertyuiopasdfghjklzxcvbnmASDGDFG".split('').sort(function () { return 0.5 - Math.random() }).join('');
-      this._isAuthenticated = true;
-      localStorage.setItem('accessToken', res.id);
-      localStorage.setItem('com', res.compArr);
-      localStorage.setItem('avpr', string + res.userId + "jgfiogfgzfaazipof");
-      return cb(true)
+      //localStorage.setItem('accessToken', '');
+      //localStorage.setItem('com', '')
+      return cb({ success: false, msg: res.error });
     }
+
+    let string = "qwertyuiopasdfghjklzxcvbnmASDGDFG".split('').sort(function () { return 0.5 - Math.random() }).join('');
+    this._isAuthenticated = true;
+    localStorage.setItem('accessToken', res.id);
+    localStorage.setItem('com', res.compArr);
+    localStorage.setItem('avpr', string + res.userId + "jgfiogfgzfaazipof");
+    return cb({ success: true }, res);
   },
 
   authenticate(email, pw, cb) {
@@ -132,21 +152,42 @@ const Auth = {
       .then(res => {
         if (!res.error) {
           console.log("User registered!!", res);
-          alert(message)
+          console.log(message)
           return false;
         }
         else {
           if (res.error.code)
-            alert(res.error.message)
+            console.log(res.error.message)
           else if (res.error.details.codes.email[0] = "uniqueness")
-            alert("This email is alredy registered in our system.")
+            console.log("This email is alredy registered in our system.")
 
         }
       }).catch(error => {
         console.log("error!!", error);
-        // alert()
       })
 
+  },
+  async registerAsync(fd, message) {
+    var payload = {};
+    fd.forEach(function (value, key) {
+      payload[key] = value;
+    });
+
+    let res = await fetch('/api/CustomUsers', {
+      headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      let [err, res2] = await AsyncTools.to(res.json());
+      if (err) {
+        return { error: err, ok: false };
+      }
+      return { error: res2.error.details ? Object.values(res2.error.details.messages) : Object.values(res2.error.code), ok: false };
+    }
+
+    return { ok: true };
   }
 
 
