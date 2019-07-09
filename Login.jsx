@@ -5,8 +5,6 @@ import { Redirect } from 'react-router';
 import ReactModal from 'react-responsive-modal';
 import { HashRouter as Router, Route, Link } from "react-router-dom";
 
-
-
 class Login extends Component {
 
     constructor(props) {

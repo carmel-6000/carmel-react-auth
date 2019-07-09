@@ -95,20 +95,24 @@ const Auth = {
       return cb(false);
     })
       .then(response => { return response.json() }).then(res => {
-        if (res.error) {
-          this._isAuthenticated = false;
-          //localStorage.setItem('accessToken', '');
-          //localStorage.setItem('com', '')
-          return cb({ success: false, msg: res.error });
-        }
-
-        let string = "qwertyuiopasdfghjklzxcvbnmASDGDFG".split('').sort(function () { return 0.5 - Math.random() }).join('');
-        this._isAuthenticated = true;
-        localStorage.setItem('accessToken', res.id);
-        localStorage.setItem('com', res.compArr);
-        localStorage.setItem('avpr', string + res.userId + "jgfiogfgzfaazipof");
-        return cb({ success: true }, res);
+        return this.afterResponseAuth(res, cb);
       });
+  },
+
+  afterResponseAuth(res, cb){
+    if (res.error) {
+      this._isAuthenticated = false;
+      //localStorage.setItem('accessToken', '');
+      //localStorage.setItem('com', '')
+      return cb({ success: false, msg: res.error });
+    }
+
+    let string = "qwertyuiopasdfghjklzxcvbnmASDGDFG".split('').sort(function () { return 0.5 - Math.random() }).join('');
+    this._isAuthenticated = true;
+    localStorage.setItem('accessToken', res.id);
+    localStorage.setItem('com', res.compArr);
+    localStorage.setItem('avpr', string + res.userId + "jgfiogfgzfaazipof");
+    return cb({ success: true }, res);
   },
 
   authenticate(email, pw, cb) {
