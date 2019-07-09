@@ -88,9 +88,6 @@ const Auth = {
   getRoutingCode() {
     return localStorage.getItem('com');
   },
-  getUserId() {
-    return eval(localStorage.getItem('avpr').replace(/\D/g, ''));
-  },
 
   afterAuthenticate(promise, cb) {
     promise.catch(err => {
