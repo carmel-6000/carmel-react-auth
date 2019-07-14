@@ -26,25 +26,25 @@ const Auth = {
     }
   },
 
-  superAuthFetch(url,payload=null){
+  superAuthFetch(url, payload = null) {
 
     let accessToken = localStorage.getItem('accessToken');
-   
+
     if (accessToken === null) {
-      return url;
+      return fetch(url, payload);
     }
 
     if (url.includes("?")) {
-        url += "&access_token=" + accessToken;
+      url += "&access_token=" + accessToken;
     } else {
-        url += "?access_token=" + accessToken;
+      url += "?access_token=" + accessToken;
     }
 
-    return AsyncTools.superFetch(url,payload);
+    return AsyncTools.superFetch(url, payload);
 
   },
 
-  
+
 
   authFetchJsonify(url, payload = null) {
     let _this = this;
@@ -84,7 +84,7 @@ const Auth = {
       else return fetch(url);
     }
   },
-  
+
   getRoutingCode() {
     return localStorage.getItem('com');
   },
@@ -99,7 +99,7 @@ const Auth = {
       });
   },
 
-  afterResponseAuth(res, cb){
+  afterResponseAuth(res, cb) {
     if (res.error) {
       this._isAuthenticated = false;
       //localStorage.setItem('accessToken', '');
@@ -127,7 +127,8 @@ const Auth = {
   logout(cb) {
     //console.log("log out!")
     localStorage.removeItem('accessToken');
-    localStorage.removeItem('com')
+    localStorage.removeItem('com');
+    localStorage.removeItem('avpr');
     this._isAuthenticated = false;
     if (cb)
       cb();
