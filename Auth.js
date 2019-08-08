@@ -13,6 +13,11 @@ const Auth = {
 
   },
 
+  // DEPRECATED
+  getUserId() {
+    return eval(localStorage.getItem('avpr').replace(/\D/g, ''));
+  },
+
 
 
   jsonify(res) {
