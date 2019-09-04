@@ -2,8 +2,6 @@ import React, { Component } from 'react';
 import './_Login.scss';
 import Auth from './Auth';
 import { Redirect } from 'react-router';
-import ReactModal from 'react-responsive-modal';
-import { HashRouter as Router, Route, Link } from "react-router-dom";
 
 class Login extends Component {
 
@@ -179,7 +177,7 @@ class Login extends Component {
                         </form>
                         <div className='frow'>
                             <p className="registerLink" onClick={this.openRegModal}>לא רשומים? הירשמו עכשיו!</p>
-                            <ReactModal closeOnOverlayClick shouldCloseOnEsc showCloseIcon open={this.state.registerModal} center onClose={this.openRegModal}>
+                            {/* <ReactModal closeOnOverlayClick shouldCloseOnEsc showCloseIcon open={this.state.registerModal} center onClose={this.openRegModal}> */}
                                 <form className="form" id="registrationForm" style={{ textAlign: 'center' }} onSubmit={this.register}>
                                     <p className="mt-3">מלאו את הפרטים הבאים</p>
                                     <div className="form-group">
@@ -204,7 +202,7 @@ class Login extends Component {
                                     </div>
                                     <button className='btn btn-warning' type='submit'>הירשם!</button>
                                 </form>
-                            </ReactModal>
+                            {/* </ReactModal> */}
                         </div>
 
 
