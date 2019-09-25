@@ -223,8 +223,31 @@ const Auth = {
     }
 
     return { ok: true };
-  }
+  },
 
+  inactivityTime(cb) {
+    let time;
+
+    window.onload = resetTimer();
+    // DOM Events - addeventlisteners
+    document.addEventListener("load", resetTimer);
+    document.addEventListener("mousemove", resetTimer);
+    document.addEventListener("mousedown", resetTimer); // touchscreen presses
+    document.addEventListener("touchstart", resetTimer);
+    document.addEventListener("click", resetTimer);     // touchpad clicks
+    document.addEventListener("scroll", resetTimer);    // scrolling with arrow keys
+    document.addEventListener("keypress", resetTimer);
+    document.addEventListener("mousewheel", resetTimer);
+    document.addEventListener("DOMMouseScroll", resetTimer);
+    document.addEventListener("keypress", resetTimer);
+
+    
+
+    function resetTimer() {
+        clearTimeout(time);
+        time = setTimeout(()=>Auth.logout(cb), 10 * 60 * 1000) //10 mins
+    }
+}
 
 }
 
