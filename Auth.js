@@ -112,7 +112,7 @@ const Auth = {
 
   async superAuthFetch(url, payload = null) {
     let [res, err] = await AsyncTools.superFetch(url, payload);
-    if (err && err.error.statusCode === 401) {
+    if (err && err.error && err.error.statusCode === 401) {
       Auth.logout(() => window.location.href = window.location.origin); //FORCE LOGOUT.      
     }
     return [res, err];
@@ -163,7 +163,7 @@ const Auth = {
     //~~~~~DEPRECATED~~~~~
     localStorage.removeItem('avpr');
     //~~~~END OF DEPRECATED~~~~~
-    
+
     this.removeItem('access_token');
     this.removeItem('com');
     GenericTools.deleteAllCookies(); //needed?
