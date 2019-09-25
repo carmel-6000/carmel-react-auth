@@ -1,19 +1,103 @@
-import AsyncTools from '../tools/AsyncTools';
+// import AsyncTools from '../tools/AsyncTools';
+// import GenericTools from '../tools/GenericTools'
+let AsyncTools = {
+  to(promise) {
+    return promise.then(data => {
+      return [null, data];
+    })
+      .catch(err => [err]);
+  },
+  parseJSON(response) {
+    return new Promise((resolve, reject) =>
+      response.json()
+        .then((json) => resolve({
+          status: response.status,
+          ok: response.ok,
+          json,
+        }))
+        .catch(error => { reject(error) })
+    );
+  },
+
+  superFetch(url, payload) {
+
+    let fPromise = payload === null ? fetch(url) : fetch(url, payload);
+
+    return new Promise((resolve, reject) => {
+      fPromise
+        .then(this.parseJSON)// this trys to parse- get origin error when you have one.
+        .then((response) => {
+          if (response.ok) {
+            return resolve([response.json, null]);
+          }
+          console.log("response", response.json)
+          // extract the error from the server's json
+          if (response.json.error && response.json.error.statusCode === 401)
+            Auth.logout(() => window.location.href = window.location.origin); //FORCE LOGOUT.
+
+          return resolve([null, response.json]);
+        })
+        .catch((error) => resolve([null, "No response, check your network connectivity"]));
+    });
+  }
+}
+const GenericTools = {
+  getCookieByKey(name) {
+    var value = "; " + document.cookie;
+    var parts = value.split("; " + name + "=");
+    if (parts.length === 2) return parts.pop().split(";").shift();
+  },
+  deleteAllCookies() {
+    var cookies = document.cookie.split(";");
+
+    for (var i = 0; i < cookies.length; i++) {
+      var cookie = cookies[i];
+      var eqPos = cookie.indexOf("=");
+      var name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+      document.cookie = name + "=;path='/';expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    }
+  },
+  deleteCookieByKey(name, path = '/', domain = null) {
+    if (this.getCookieByKey(name)) {
+      document.cookie = name + "=" +
+        ((path) ? ";path=" + path : "") +
+        ((domain) ? ";domain=" + domain : "") +
+        ";expires=Thu, 01 Jan 1970 00:00:01 GMT";
+    }
+  }
+}
 
 const Auth = {
 
   _isAuthenticated: false,
 
+  getAccessToken() {
+    return this.getItem("access_token");
+  },
   isAuthenticated() {
-
-    let at = localStorage.getItem('accessToken');
-    //console.log("access token?",at);
-    this._isAuthenticated = at !== null;
+    let at = this.getAccessToken();
+    this._isAuthenticated = (at !== null && at !== undefined && at !== "");
     return this._isAuthenticated;
-
   },
 
+  setItem(id, item, localStorageOnly = false, cookiesOnly = false) {
+    if (!localStorageOnly)
+      document.cookie = `${id}=${item}`;
+    if (!cookiesOnly)
+      localStorage.setItem(id, item);
+  },
 
+  getItem(id) {
+    let cookie = GenericTools.getCookieByKey(id);
+    if (cookie) return cookie;
+    return localStorage.getItem(id);
+  },
+
+  removeItem(id) {
+    localStorage.removeItem(id);
+    GenericTools.deleteCookieByKey(id);
+    console.log("deleted?", this.getItem(id))
+  },
 
   jsonify(res) {
     if (res && res.ok) {
@@ -26,111 +110,65 @@ const Auth = {
     }
   },
 
-  superAuthFetch(url,payload=null){
-
-    let accessToken = localStorage.getItem('accessToken');
-   
-    if (accessToken === null) {
-      return url;
+  async superAuthFetch(url, payload = null) {
+    let [res, err] = await AsyncTools.superFetch(url, payload);
+    if (err && err.error.statusCode === 401) {
+      Auth.logout(() => window.location.href = window.location.origin); //FORCE LOGOUT.      
     }
-
-    if (url.includes("?")) {
-        url += "&access_token=" + accessToken;
-    } else {
-        url += "?access_token=" + accessToken;
-    }
-
-    return AsyncTools.superFetch(url,payload);
-
+    return [res, err];
   },
 
-  
+
 
   authFetchJsonify(url, payload = null) {
     let _this = this;
-    let accessToken = localStorage.getItem('accessToken');
 
-    if (accessToken === null) {
-      return fetch(url, payload).then(_this.jsonify);
-    }
-
-    if (url.includes("?")) {
-      url += "&access_token=" + accessToken;
-    } else {
-      url += "?access_token=" + accessToken;
-    }
-
-    if (payload) return fetch(url, payload).then(_this.jsonify);
-
-    return fetch(url).then(_this.jsonify);
+    return fetch(url, payload).then(_this.jsonify);
 
   },
 
 
-  authFetch(url, payload = null) {
-    let accessToken = localStorage.getItem('accessToken');
-    //console.log("authFetch given accessToken:", accessToken);
-    if (accessToken === null) {
-      return url;
-    } else {
-
-      if (url.includes("?")) {
-        url += "&access_token=" + accessToken;
-      } else {
-        url += "?access_token=" + accessToken;
-      }
-      if (payload)
-        return fetch(url, payload);
-      else return fetch(url);
-    }
+  authFetch(url, payload = null) { //DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED
+    return fetch(url, payload);
   },
-  
+
   getRoutingCode() {
-    return localStorage.getItem('com');
+    return this.getItem("com");
   },
 
-  afterAuthenticate(promise, cb) {
-    promise.catch(err => {
-      console.log("Server response err", err);
-      return cb(false);
-    })
-      .then(response => { return response.json() }).then(res => {
-        return this.afterResponseAuth(res, cb);
-      });
-  },
+  getUserId() { //DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED
+    return eval(localStorage.getItem('avpr').replace(/\D/g, ''));
+  }, //DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED
 
-  afterResponseAuth(res, cb){
-    if (res.error) {
-      this._isAuthenticated = false;
-      //localStorage.setItem('accessToken', '');
-      //localStorage.setItem('com', '')
-      return cb({ success: false, msg: res.error });
-    }
-
-    let string = "qwertyuiopasdfghjklzxcvbnmASDGDFG".split('').sort(function () { return 0.5 - Math.random() }).join('');
-    this._isAuthenticated = true;
-    localStorage.setItem('accessToken', res.id);
-    localStorage.setItem('com', res.compArr);
-    localStorage.setItem('avpr', string + res.userId + "jgfiogfgzfaazipof");
-    return cb({ success: true }, res);
-  },
-
-  authenticate(email, pw, cb) {
-    const promise = fetch('/api/CustomUsers/elogin/', {
+  async authenticate(email, pw, cb) {
+    const [res, err] = await AsyncTools.superFetch('/api/CustomUsers/elogin/', {
       method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email, password: pw })
     });
-    return this.afterAuthenticate(promise, cb);
 
+    if (err) {
+      this._isAuthenticated = false;
+      return cb({ success: false, msg: err });
+    }
+    //DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED
+    let string = "qwertyuiopasdfghjklzxcvbnmASDGDFG".split('').sort(function () { return 0.5 - Math.random() }).join(''); //in the future- remove this
+    localStorage.setItem('avpr', string + res.userId + "jgfiogfgzfaazipof");
+    //DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED
+    this._isAuthenticated = true;
+    this.setItem('com', res.compArr);
+    return cb({ success: true }, res);
 
   },
   logout(cb) {
-    //console.log("log out!")
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('com')
+    //~~~~~DEPRECATED~~~~~
+    localStorage.removeItem('avpr');
+    //~~~~END OF DEPRECATED~~~~~
+    
+    this.removeItem('access_token');
+    this.removeItem('com');
+    GenericTools.deleteAllCookies(); //needed?
     this._isAuthenticated = false;
-    if (cb)
-      cb();
+    cb && cb();
     return;
   },
   register(fd, message) {
@@ -148,8 +186,8 @@ const Auth = {
     }).then((res => res.json()))
       .then(res => {
         if (!res.error) {
-          console.log("User registered!!", res);
-          console.log(message)
+          // console.log("User registered!!", res);
+          // console.log(message)
           return false;
         }
         else {
@@ -160,7 +198,7 @@ const Auth = {
 
         }
       }).catch(error => {
-        console.log("error!!", error);
+        // console.log("error!!", error);
       })
 
   },
