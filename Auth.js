@@ -96,7 +96,7 @@ const Auth = {
   removeItem(id) {
     localStorage.removeItem(id);
     GenericTools.deleteCookieByKey(id);
-    console.log("deleted?", this.getItem(id))
+    // console.log("deleted?", this.getItem(id))
   },
 
   jsonify(res) {
