@@ -175,9 +175,22 @@ class Login extends Component {
                                 }
                             </div>
                         </form>
-                        <div className='frow'>
+                        
+
+
+                    </div>
+                </div>
+            )
+    }
+}
+
+export default Login;
+
+
+/*
+<div className='frow'>
                             <p className="registerLink" onClick={this.openRegModal}>לא רשומים? הירשמו עכשיו!</p>
-                            {/* <ReactModal closeOnOverlayClick shouldCloseOnEsc showCloseIcon open={this.state.registerModal} center onClose={this.openRegModal}> */}
+                            
                                 <form className="form" id="registrationForm" style={{ textAlign: 'center' }} onSubmit={this.register}>
                                     <p className="mt-3">מלאו את הפרטים הבאים</p>
                                     <div className="form-group">
@@ -202,14 +215,6 @@ class Login extends Component {
                                     </div>
                                     <button className='btn btn-warning' type='submit'>הירשם!</button>
                                 </form>
-                            {/* </ReactModal> */}
+
                         </div>
-
-
-                    </div>
-                </div>
-            )
-    }
-}
-
-export default Login;
+*/
