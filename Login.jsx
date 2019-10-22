@@ -35,7 +35,7 @@ class Login extends Component {
                 return;
             }
             if (res.success === true) {
-                { this.props.navHeader() };
+                //{ this.props.navHeader() };
                 if (this.props.postLoginCb)
                     this.props.postLoginCb();
                 this.setState({ redirTo: '/' });

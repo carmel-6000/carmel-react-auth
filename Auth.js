@@ -1,5 +1,7 @@
 // import AsyncTools from '../tools/AsyncTools';
 // import GenericTools from '../tools/GenericTools'
+import Authentication from './Authentication';
+
 let AsyncTools = {
   to(promise) {
     return promise.then(data => {
@@ -75,10 +77,23 @@ const Auth = {
     return this.getItem("access_token");
   },
   isAuthenticated() {
-    let at = this.getAccessToken();
-    this._isAuthenticated = (at !== null && at !== undefined && at !== "");
-    return this._isAuthenticated;
+    //let at = this.getAccessToken();
+    //this._isAuthenticated = (at !== null && at !== undefined && at !== "");
+    //return this._isAuthenticated;
+
+    let authentication=Authentication.getInstance();
+    return authentication.isAuthenticated();
+
+
   },
+
+  isAuthenticatedSync(cb) {
+    
+    let authentication=Authentication.getInstance();
+    authentication.isAuthenticatedSync(cb);
+    
+  },
+
 
   setItem(id, item, localStorageOnly = false, cookiesOnly = false) {
     if (!localStorageOnly)
