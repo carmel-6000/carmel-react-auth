@@ -58,7 +58,7 @@ class _PrivateRoute extends Component {
     let kls=Auth.getKls();
     this.klsk=[];
     this.dhp=null;
-    console.log("KLS?",kls);
+    //console.log("KLS?",kls);
     //console.log("klo?",JSON.parse(b.decode(kls.klo)));
     try{
       let klsk=JSON.parse(b.decode(kls.klo));
@@ -95,8 +95,11 @@ class _HomeRoute extends Component {
     super(props);
     let kls=Auth.getKls();
     this.dhp=null;
-    try{let klsk=JSON.parse(b.decode(kls.klo));this.dhp=klsk.b;}catch(err){}
-    //console.log("this.defaultHomePage?",this.dhp);
+    try{
+      let klsk=JSON.parse(b.decode(kls.klo));
+      this.dhp=klsk.b;
+    }catch(err){}
+
     this.haveAccess=Auth.isAuthenticated();
   }
   render() {

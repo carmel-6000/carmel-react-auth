@@ -41,10 +41,7 @@ class Login extends Component {
             return;
         }
         if (res.success === true) {
-            //{ this.props.navHeader() };
-            if (this.props.postLoginCb)
-                this.props.postLoginCb();
-            this.setState({ redirTo: '/' });
+            window.location="/";
         }
 
 
@@ -174,7 +171,9 @@ class Login extends Component {
                                 <input className="form-control" type='email' ref='email' placeholder='מייל'  value="admin@carmel6000.amitnet.org" required />
                             </div>
                             <div className='form-group'>
+                                {/*<input className="form-control" type='password' ref='pw' placeholder='סיסמא' value="7w3lA^WPVMY0" required />*/}
                                 <input className="form-control" type='password' ref='pw' placeholder='סיסמא' value="E2PSzAmJ-5-ldKnl" required />
+
                             </div>
                             <div className='form-group'>
                                 {this.state.isLoading ?

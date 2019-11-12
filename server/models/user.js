@@ -373,6 +373,7 @@ User.extendedLogin = function (credentials, include, callback) {
               comps.b=rolesAccess[uRole.role.name]['defaultHomePage'];
             }
           }
+          logUser("COMPS?",comps);
         }catch(err){
           logUser("Could not fetch /src/consts/roles-access.config.json and parse it");
           
