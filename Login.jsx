@@ -7,7 +7,7 @@ class Login extends Component {
 
     constructor(props) {
         super(props);
-        this.handleLogin = this.handleLogin.bind(this);
+        
         this.state = {
             isLoading: false,
             redirTo: false,
@@ -20,28 +20,35 @@ class Login extends Component {
         }
 
     }
-    handleLogin(e) {
+    
+    handleLogin=async(e)=> {
         e.preventDefault();
 
         let email = this.refs.email.value;
         let pw = this.refs.pw.value;
+
         this.setState({ isLoading: true });
         
-        Auth.authenticate(email, pw, (res, role) => {
+        let res=await Auth.login(email, pw);
 
-            this.setState({ isLoading: false });
-            if (res.success === false) {
-                console.log("login failed with error", res.msg);
-                return;
-            }
-            if (res.success === true) {
-                //{ this.props.navHeader() };
-                if (this.props.postLoginCb)
-                    this.props.postLoginCb();
-                this.setState({ redirTo: '/' });
+        console.log("Auth.authenticate res",res);
+        
 
-            }
-        });
+        this.setState({ isLoading: false });
+        
+        if (res.success === false) {
+            console.log("login failed with error", res.msg);
+            return;
+        }
+        if (res.success === true) {
+            //{ this.props.navHeader() };
+            if (this.props.postLoginCb)
+                this.props.postLoginCb();
+            this.setState({ redirTo: '/' });
+        }
+
+
+        
 
     }
 
@@ -163,10 +170,11 @@ class Login extends Component {
                         <form className="form" onSubmit={this.handleLogin}>
                             <p className="mt-1">ברוכים הבאים !</p>
                             <div className='form-group'>
-                                <input className="form-control" type='email' ref='email' placeholder='מייל' required />
+                                {/*<input className="form-control" type='email' ref='email' placeholder='מייל'  value="batz@carmel6000.amitnet.org" required />*/}
+                                <input className="form-control" type='email' ref='email' placeholder='מייל'  value="admin@carmel6000.amitnet.org" required />
                             </div>
                             <div className='form-group'>
-                                <input className="form-control" type='password' ref='pw' placeholder='סיסמא' required />
+                                <input className="form-control" type='password' ref='pw' placeholder='סיסמא' value="E2PSzAmJ-5-ldKnl" required />
                             </div>
                             <div className='form-group'>
                                 {this.state.isLoading ?
@@ -189,32 +197,32 @@ export default Login;
 
 /*
 <div className='frow'>
-                            <p className="registerLink" onClick={this.openRegModal}>לא רשומים? הירשמו עכשיו!</p>
-                            
-                                <form className="form" id="registrationForm" style={{ textAlign: 'center' }} onSubmit={this.register}>
-                                    <p className="mt-3">מלאו את הפרטים הבאים</p>
-                                    <div className="form-group">
-                                        <label for="registerPrivateName">הכנס שם פרטי</label>
-                                        <input onChange={this.handleInputChange} name='realm' id="registerPrivateName" className="form-control" type='text' required placeholder="הכנס את שמך"></input>
-                                        <div className="validationError">{this.state.realm.text}</div>
-                                    </div>
-                                    <div className="form-group">
-                                        <label for="registerEmail">הכנס כתובת מייל</label>
-                                        <input onChange={this.handleInputChange} name='email' id="registerEmail" className="form-control" type='email' required placeholder={"example@gmail.com"}></input>
-                                        <div className="validationError">{this.state.email.text}</div>
-                                    </div>
-                                    <div className="form-group">
-                                        <label for="registerUserName">הכנס שם משתמש</label>
-                                        <input onChange={this.handleInputChange} name='username' id="registerUserName" className="form-control" type='text' required placeholder="הכנס שם משתמש"></input>
-                                        <div className="validationError">{this.state.username.text}</div>
-                                    </div>
-                                    <div className="form-group">
-                                        <label for="registerPasswd">הכנס סיסמא</label>
-                                        <input required name='password' id="registerPasswd" className="form-control" type='password' required placeholder="הכנס סיסמא" onChange={this.handleInputChange}></input>
-                                        <div className="validationError">{this.state.password.text}</div>
-                                    </div>
-                                    <button className='btn btn-warning' type='submit'>הירשם!</button>
-                                </form>
+        <p className="registerLink" onClick={this.openRegModal}>לא רשומים? הירשמו עכשיו!</p>
+        
+            <form className="form" id="registrationForm" style={{ textAlign: 'center' }} onSubmit={this.register}>
+                <p className="mt-3">מלאו את הפרטים הבאים</p>
+                <div className="form-group">
+                    <label for="registerPrivateName">הכנס שם פרטי</label>
+                    <input onChange={this.handleInputChange} name='realm' id="registerPrivateName" className="form-control" type='text' required placeholder="הכנס את שמך"></input>
+                    <div className="validationError">{this.state.realm.text}</div>
+                </div>
+                <div className="form-group">
+                    <label for="registerEmail">הכנס כתובת מייל</label>
+                    <input onChange={this.handleInputChange} name='email' id="registerEmail" className="form-control" type='email' required placeholder={"example@gmail.com"}></input>
+                    <div className="validationError">{this.state.email.text}</div>
+                </div>
+                <div className="form-group">
+                    <label for="registerUserName">הכנס שם משתמש</label>
+                    <input onChange={this.handleInputChange} name='username' id="registerUserName" className="form-control" type='text' required placeholder="הכנס שם משתמש"></input>
+                    <div className="validationError">{this.state.username.text}</div>
+                </div>
+                <div className="form-group">
+                    <label for="registerPasswd">הכנס סיסמא</label>
+                    <input required name='password' id="registerPasswd" className="form-control" type='password' required placeholder="הכנס סיסמא" onChange={this.handleInputChange}></input>
+                    <div className="validationError">{this.state.password.text}</div>
+                </div>
+                <button className='btn btn-warning' type='submit'>הירשם!</button>
+            </form>
 
-                        </div>
+    </div>
 */

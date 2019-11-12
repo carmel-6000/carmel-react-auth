@@ -1,99 +1,30 @@
-// import AsyncTools from '../tools/AsyncTools';
-// import GenericTools from '../tools/GenericTools'
+import AsyncTools from '../tools/AsyncTools';
+import GenericTools from '../tools/GenericTools'
 import Authentication from './Authentication';
-
-let AsyncTools = {
-  to(promise) {
-    return promise.then(data => {
-      return [null, data];
-    })
-      .catch(err => [err]);
-  },
-  parseJSON(response) {
-    return new Promise((resolve, reject) =>
-      response.json()
-        .then((json) => resolve({
-          status: response.status,
-          ok: response.ok,
-          json,
-        }))
-        .catch(error => { reject(error) })
-    );
-  },
-
-  superFetch(url, payload) {
-
-    let fPromise = payload === null ? fetch(url) : fetch(url, payload);
-
-    return new Promise((resolve, reject) => {
-      fPromise
-        .then(this.parseJSON)// this trys to parse- get origin error when you have one.
-        .then((response) => {
-          if (response.ok) {
-            return resolve([response.json, null]);
-          }
-          console.log("response", response.json)
-          // extract the error from the server's json
-          if (response.json.error && response.json.error.statusCode === 401)
-            Auth.logout(() => window.location.href = window.location.origin); //FORCE LOGOUT.
-
-          return resolve([null, response.json]);
-        })
-        .catch((error) => resolve([null, "No response, check your network connectivity"]));
-    });
-  }
-}
-const GenericTools = {
-  getCookieByKey(name) {
-    var value = "; " + document.cookie;
-    var parts = value.split("; " + name + "=");
-    if (parts.length === 2) return parts.pop().split(";").shift();
-  },
-  deleteAllCookies() {
-    var cookies = document.cookie.split(";");
-
-    for (var i = 0; i < cookies.length; i++) {
-      var cookie = cookies[i];
-      var eqPos = cookie.indexOf("=");
-      var name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
-      document.cookie = name + "=;path='/';expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    }
-  },
-  deleteCookieByKey(name, path = '/', domain = null) {
-    if (this.getCookieByKey(name)) {
-      document.cookie = name + "=" +
-        ((path) ? ";path=" + path : "") +
-        ((domain) ? ";domain=" + domain : "") +
-        ";expires=Thu, 01 Jan 1970 00:00:01 GMT";
-    }
-  }
-}
 
 const Auth = {
 
   _isAuthenticated: false,
 
+  getKls(){
+    let kls={kl:this.getItem('kl'),klo:this.getItem('klo')};    
+    //console.log("KLS? (auth.js)",kls);
+    return kls;
+  },
   getAccessToken() {
     return this.getItem("access_token");
   },
   isAuthenticated() {
-    //let at = this.getAccessToken();
-    //this._isAuthenticated = (at !== null && at !== undefined && at !== "");
-    //return this._isAuthenticated;
-
-    let authentication=Authentication.getInstance();
-    return authentication.isAuthenticated();
-
-
+    let at = this.getAccessToken();
+    this._isAuthenticated = (at !== null && at !== undefined && at !== "");
+    return this._isAuthenticated;
   },
 
-  isAuthenticatedSync(cb) {
-    
+  //Since we are now using cookies, there is no need to use this method anymore
+  isAuthenticatedSync(cb) {    
     let authentication=Authentication.getInstance();
     authentication.isAuthenticatedSync(cb);
-    
   },
-
 
   setItem(id, item, localStorageOnly = false, cookiesOnly = false) {
     if (!localStorageOnly)
@@ -104,6 +35,7 @@ const Auth = {
 
   getItem(id) {
     let cookie = GenericTools.getCookieByKey(id);
+    //console.log("COOKIE by id (%s)",id,cookie);
     if (cookie) return cookie;
     return localStorage.getItem(id);
   },
@@ -118,7 +50,7 @@ const Auth = {
     if (res && res.ok) {
       return res.json();
     } else {
-      console.log("Could not fetch data from server, make sure your server is running? (2)");
+      //console.log("Could not fetch data from server, make sure your server is running? (2)");
       return new Promise((resolve, reject) => {
         reject([]);
       });
@@ -133,27 +65,10 @@ const Auth = {
     return [res, err];
   },
 
-
-
-  authFetchJsonify(url, payload = null) {
-    let _this = this;
-
-    return fetch(url, payload).then(_this.jsonify);
-
+  
+  async login(email, pw, cb) {
+    return this.authenticate(email,pw,cb);
   },
-
-
-  authFetch(url, payload = null) { //DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED
-    return fetch(url, payload);
-  },
-
-  getRoutingCode() {
-    return this.getItem("com");
-  },
-
-  getUserId() { //DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED
-    return eval(localStorage.getItem('avpr').replace(/\D/g, ''));
-  }, //DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED
 
   async authenticate(email, pw, cb) {
     const [res, err] = await AsyncTools.superFetch('/api/CustomUsers/elogin/', {
@@ -163,24 +78,30 @@ const Auth = {
 
     if (err) {
       this._isAuthenticated = false;
-      return cb({ success: false, msg: err });
+      return new Promise((res,rej)=>{res({success:false,msg:err})});
     }
-    //DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED
-    let string = "qwertyuiopasdfghjklzxcvbnmASDGDFG".split('').sort(function () { return 0.5 - Math.random() }).join(''); //in the future- remove this
-    localStorage.setItem('avpr', string + res.userId + "jgfiogfgzfaazipof");
-    //DEPRECATED DEPRECATED DEPRECATED DEPRECATED DEPRECATED
+    
+    console.log("Login res",res);
     this._isAuthenticated = true;
-    this.setItem('com', res.compArr);
-    return cb({ success: true }, res);
+
+    
+    this.setItem('klo',res.klo,false,true);
+    this.setItem('kl',res.kl,false,true);
+
+    return new Promise((res,rej)=>{res({success:true})});
+    //return cb({ success: true }, res);
 
   },
-  logout(cb) {
-    //~~~~~DEPRECATED~~~~~
-    localStorage.removeItem('avpr');
-    //~~~~END OF DEPRECATED~~~~~
 
+  logout(cb) {
+    
     this.removeItem('access_token');
-    this.removeItem('com');
+    this.removeItem('kl');
+    this.removeItem('klo');
+    this.removeItem('klk');
+    this.removeItem('kloo');
+    this.removeItem('olk');
+
     GenericTools.deleteAllCookies(); //needed?
     this._isAuthenticated = false;
     cb && cb();
@@ -191,8 +112,6 @@ const Auth = {
     fd.forEach(function (value, key) {
       payload[key] = value;
     });
-
-
 
     fetch('/api/CustomUsers', {
       headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
@@ -243,6 +162,11 @@ const Auth = {
   inactivityTime(cb) {
     let time;
 
+    function resetTimer() {
+        clearTimeout(time);
+        time = setTimeout(()=>Auth.logout(cb), 10 * 60 * 1000) //10 mins
+    }
+
     window.onload = resetTimer();
     // DOM Events - addeventlisteners
     document.addEventListener("load", resetTimer);
@@ -255,14 +179,14 @@ const Auth = {
     document.addEventListener("mousewheel", resetTimer);
     document.addEventListener("DOMMouseScroll", resetTimer);
     document.addEventListener("keypress", resetTimer);
+  },
 
-    
-
-    function resetTimer() {
-        clearTimeout(time);
-        time = setTimeout(()=>Auth.logout(cb), 10 * 60 * 1000) //10 mins
-    }
-}
+  //DEPRECATED
+  authFetchJsonify(url, payload = null) {return this.superAuthFetch(url,payload);},
+  //DEPRECATED
+  authFetch(url, payload = null){return this.superAuthFetch(url,payload);},
+  //DEPRECATED 
+  getUserId() { return 0;}, 
 
 }
 
