@@ -357,7 +357,15 @@ User.extendedLogin = function (credentials, include, callback) {
 
         if (err) {return callback(err, null);}
         
-        let uRole=JSON.parse(JSON.stringify(userrole));
+        let uRole={};
+        try{
+          uRole=JSON.parse(JSON.stringify(userrole));
+          uRole=uRole==null || !uRole ? {}:uRole;
+        }catch(err){
+          logUser("The current user is not associated with any role");
+          return callback(null, loginToken);  
+        }
+        
         const configFile=path.join(__dirname,'../../../../consts/','roles-access.config.json');
         let comps={a:[],b:""};
         logUser("configFile",configFile);
