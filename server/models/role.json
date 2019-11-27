@@ -1,5 +1,6 @@
 {
   "name": "Role",
+  "isPublic":"false",
   "properties": {
 
     "id": {
