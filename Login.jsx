@@ -167,12 +167,10 @@ class Login extends Component {
                         <form className="form" onSubmit={this.handleLogin}>
                             <p className="mt-1">ברוכים הבאים !</p>
                             <div className='form-group'>
-                                {/*<input className="form-control" type='email' ref='email' placeholder='מייל'  defaultValue="batz@carmel6000.amitnet.org" required />*/}
-                                <input className="form-control" type='email' ref='email' placeholder='מייל'  defaultValue="admin@carmel6000.amitnet.org" required />
+                                <input className="form-control" type='email' ref='email' placeholder='מייל'  defaultValue="" required />
                             </div>
                             <div className='form-group'>
-                                {/*<input className="form-control" type='password' ref='pw' placeholder='סיסמא' defaultValue="7w3lA^WPVMY0" required />*/}
-                                <input className="form-control" type='password' ref='pw' placeholder='סיסמא' defaultValue="E2PSzAmJ-5-ldKnl" required />
+                                <input className="form-control" type='password' ref='pw' placeholder='סיסמא' defaultValue="" required />
 
                             </div>
                             <div className='form-group'>
