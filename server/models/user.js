@@ -1339,6 +1339,34 @@ User.extendedLogin = function (credentials, include, callback) {
       next();
     });
 
+
+    UserModel.beforeRemote('resetPassword', function (ctx, model, next) {
+        ctx.req.body.origin = ctx.req.body.origin || ctx.req.headers['x-forwarded-host'];
+        next();
+    });
+
+    UserModel.on('resetPasswordRequest', function (info) {
+        let origin = info.options.origin;
+        logUser(info.email); // the email of the requested user
+        logUser(info.accessToken.id); // the temp access token to allow password reset
+
+        if (origin.indexOf("http") != 0)
+            origin = "http://" + origin;
+        var url = origin + '/reset-password';
+
+        var html = 'Click <a href="' + url + '?access_token=' + info.accessToken.id + '">here</a> to reset your password';
+
+        UserModel.app.models.Email.send({
+            to: info.email,
+            subject: 'Password reset',
+            html: html
+        }, function (err) {
+            if (err) return console.log('> error sending password reset email', err);
+            console.log('> sending password reset email to:', info.email);
+        });
+    });
+
+
     
 
     UserModel.remoteMethod(

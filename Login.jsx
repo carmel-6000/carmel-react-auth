@@ -2,12 +2,15 @@ import React, { Component } from 'react';
 import './_Login.scss';
 import Auth from './Auth';
 import { Redirect } from 'react-router';
+import ValidateTool from '../tools/ValidateTool'
+import ElementsHandler from '../../handlers/ElementsHandler'
+import { Dialog, DialogTitle, Button, DialogContent, DialogActions } from '@material-ui/core';
 
 class Login extends Component {
 
     constructor(props) {
         super(props);
-        
+
         this.state = {
             isLoading: false,
             redirTo: false,
@@ -16,36 +19,38 @@ class Login extends Component {
             username: { text: "", isvalid: false },
             password: { text: "", isvalid: false },
             realm: { text: "", isvalid: false },
-            isValid: false
+            isValid: false,
+            resetPassDialog: false,
+            resetPassMsg: ""
         }
-
+        this.elementsHandler = new ElementsHandler(this);
     }
-    
-    handleLogin=async(e)=> {
+
+    handleLogin = async (e) => {
         e.preventDefault();
 
         let email = this.refs.email.value;
         let pw = this.refs.pw.value;
 
         this.setState({ isLoading: true });
-        
-        let res=await Auth.login(email, pw);
 
-        console.log("Auth.authenticate res",res);
-        
+        let res = await Auth.login(email, pw);
+
+        console.log("Auth.authenticate res", res);
+
 
         this.setState({ isLoading: false });
-        
+
         if (res.success === false) {
             console.log("login failed with error", res.msg);
             return;
         }
         if (res.success === true) {
-            window.location="/";
+            window.location = "/";
         }
 
 
-        
+
 
     }
 
@@ -152,9 +157,25 @@ class Login extends Component {
     }
 
 
+    reset = async (e) => {
+        e.preventDefault();
+        let email = this.refs.resetEmailInput.value;
+        let [res, err] = await Auth.superAuthFetch('/api/CustomUsers/reset', {
+            headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+            method: "POST",
+            body: JSON.stringify({ email: email, origin: window.location.origin + (window.location.hash[0] == "#" ? "/#" : "") })
+        })
+
+        this.setState({
+            resetPassDialog: true,
+            resetPassMsg: res ? "נשלחה הודעת אימות לכתובת המייל" : "הכתובת אינה רשומה במערכת"
+        });
+    }
+
+
     render() {
         if (this.state.redirTo != false) {
-            return (<Redirect to={{pathname: '/', state: this.state}} />);
+            return (<Redirect to={{ pathname: '/', state: this.state }} />);
 
         } else
             return (
@@ -162,15 +183,14 @@ class Login extends Component {
 
                     <div className='loginBox'>
                         <div className='frow'>
-
                         </div>
-                        <form className="form" onSubmit={this.handleLogin}>
-                            <p className="mt-1">ברוכים הבאים !</p>
+                        <p className="mt-1">ברוכים הבאים !</p>
+                        <form onSubmit={this.handleLogin} id="logForm" className="collapses show form" data-toggle="collapse">
                             <div className='form-group'>
-                                <input className="form-control" type='email' ref='email' placeholder='מייל'  defaultValue="" required />
+                                <input className="form-control" type='email' ref='email' placeholder='מייל' defaultValue="admin@carmel6000.amitnet.org" required />
                             </div>
                             <div className='form-group'>
-                                <input className="form-control" type='password' ref='pw' placeholder='סיסמא' defaultValue="" required />
+                                <input className="form-control" type='password' ref='pw' placeholder='סיסמא' defaultValue="E2PSzAmJ-5-ldKnl" required />
 
                             </div>
                             <div className='form-group'>
@@ -180,22 +200,54 @@ class Login extends Component {
                                 }
                             </div>
                         </form>
-                        
 
+                        {/* Reset section */}
+                        <div id="resetPassDiv" className="collapse collapses">
+                            <form onSubmit={this.reset}>
+                                <input ref="resetEmailInput" id="reset" type="email" className="form-control login_input" placeholder="Email" required />
+                                <button type="submit" className="btn btn-warning login_input mt-3" >
+                                    אפס סיסמה
+                        </button>
+                            </form>
+                        </div>
+
+                        <p>
+                            <button className="btn btn-link login_input" id="toggle" type="button" data-toggle="collapse" data-target=".collapses" aria-expanded="false" aria-controls="resetPassDiv logForm" onClick={(event) => {
+                                let btn = document.getElementById("toggle");
+                                btn.innerHTML = btn.innerHTML == "התחבר" ? 'שכחת סיסמה?' : "התחבר"
+                            }}>
+                                שכחת סיסמה?
+                            </button>
+                        </p>
 
                     </div>
+
+                    <Dialog open={this.state.resetPassDialog} aria-labelledby="reset-modal">
+                        <DialogTitle id="reset-modal" className="float-right" >
+                            <p style={{ float: "right", margin: "0" }}>שינוי סיסמה</p>
+                        </DialogTitle>
+
+                        <DialogContent>
+                            {this.state.resetPassMsg}
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={() => this.setState({ resetPassDialog: false })} children="סבבה" color="primary" />
+                        </DialogActions>
+                    </Dialog>
+                    {/* End of reset section */}
                 </div>
             )
     }
 }
 
+window.ValidateTool = ValidateTool;
 export default Login;
 
 
 /*
 <div className='frow'>
         <p className="registerLink" onClick={this.openRegModal}>לא רשומים? הירשמו עכשיו!</p>
-        
+
             <form className="form" id="registrationForm" style={{ textAlign: 'center' }} onSubmit={this.register}>
                 <p className="mt-3">מלאו את הפרטים הבאים</p>
                 <div className="form-group">
