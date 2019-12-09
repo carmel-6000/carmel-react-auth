@@ -28,7 +28,7 @@ const Auth = {
 
   setItem(id, item, localStorageOnly = false, cookiesOnly = false) {
     if (!localStorageOnly)
-      document.cookie = `${id}=${item}`;
+      document.cookie = `${id}=${item};path=/`;
     if (!cookiesOnly)
       localStorage.setItem(id, item);
   },
@@ -57,9 +57,9 @@ const Auth = {
     }
   },
 
-  async superAuthFetch(url, payload = null) {
+  async superAuthFetch(url, payload = null, redirOnFailure=false) {
     let [res, err] = await AsyncTools.superFetch(url, payload);
-    if (err && err.error && err.error.statusCode === 401) {
+    if (err && err.error && err.error.statusCode === 401 && redirOnFailure===true) {
       Auth.logout(() => window.location.href = window.location.origin); //FORCE LOGOUT.      
     }
     return [res, err];
@@ -92,6 +92,33 @@ const Auth = {
     //return cb({ success: true }, res);
 
   },
+
+  async loginAs(uid,cb){
+
+    let [at,err]=await Auth.superAuthFetch('/api/CustomUsers/login-as', {
+            method: 'POST',
+            headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+            body: JSON.stringify({uid:uid})
+    });
+
+    if (err) {
+      this._isAuthenticated = false;
+      return new Promise((res,rej)=>{res({success:false,msg:err})});
+    }
+
+    console.log("Login res",at);
+    this._isAuthenticated = true;
+
+    this.setItem("access_token",at.accessToken);
+    //This stuff needs to be set up 
+    this.setItem('klo',"",false,true);
+    this.setItem('kl',"",false,true);
+
+    return new Promise((res,rej)=>{res({success:true})});
+
+
+  },
+
 
   logout(cb) {
     
@@ -181,10 +208,12 @@ const Auth = {
     document.addEventListener("keypress", resetTimer);
   },
 
+  
+  superFetch(url, payload = null,redirOnFailure=false){return this.superAuthFetch(url,payload,redirOnFailure);},
   //DEPRECATED
-  authFetchJsonify(url, payload = null) {return this.superAuthFetch(url,payload);},
+  authFetchJsonify(url, payload = null,redirOnFailure=false) {return this.superAuthFetch(url,payload,redirOnFailure);},
   //DEPRECATED
-  authFetch(url, payload = null){return this.superAuthFetch(url,payload);},
+  authFetch(url, payload = null,redirOnFailure=false){return this.superAuthFetch(url,payload,redirOnFailure);},
   //DEPRECATED 
   getUserId() { return 0;}, 
 

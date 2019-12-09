@@ -338,6 +338,125 @@ module.exports = function(User) {
 
 
 
+User.registerOrLoginByUniqueField = (uField, uData, roleId, cb) => {
+        (async () => {
+                let query = { where: {} };
+                query.where[uField] = uData[uField];
+                logUser("quiery", query);
+                let [err, res] = await asyncTools.to(Customuser.findOne(query));
+                if (err) {
+                        logUser("Error on serch by field", err);
+                        return cb(err);
+                }
+                if (res) {
+                        logUser(`found by ${uField}`, res);
+                        return User.directLoginAs(res.id, roleId, cb);
+                }
+                //create new user in db.
+                let pass = tools.generatePassword(8);
+                uData.password = pass;
+                uData.emailVerified = 1;
+                uData.verificationToken = null;
+                let [error, newUser] = await asyncTools.to(Customuser.create(uData));
+                if (error) {
+                        return cb(err);
+                }
+                logUser("~~we created new user~~\n", newUser, newUser.id);
+
+                return User.directLoginAs(newUser.id, roleId, cb); //creates accessToken for user
+        })();
+}
+
+User.loginAs=function(uid,ctx,cb){
+
+  const token = ctx && ctx.accessToken;
+  const userId = token && token.userId;
+        
+  if (!userId){
+    logUser("loginAs is launched without authentication, aborting");
+    return cb({},null);
+  }
+
+
+  logUser("User.loginAs is launched with uid",uid);
+
+  this.directLoginAs(uid,null,(err,at)=>{
+
+    logUser("err?",err);
+    logUser("Returning Access token (only id)?",at);
+
+    cb(null,{accessToken:at.id});
+
+  })
+
+}
+
+
+
+User.directLoginAs = function (userId, roleId = null, fn) { 
+
+  logUser("User.directLoginAs is launched with userId",userId);
+
+  let getRoleCode=()=>{
+    return null;
+  }
+
+  userId = parseInt(userId); 
+  if (typeof roleId == "function") { //make roleid optional 
+          if (!fn) fn = roleId; 
+          roleId = null; 
+  } 
+  fn = fn || utils.createPromiseCallback(); 
+  var realmDelimiter; 
+  var realmRequired = false;//!!(self.settings.realmRequired || self.settings.realmDelimiter); 
+  var query = { id: userId }; 
+  logUser("query?",query);
+  this.findOne({ where: query }, (err, user) => { 
+          logUser("User.findOne results",user);
+          var defaultError = new Error('login failed'); 
+          defaultError.statusCode = 401; 
+
+        defaultError.code = 'LOGIN_FAILED';
+          var credentials = { ttl: 60 * 60, password: 'wrong-one', email: user.email };
+          async function tokenHandler(err, token) {
+                  if (err) return fn(err);
+                  token.__data.user = user;
+                  if (roleId !== null) {
+                          token.__data.roleCode = getRoleCode(roleId);
+                          return fn(err, token);
+                  }
+                  User.app.models.RoleMapping.findOne({ where: { principalId: userId } }, (err, roleRes) => {
+                          token.__data.roleCode = getRoleCode(roleRes && roleRes.roleId);
+                          return fn(err, token);
+                  })
+          }
+
+
+          if (err) {
+                  logUser('An error is reported from User.findOne: %j', err);
+                  return fn(defaultError);
+          }
+
+          if (!user) {
+                  logUser('No matching record is found for user %s', query.email || query.username);
+                  return fn(defaultError);
+          }
+
+          if (user.createAccessToken.length === 2) {
+                  logUser("user.createAccessToken.length is 2 ?", user.createAccessToken.length);
+                  user.createAccessToken(credentials.ttl, tokenHandler);
+          } else {
+
+                  logUser("user.createAccessToken.length is NOT 2 ?", user.createAccessToken.length);
+                  user.createAccessToken(credentials.ttl, credentials, tokenHandler);
+          }
+  });
+  return fn.promise;
+}
+
+
+
+
 
 User.extendedLogin = function (credentials, include, callback) {
     // Invoke the default login function\
@@ -1244,6 +1363,22 @@ User.extendedLogin = function (credentials, include, callback) {
         http: {verb: 'post'},
       }
     );
+
+    UserModel.remoteMethod("loginAs",{
+      description:'Carmel: Enables to login as another user by user id',
+      'http':{
+        path:'/login-as',
+        'verb':'post'
+      },
+      'accepts':[
+          {arg: 'uid', type: 'number', required: true},
+          {arg: 'options', type: 'object', http: 'optionsFromRequest'}
+      ],
+      'returns':[
+        {arg: 'accessToken', type: 'string', root: true}
+      ]
+      
+    });
 
     UserModel.remoteMethod('extendedLogin', {
     description:'Carmel: This login matches also user roles',

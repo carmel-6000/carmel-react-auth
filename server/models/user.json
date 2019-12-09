@@ -24,10 +24,17 @@
   },
   "hidden": ["password", "verificationToken"],
   "acls": [
+
     {
       "principalType": "ROLE",
       "principalId": "$everyone",
       "permission": "DENY"
+    },
+    {
+      "principalType": "ROLE",
+      "principalId": "$authenticated",
+      "permission": "ALLOW",
+      "property":"find"
     },
     {
       "principalType": "ROLE",
@@ -76,6 +83,13 @@
       "principalId": "$everyone",
       "permission": "ALLOW",
       "property": "verify",
+      "accessType": "EXECUTE"
+    },
+    {
+      "principalType": "ROLE",
+      "principalId": "$authenticated",
+      "permission": "ALLOW",
+      "property": "loginAs",
       "accessType": "EXECUTE"
     },
     {
