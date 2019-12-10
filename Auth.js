@@ -65,6 +65,27 @@ const Auth = {
     return [res, err];
   },
 
+  async loginWithUniqueField(key,value,pw,cb){
+
+    const [res, err] = await AsyncTools.superFetch('/api/CustomUsers/elogin/', {
+      method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key,value, password: pw })
+    });
+
+    if (err) {
+      this._isAuthenticated = false;
+      return new Promise((res,rej)=>{res({success:false,msg:err})});
+    }
+    
+    console.log("Login res",res);
+    this._isAuthenticated = true;
+
+    this.setItem('klo',res.klo,false,true);
+    this.setItem('kl',res.kl,false,true);
+
+    return new Promise((res,rej)=>{res({success:true})});
+
+  },
   
   async login(email, pw, cb) {
     return this.authenticate(email,pw,cb);
