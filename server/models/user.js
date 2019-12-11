@@ -84,7 +84,7 @@ var debug = require('debug')('loopback:user');
  * @inherits {PersistedModel}
  */
 
-module.exports = function(User) {
+module.exports = function (User) {
   /**
    * Create access token for the logged in user. This method can be overridden to
    * customize how access tokens are generated
@@ -110,7 +110,7 @@ module.exports = function(User) {
    * @promise
    *
    */
-  User.prototype.createAccessToken = function(ttl, options, cb) {
+  User.prototype.createAccessToken = function (ttl, options, cb) {
     if (cb === undefined && typeof options === 'function') {
       // createAccessToken(ttl, cb)
       cb = options;
@@ -122,7 +122,7 @@ module.exports = function(User) {
     let tokenData;
     if (typeof ttl !== 'object') {
       // createAccessToken(ttl[, options], cb)
-      tokenData = {ttl};
+      tokenData = { ttl };
     } else if (options) {
       // createAccessToken(data, options, cb)
       tokenData = ttl;
@@ -157,7 +157,7 @@ module.exports = function(User) {
    * @param {String} realmDelimiter The realm delimiter, if not set, no realm is needed
    * @returns {Object} The normalized credential object
    */
-  User.normalizeCredentials = function(credentials, realmRequired, realmDelimiter) {
+  User.normalizeCredentials = function (credentials, realmRequired, realmDelimiter) {
     var query = {};
     credentials = credentials || {};
     if (!realmRequired) {
@@ -212,7 +212,7 @@ module.exports = function(User) {
    * @promise
    */
 
-  User.login = function(credentials, include, fn) {
+  User.login = function (credentials, include, fn) {
     var self = this;
     if (typeof include === 'function') {
       fn = include;
@@ -223,7 +223,7 @@ module.exports = function(User) {
 
     include = (include || '');
     if (Array.isArray(include)) {
-      include = include.map(function(val) {
+      include = include.map(function (val) {
         return val.toLowerCase();
       });
     } else {
@@ -276,8 +276,8 @@ module.exports = function(User) {
       return fn.promise;
     }
 
-    
-    self.findOne({where: query}, function(err, user) {
+
+    self.findOne({ where: query }, function (err, user) {
       var defaultError = new Error(g.f('login failed'));
       defaultError.statusCode = 401;
       defaultError.code = 'LOGIN_FAILED';
@@ -300,7 +300,7 @@ module.exports = function(User) {
         debug('An error is reported from User.findOne: %j', err);
         fn(defaultError);
       } else if (user) {
-        user.hasPassword(credentials.password, function(err, isMatch) {
+        user.hasPassword(credentials.password, function (err, isMatch) {
           if (err) {
             debug('An error is reported from User.hasPassword: %j', err);
             fn(defaultError);
@@ -338,130 +338,130 @@ module.exports = function(User) {
 
 
 
-User.registerOrLoginByUniqueField = (uField, uData, roleId, cb) => {
-        (async () => {
-                let query = { where: {} };
-                query.where[uField] = uData[uField];
-                logUser("quiery", query);
-                let [err, res] = await asyncTools.to(Customuser.findOne(query));
-                if (err) {
-                        logUser("Error on serch by field", err);
-                        return cb(err);
-                }
-                if (res) {
-                        logUser(`found by ${uField}`, res);
-                        return User.directLoginAs(res.id, roleId, cb);
-                }
-                //create new user in db.
-                let pass = tools.generatePassword(8);
-                uData.password = pass;
-                uData.emailVerified = 1;
-                uData.verificationToken = null;
-                let [error, newUser] = await asyncTools.to(Customuser.create(uData));
-                if (error) {
-                        return cb(err);
-                }
-                logUser("~~we created new user~~\n", newUser, newUser.id);
+  User.registerOrLoginByUniqueField = (uField, uData, roleId, cb) => {
+    (async () => {
+      let query = { where: {} };
+      query.where[uField] = uData[uField];
+      logUser("quiery", query);
+      let [err, res] = await asyncTools.to(Customuser.findOne(query));
+      if (err) {
+        logUser("Error on serch by field", err);
+        return cb(err);
+      }
+      if (res) {
+        logUser(`found by ${uField}`, res);
+        return User.directLoginAs(res.id, roleId, cb);
+      }
+      //create new user in db.
+      let pass = tools.generatePassword(8);
+      uData.password = pass;
+      uData.emailVerified = 1;
+      uData.verificationToken = null;
+      let [error, newUser] = await asyncTools.to(Customuser.create(uData));
+      if (error) {
+        return cb(err);
+      }
+      logUser("~~we created new user~~\n", newUser, newUser.id);
 
-                return User.directLoginAs(newUser.id, roleId, cb); //creates accessToken for user
-        })();
-}
+      return User.directLoginAs(newUser.id, roleId, cb); //creates accessToken for user
+    })();
+  }
 
-User.loginAs=function(uid,ctx,cb){
+  User.loginAs = function (uid, ctx, cb) {
+    console.log("ctx")
 
-  const token = ctx && ctx.accessToken;
-  const userId = token && token.userId;
-        
-  if (!userId){
-    logUser("loginAs is launched without authentication, aborting");
-    return cb({},null);
+    const token = ctx && ctx.accessToken;
+    const userId = token && token.userId;
+
+    if (!userId) {
+      logUser("loginAs is launched without authentication, aborting");
+      return cb({}, null);
+    }
+
+
+    logUser("User.loginAs is launched with uid", uid);
+
+    this.directLoginAs(uid, null, (err, at) => {
+      logUser("err?", err);
+      logUser("Returning Access token (only id)?", at);
+
+
+      cb(null, { accessToken: at.id, kl: at.__data.kl, klo: at.__data.klo });
+
+    })
+
   }
 
 
-  logUser("User.loginAs is launched with uid",uid);
 
-  this.directLoginAs(uid,null,(err,at)=>{
+  User.directLoginAs = function (userId, roleId = null, fn) {
 
-    logUser("err?",err);
-    logUser("Returning Access token (only id)?",at);
+    logUser("User.directLoginAs is launched with userId", userId);
 
-    cb(null,{accessToken:at.id});
+    userId = parseInt(userId);
+    if (typeof roleId == "function") { //make roleid optional 
+      if (!fn) fn = roleId;
+      roleId = null;
+    }
+    fn = fn || utils.createPromiseCallback();
+    var realmDelimiter;
+    var realmRequired = false;//!!(self.settings.realmRequired || self.settings.realmDelimiter); 
+    var query = { id: userId };
+    logUser("query?", query);
+    this.findOne({ where: query }, (err, user) => {
+      logUser("User.findOne results", user);
+      var defaultError = new Error('login failed');
+      defaultError.statusCode = 401;
 
-  })
+      defaultError.code = 'LOGIN_FAILED';
+      var credentials = { ttl: 60 * 60, password: 'wrong-one', email: user.email };
+      async function tokenHandler(err, token) {
+        if (err) return fn(err);
+        token.__data.user = user;
+        if (roleId !== null) {
+          token.__data.roleCode = null;
+          token.__data.klo = "";
+          token.__data.kl = "";
+          return fn(err, token);
+        }
 
-}
+        getKlos(userId).then(klos => {
+          token.__data.klo = klos.klo;
+          token.__data.kl = klos.kl;
+          return fn(null, token);
+        })
+      }
 
 
+      if (err) {
+        logUser('An error is reported from User.findOne: %j', err);
+        return fn(defaultError);
+      }
 
-User.directLoginAs = function (userId, roleId = null, fn) { 
+      if (!user) {
+        logUser('No matching record is found for user %s', query.email || query.username);
+        return fn(defaultError);
+      }
 
-  logUser("User.directLoginAs is launched with userId",userId);
+      if (user.createAccessToken.length === 2) {
+        logUser("user.createAccessToken.length is 2 ?", user.createAccessToken.length);
+        user.createAccessToken(credentials.ttl, tokenHandler);
+      } else {
 
-  let getRoleCode=()=>{
-    return null;
+        logUser("user.createAccessToken.length is NOT 2 ?", user.createAccessToken.length);
+        user.createAccessToken(credentials.ttl, credentials, tokenHandler);
+      }
+    });
+    return fn.promise;
   }
 
-  userId = parseInt(userId); 
-  if (typeof roleId == "function") { //make roleid optional 
-          if (!fn) fn = roleId; 
-          roleId = null; 
-  } 
-  fn = fn || utils.createPromiseCallback(); 
-  var realmDelimiter; 
-  var realmRequired = false;//!!(self.settings.realmRequired || self.settings.realmDelimiter); 
-  var query = { id: userId }; 
-  logUser("query?",query);
-  this.findOne({ where: query }, (err, user) => { 
-          logUser("User.findOne results",user);
-          var defaultError = new Error('login failed'); 
-          defaultError.statusCode = 401; 
-
-        defaultError.code = 'LOGIN_FAILED';
-          var credentials = { ttl: 60 * 60, password: 'wrong-one', email: user.email };
-          async function tokenHandler(err, token) {
-                  if (err) return fn(err);
-                  token.__data.user = user;
-                  if (roleId !== null) {
-                          token.__data.roleCode = getRoleCode(roleId);
-                          return fn(err, token);
-                  }
-                  User.app.models.RoleMapping.findOne({ where: { principalId: userId } }, (err, roleRes) => {
-                          token.__data.roleCode = getRoleCode(roleRes && roleRes.roleId);
-                          return fn(err, token);
-                  })
-          }
-
-
-          if (err) {
-                  logUser('An error is reported from User.findOne: %j', err);
-                  return fn(defaultError);
-          }
-
-          if (!user) {
-                  logUser('No matching record is found for user %s', query.email || query.username);
-                  return fn(defaultError);
-          }
-
-          if (user.createAccessToken.length === 2) {
-                  logUser("user.createAccessToken.length is 2 ?", user.createAccessToken.length);
-                  user.createAccessToken(credentials.ttl, tokenHandler);
-          } else {
-
-                  logUser("user.createAccessToken.length is NOT 2 ?", user.createAccessToken.length);
-                  user.createAccessToken(credentials.ttl, credentials, tokenHandler);
-          }
-  });
-  return fn.promise;
-}
 
 
 
 
-
-User.extendedLogin = function (credentials, include, callback) {
+  User.extendedLogin = function (credentials, include, callback) {
     // Invoke the default login function\
     //let userModel = CustomUser.app.models.User;
-    let rolemap = User.app.models.RoleMapping;
     //logUser("this: ", this);
     //logUser("login: ", CustomUser.login);
 
@@ -470,53 +470,68 @@ User.extendedLogin = function (credentials, include, callback) {
         logUser("Login error", loginErr);
         return callback(loginErr);
       }
-      logUser("User is logged in with loginToken",loginToken);
+      logUser("User is logged in with loginToken", loginToken);
       loginToken = loginToken.toObject();
-      rolemap.findOne({ include:['role'],where: { principalId: loginToken.userId } }, (err, userrole) => {
 
-        if (err) {return callback(err, null);}
-        
-        let uRole={};
-        try{
-          uRole=JSON.parse(JSON.stringify(userrole));
-          uRole=uRole==null || !uRole ? {}:uRole;
-        }catch(err){
-          logUser("The current user is not associated with any role");
-          return callback(null, loginToken);  
-        }
-        
-        const configFile=path.join(__dirname,'../../../../consts/','roles-access.config.json');
-        let comps={a:[],b:""};
-        logUser("configFile",configFile);
-        loginToken.klo="";
-        try{
-          const rolesAccess=JSON.parse(fs.readFileSync(configFile, 'utf8'));
-          //if (rolesAccess[])
-          logUser("uRole",uRole);
-          if (uRole.role && uRole.role.name && uRole.role.name!=='' && rolesAccess.hasOwnProperty(uRole.role.name) && rolesAccess[uRole.role.name]['comps']){
-            comps.a=rolesAccess[uRole.role.name]['comps'];
-            logUser("Valid comps for role %s",uRole.role.name,comps);
-            if (rolesAccess[uRole.role.name]['defaultHomePage']){
-              comps.b=rolesAccess[uRole.role.name]['defaultHomePage'];
-            }
-          }
-          logUser("COMPS?",comps);
-        }catch(err){
-          logUser("Could not fetch /src/consts/roles-access.config.json and parse it");
-          
-        }
+      getKlos(loginToken.userId).then(klos => {
         //kl == role key, that represents user role
-        loginToken.kl=uRole.role && uRole.role.roleKey? uRole.role.roleKey:"";
+        loginToken.kl = klos.kl;
         //klo == array of view components that user is allowed to access on base64
-        loginToken.klo=base64.encode(JSON.stringify(comps));
-        
+        loginToken.klo = klos.klo;
+
         logUser("Extended login output:", loginToken);
-        
+
         return callback(null, loginToken);
-        //return component arr and save in session storage
       });
+      //return component arr and save in session storage
     });
   };
+
+  async function getKlos(userId) {
+    let rolemap = User.app.models.RoleMapping;
+    let res = { kl: "", klo: "" };
+    try {
+      let userrole = await rolemap.findOne({ include: ['role'], where: { principalId: userId } });
+
+
+      let uRole = {};
+      try {
+        uRole = JSON.parse(JSON.stringify(userrole));
+        uRole = uRole == null || !uRole ? {} : uRole;
+      } catch (err) {
+        logUser("The current user is not associated with any role");
+        return res;
+      }
+
+      const configFile = path.join(__dirname, '../../../../consts/', 'roles-access.config.json');
+      let comps = { a: [], b: "" };
+      logUser("configFile", configFile);
+      try {
+        const rolesAccess = JSON.parse(fs.readFileSync(configFile, 'utf8'));
+        //if (rolesAccess[])
+        logUser("uRole", uRole);
+        if (uRole.role && uRole.role.name && uRole.role.name !== '' && rolesAccess.hasOwnProperty(uRole.role.name) && rolesAccess[uRole.role.name]['comps']) {
+          comps.a = rolesAccess[uRole.role.name]['comps'];
+          logUser("Valid comps for role %s", uRole.role.name, comps);
+          if (rolesAccess[uRole.role.name]['defaultHomePage']) {
+            comps.b = rolesAccess[uRole.role.name]['defaultHomePage'];
+          }
+        }
+        logUser("COMPS?", comps);
+        res.kl = uRole.role && uRole.role.roleKey ? uRole.role.roleKey : "";
+        res.klo = base64.encode(JSON.stringify(comps)).replace("=", '');
+        return res;
+
+      } catch (err) {
+        logUser("Could not fetch /src/consts/roles-access.config.json and parse it");
+        return { kl: "", klo: "" }
+      }
+    } catch (err) {
+      console.log("ERROR on get klos:", err);
+      return { kl: "", klo: "" }
+    }
+  }
+
 
 
   User.authenticate = function (options, cb) {
@@ -524,15 +539,15 @@ User.extendedLogin = function (credentials, include, callback) {
     //console.log("authenticate is launched?!");
 
     const token = options && options.accessToken;
-        const userId = token && token.userId;
-        
-        if (!userId){
-            //console.log("No authentication");
-            return cb(null,{isAuthenticated:false});
-        }else{
-          //console.log("Authenticated");
-          return cb(null,{isAuthenticated:true});
-        }
+    const userId = token && token.userId;
+
+    if (!userId) {
+      //console.log("No authentication");
+      return cb(null, { isAuthenticated: false });
+    } else {
+      //console.log("Authenticated");
+      return cb(null, { isAuthenticated: true });
+    }
 
   }
 
@@ -552,7 +567,7 @@ User.extendedLogin = function (credentials, include, callback) {
    * @promise
    */
 
-  User.logout = function(tokenId, fn) {
+  User.logout = function (tokenId, fn) {
     fn = fn || utils.createPromiseCallback();
 
     var err;
@@ -563,7 +578,7 @@ User.extendedLogin = function (credentials, include, callback) {
       return fn.promise;
     }
 
-    this.relations.accessTokens.modelTo.destroyById(tokenId, function(err, info) {
+    this.relations.accessTokens.modelTo.destroyById(tokenId, function (err, info) {
       if (err) {
         fn(err);
       } else if ('count' in info && info.count === 0) {
@@ -577,20 +592,20 @@ User.extendedLogin = function (credentials, include, callback) {
     return fn.promise;
   };
 
-  User.observe('before delete', function(ctx, next) {
+  User.observe('before delete', function (ctx, next) {
     // Do nothing when the access control was disabled for this user model.
     if (!ctx.Model.relations.accessTokens) return next();
 
     var AccessToken = ctx.Model.relations.accessTokens.modelTo;
     var pkName = ctx.Model.definition.idName() || 'id';
-    ctx.Model.find({where: ctx.where, fields: [pkName]}, function(err, list) {
+    ctx.Model.find({ where: ctx.where, fields: [pkName] }, function (err, list) {
       if (err) return next(err);
 
-      var ids = list.map(function(u) { return u[pkName]; });
+      var ids = list.map(function (u) { return u[pkName]; });
       ctx.where = {};
-      ctx.where[pkName] = {inq: ids};
+      ctx.where[pkName] = { inq: ids };
 
-      AccessToken.destroyAll({userId: {inq: ids}}, next);
+      AccessToken.destroyAll({ userId: { inq: ids } }, next);
     });
   });
 
@@ -604,10 +619,10 @@ User.extendedLogin = function (credentials, include, callback) {
    * @promise
    */
 
-  User.prototype.hasPassword = function(plain, fn) {
+  User.prototype.hasPassword = function (plain, fn) {
     fn = fn || utils.createPromiseCallback();
     if (this.password && plain) {
-      bcrypt.compare(plain, this.password, function(err, isMatch) {
+      bcrypt.compare(plain, this.password, function (err, isMatch) {
         if (err) return fn(err);
         fn(null, isMatch);
       });
@@ -629,7 +644,7 @@ User.extendedLogin = function (credentials, include, callback) {
    * @param {Error} err Error object
    * @promise
    */
-  User.changePassword = function(userId, oldPassword, newPassword, options, cb) {
+  User.changePassword = function (userId, oldPassword, newPassword, options, cb) {
     if (cb === undefined && typeof options === 'function') {
       cb = options;
       options = undefined;
@@ -667,7 +682,7 @@ User.extendedLogin = function (credentials, include, callback) {
    * @param {Error} err Error object
    * @promise
    */
-  User.prototype.changePassword = function(oldPassword, newPassword, options, cb) {
+  User.prototype.changePassword = function (oldPassword, newPassword, options, cb) {
     if (cb === undefined && typeof options === 'function') {
       cb = options;
       options = undefined;
@@ -700,7 +715,7 @@ User.extendedLogin = function (credentials, include, callback) {
    * @param {Error} err Error object
    * @promise
    */
-  User.setPassword = function(userId, newPassword, options, cb) {
+  User.setPassword = function (userId, newPassword, options, cb) {
     assert(userId != null && userId !== '', 'userId is a required argument');
     assert(!!newPassword, 'newPassword is a required argument');
 
@@ -742,7 +757,7 @@ User.extendedLogin = function (credentials, include, callback) {
    * @param {Error} err Error object
    * @promise
    */
-  User.prototype.setPassword = function(newPassword, options, cb) {
+  User.prototype.setPassword = function (newPassword, options, cb) {
     assert(!!newPassword, 'newPassword is a required argument');
 
     if (cb === undefined && typeof options === 'function') {
@@ -766,7 +781,7 @@ User.extendedLogin = function (credentials, include, callback) {
     // unless "options.setPassword" is set.
     options.setPassword = true;
 
-    const delta = {password: newPassword};
+    const delta = { password: newPassword };
     this.patchAttributes(delta, options, (err, updated) => cb(err));
 
     return cb.promise;
@@ -837,7 +852,7 @@ User.extendedLogin = function (credentials, include, callback) {
    * and their default values.
    */
 
-  User.getVerifyOptions = function() {
+  User.getVerifyOptions = function () {
     const defaultOptions = {
       type: 'email',
       from: 'noreply@example.com',
@@ -924,7 +939,7 @@ User.extendedLogin = function (credentials, include, callback) {
    * @promise
    */
 
-  User.prototype.verify = function(verifyOptions, options, cb) {
+  User.prototype.verify = function (verifyOptions, options, cb) {
     if (cb === undefined && typeof options === 'function') {
       cb = options;
       options = undefined;
@@ -1017,7 +1032,7 @@ User.extendedLogin = function (credentials, include, callback) {
     function addTokenToUserAndSave(err, token) {
       if (err) return cb(err);
       user.verificationToken = token;
-      user.save(options, function(err) {
+      user.save(options, function (err) {
         if (err) return cb(err);
         sendEmail(user);
       });
@@ -1061,7 +1076,7 @@ User.extendedLogin = function (credentials, include, callback) {
 
         function handleAfterSend(err, email) {
           if (err) return cb(err);
-          cb(null, {email: email, token: user.verificationToken, uid: user[pkName]});
+          cb(null, { email: email, token: user.verificationToken, uid: user[pkName] });
         }
       }
     }
@@ -1100,8 +1115,8 @@ User.extendedLogin = function (credentials, include, callback) {
    * @param {object} options remote context options.
    * @param {Function} cb The generator must pass back the new token with this function call.
    */
-  User.generateVerificationToken = function(user, options, cb) {
-    crypto.randomBytes(64, function(err, buf) {
+  User.generateVerificationToken = function (user, options, cb) {
+    crypto.randomBytes(64, function (err, buf) {
       cb(err, buf && buf.toString('hex'));
     });
   };
@@ -1116,16 +1131,16 @@ User.extendedLogin = function (credentials, include, callback) {
    * @param {Error} err
    * @promise
    */
-  User.confirm = function(uid, token, redirect, fn) {
+  User.confirm = function (uid, token, redirect, fn) {
     fn = fn || utils.createPromiseCallback();
-    this.findById(uid, function(err, user) {
+    this.findById(uid, function (err, user) {
       if (err) {
         fn(err);
       } else {
         if (user && user.verificationToken === token) {
           user.verificationToken = null;
           user.emailVerified = true;
-          user.save(function(err) {
+          user.save(function (err) {
             if (err) {
               fn(err);
             } else {
@@ -1161,7 +1176,7 @@ User.extendedLogin = function (credentials, include, callback) {
    * @promise
    */
 
-  User.resetPassword = function(options, cb) {
+  User.resetPassword = function (options, cb) {
     cb = cb || utils.createPromiseCallback();
     var UserModel = this;
     var ttl = UserModel.settings.resetPasswordTokenTTL || DEFAULT_RESET_PW_TTL;
@@ -1187,7 +1202,7 @@ User.extendedLogin = function (credentials, include, callback) {
     if (options.realm) {
       where.realm = options.realm;
     }
-    UserModel.findOne({where: where}, function(err, user) {
+    UserModel.findOne({ where: where }, function (err, user) {
       if (err) {
         return cb(err);
       }
@@ -1240,13 +1255,13 @@ User.extendedLogin = function (credentials, include, callback) {
   /*!
    * Hash the plain password
    */
-  User.hashPassword = function(plain) {
+  User.hashPassword = function (plain) {
     this.validatePassword(plain);
     var salt = bcrypt.genSaltSync(this.settings.saltWorkFactor || SALT_WORK_FACTOR);
     return bcrypt.hashSync(plain, salt);
   };
 
-  User.validatePassword = function(plain) {
+  User.validatePassword = function (plain) {
     var err;
     if (!plain || typeof plain !== 'string') {
       err = new Error(g.f('Invalid password.'));
@@ -1266,7 +1281,7 @@ User.extendedLogin = function (credentials, include, callback) {
     }
   };
 
-  User._invalidateAccessTokensOfUsers = function(userIds, options, cb) {
+  User._invalidateAccessTokensOfUsers = function (userIds, options, cb) {
     if (typeof options === 'function' && cb === undefined) {
       cb = options;
       options = {};
@@ -1280,10 +1295,10 @@ User.extendedLogin = function (credentials, include, callback) {
       return process.nextTick(cb);
 
     var AccessToken = accessTokenRelation.modelTo;
-    var query = {userId: {inq: userIds}};
+    var query = { userId: { inq: userIds } };
     var tokenPK = AccessToken.definition.idName() || 'id';
     if (options.accessToken && tokenPK in options.accessToken) {
-      query[tokenPK] = {neq: options.accessToken[tokenPK]};
+      query[tokenPK] = { neq: options.accessToken[tokenPK] };
     }
     // add principalType in AccessToken.query if using polymorphic relations
     // between AccessToken and User
@@ -1300,7 +1315,7 @@ User.extendedLogin = function (credentials, include, callback) {
    * Setup an extended user model.
    */
 
-  User.setup = function() {
+  User.setup = function () {
     // We need to call the base class's setup method
     User.base.setup.call(this);
     var UserModel = this;
@@ -1309,7 +1324,7 @@ User.extendedLogin = function (credentials, include, callback) {
     this.settings.maxTTL = this.settings.maxTTL || DEFAULT_MAX_TTL;
     this.settings.ttl = this.settings.ttl || DEFAULT_TTL;
 
-    UserModel.setter.email = function(value) {
+    UserModel.setter.email = function (value) {
       if (!UserModel.settings.caseSensitiveEmail && typeof value === 'string') {
         this.$email = value.toLowerCase();
       } else {
@@ -1317,7 +1332,7 @@ User.extendedLogin = function (credentials, include, callback) {
       }
     };
 
-    UserModel.setter.password = function(plain) {
+    UserModel.setter.password = function (plain) {
       if (typeof plain !== 'string') {
         return;
       }
@@ -1331,7 +1346,7 @@ User.extendedLogin = function (credentials, include, callback) {
     };
 
     // Make sure emailVerified is not set by creation
-    UserModel.beforeRemote('create', function(ctx, user, next) {
+    UserModel.beforeRemote('create', function (ctx, user, next) {
       var body = ctx.req.body;
       if (body && body.emailVerified) {
         body.emailVerified = false;
@@ -1341,124 +1356,127 @@ User.extendedLogin = function (credentials, include, callback) {
 
 
     UserModel.beforeRemote('resetPassword', function (ctx, model, next) {
-        ctx.req.body.origin = ctx.req.body.origin || ctx.req.headers['x-forwarded-host'];
-        next();
+      ctx.req.body.origin = ctx.req.body.origin || ctx.req.headers['x-forwarded-host'];
+      next();
     });
 
     UserModel.on('resetPasswordRequest', function (info) {
-        let origin = info.options.origin;
-        logUser(info.email); // the email of the requested user
-        logUser(info.accessToken.id); // the temp access token to allow password reset
+      let origin = info.options.origin;
+      logUser(info.email); // the email of the requested user
+      logUser(info.accessToken.id); // the temp access token to allow password reset
 
-        if (origin.indexOf("http") != 0)
-            origin = "http://" + origin;
-        var url = origin + '/reset-password';
+      if (origin.indexOf("http") != 0)
+        origin = "http://" + origin;
+      var url = origin + '/reset-password';
 
-        var html = 'Click <a href="' + url + '?access_token=' + info.accessToken.id + '">here</a> to reset your password';
+      var html = 'Click <a href="' + url + '?access_token=' + info.accessToken.id + '">here</a> to reset your password';
 
-        UserModel.app.models.Email.send({
-            to: info.email,
-            subject: 'Password reset',
-            html: html
-        }, function (err) {
-            if (err) return console.log('> error sending password reset email', err);
-            console.log('> sending password reset email to:', info.email);
-        });
+      UserModel.app.models.Email.send({
+        to: info.email,
+        subject: 'Password reset',
+        html: html
+      }, function (err) {
+        if (err) return console.log('> error sending password reset email', err);
+        console.log('> sending password reset email to:', info.email);
+      });
     });
 
 
-    
+
 
     UserModel.remoteMethod(
       'login',
       {
         description: 'Login a user with username/email and password.',
         accepts: [
-          {arg: 'credentials', type: 'object', required: true, http: {source: 'body'}},
-          {arg: 'include', type: ['string'], http: {source: 'query'},
+          { arg: 'credentials', type: 'object', required: true, http: { source: 'body' } },
+          {
+            arg: 'include', type: ['string'], http: { source: 'query' },
             description: 'Related objects to include in the response. ' +
-            'See the description of return value for more details.'},
+              'See the description of return value for more details.'
+          },
         ],
         returns: {
           arg: 'accessToken', type: 'object', root: true,
           description:
             g.f('The response body contains properties of the {{AccessToken}} created on login.\n' +
-            'Depending on the value of `include` parameter, the body may contain ' +
-            'additional properties:\n\n' +
-            '  - `user` - `U+007BUserU+007D` - Data of the currently logged in user. ' +
-            '{{(`include=user`)}}\n\n'),
+              'Depending on the value of `include` parameter, the body may contain ' +
+              'additional properties:\n\n' +
+              '  - `user` - `U+007BUserU+007D` - Data of the currently logged in user. ' +
+              '{{(`include=user`)}}\n\n'),
         },
-        http: {verb: 'post'},
+        http: { verb: 'post' },
       }
     );
 
-    UserModel.remoteMethod("loginAs",{
-      description:'Carmel: Enables to login as another user by user id',
-      'http':{
-        path:'/login-as',
-        'verb':'post'
+    UserModel.remoteMethod("loginAs", {
+      description: 'Carmel: Enables to login as another user by user id',
+      'http': {
+        path: '/login-as',
+        'verb': 'post'
       },
-      'accepts':[
-          {arg: 'uid', type: 'number', required: true},
-          {arg: 'options', type: 'object', http: 'optionsFromRequest'}
+      'accepts': [
+        { arg: 'uid', type: 'number', required: true },
+        { arg: 'options', type: 'object', http: 'optionsFromRequest' }
       ],
-      'returns':[
-        {arg: 'accessToken', type: 'string', root: true}
+      'returns': [
+        { arg: 'accessToken', type: 'string', root: true }
       ]
-      
+
     });
 
     UserModel.remoteMethod('extendedLogin', {
-    description:'Carmel: This login matches also user roles',
-    'http': {
-      'path': '/elogin',
-      'verb': 'post'
-    },
-    'accepts': [
-      {
-        'arg': 'credentials',
-        'type': 'object',
-        'description': 'Login credentials',
-        'required': true,
-        'http': {
-          'source': 'body'
-        }
+      description: 'Carmel: This login matches also user roles',
+      'http': {
+        'path': '/elogin',
+        'verb': 'post'
       },
-      {
-        'arg': 'include',
-        'type': 'string',
-        'description': 'Related objects to include in the response. See the description of return value for more details.',
-        'http': {
-          'source': 'query'
+      'accepts': [
+        {
+          'arg': 'credentials',
+          'type': 'object',
+          'description': 'Login credentials',
+          'required': true,
+          'http': {
+            'source': 'body'
+          }
+        },
+        {
+          'arg': 'include',
+          'type': 'string',
+          'description': 'Related objects to include in the response. See the description of return value for more details.',
+          'http': {
+            'source': 'query'
+          }
         }
-      }
-    ],
-    'returns': [
-      {
-        'arg': 'token',
-        'type': 'object',
-        'root': true
-      }
-    ]
-  });
+      ],
+      'returns': [
+        {
+          'arg': 'token',
+          'type': 'object',
+          'root': true
+        }
+      ]
+    });
 
-    
+
     UserModel.remoteMethod(
       'logout',
       {
         description: 'Logout a user with access token.',
         accepts: [
-          {arg: 'access_token', type: 'string', http: function(ctx) {
-            var req = ctx && ctx.req;
-            var accessToken = req && req.accessToken;
-            var tokenID = accessToken ? accessToken.id : undefined;
+          {
+            arg: 'access_token', type: 'string', http: function (ctx) {
+              var req = ctx && ctx.req;
+              var accessToken = req && req.accessToken;
+              var tokenID = accessToken ? accessToken.id : undefined;
 
-            return tokenID;
-          }, description: 'Do not supply this argument, it is automatically extracted ' +
-            'from request headers.',
+              return tokenID;
+            }, description: 'Do not supply this argument, it is automatically extracted ' +
+              'from request headers.',
           },
         ],
-        http: {verb: 'all'},
+        http: { verb: 'all' },
       }
     );
 
@@ -1467,10 +1485,10 @@ User.extendedLogin = function (credentials, include, callback) {
       {
         description: 'Trigger user\'s identity verification with configured verifyOptions',
         accepts: [
-          {arg: 'verifyOptions', type: 'object', http: ctx => this.getVerifyOptions()},
-          {arg: 'options', type: 'object', http: 'optionsFromRequest'},
+          { arg: 'verifyOptions', type: 'object', http: ctx => this.getVerifyOptions() },
+          { arg: 'options', type: 'object', http: 'optionsFromRequest' },
         ],
-        http: {verb: 'post'},
+        http: { verb: 'post' },
       }
     );
 
@@ -1479,11 +1497,11 @@ User.extendedLogin = function (credentials, include, callback) {
       {
         description: 'Confirm a user registration with identity verification token.',
         accepts: [
-          {arg: 'uid', type: 'string', required: true},
-          {arg: 'token', type: 'string', required: true},
-          {arg: 'redirect', type: 'string'},
+          { arg: 'uid', type: 'string', required: true },
+          { arg: 'token', type: 'string', required: true },
+          { arg: 'redirect', type: 'string' },
         ],
-        http: {verb: 'get', path: '/confirm'},
+        http: { verb: 'get', path: '/confirm' },
       }
     );
 
@@ -1492,9 +1510,9 @@ User.extendedLogin = function (credentials, include, callback) {
       {
         description: 'Reset password for a user with email.',
         accepts: [
-          {arg: 'options', type: 'object', required: true, http: {source: 'body'}},
+          { arg: 'options', type: 'object', required: true, http: { source: 'body' } },
         ],
-        http: {verb: 'post', path: '/reset'},
+        http: { verb: 'post', path: '/reset' },
       }
     );
 
@@ -1503,12 +1521,12 @@ User.extendedLogin = function (credentials, include, callback) {
       {
         description: 'Change a user\'s password.',
         accepts: [
-          {arg: 'id', type: 'any', http: getUserIdFromRequestContext},
-          {arg: 'oldPassword', type: 'string', required: true, http: {source: 'form'}},
-          {arg: 'newPassword', type: 'string', required: true, http: {source: 'form'}},
-          {arg: 'options', type: 'object', http: 'optionsFromRequest'},
+          { arg: 'id', type: 'any', http: getUserIdFromRequestContext },
+          { arg: 'oldPassword', type: 'string', required: true, http: { source: 'form' } },
+          { arg: 'newPassword', type: 'string', required: true, http: { source: 'form' } },
+          { arg: 'options', type: 'object', http: 'optionsFromRequest' },
         ],
-        http: {verb: 'POST', path: '/change-password'},
+        http: { verb: 'POST', path: '/change-password' },
       }
     );
 
@@ -1520,12 +1538,12 @@ User.extendedLogin = function (credentials, include, callback) {
       {
         description: 'Reset user\'s password via a password-reset token.',
         accepts: [
-          {arg: 'id', type: 'any', http: getUserIdFromRequestContext},
-          {arg: 'newPassword', type: 'string', required: true, http: {source: 'form'}},
-          {arg: 'options', type: 'object', http: 'optionsFromRequest'},
+          { arg: 'id', type: 'any', http: getUserIdFromRequestContext },
+          { arg: 'newPassword', type: 'string', required: true, http: { source: 'form' } },
+          { arg: 'options', type: 'object', http: 'optionsFromRequest' },
         ],
         accessScopes: setPasswordScopes,
-        http: {verb: 'POST', path: '/reset-password'},
+        http: { verb: 'POST', path: '/reset-password' },
       }
     );
 
@@ -1546,7 +1564,7 @@ User.extendedLogin = function (credentials, include, callback) {
       return token.userId;
     }
 
-    UserModel.afterRemote('confirm', function(ctx, inst, next) {
+    UserModel.afterRemote('confirm', function (ctx, inst, next) {
       if (ctx.args.redirect !== undefined) {
         if (!ctx.res) {
           return next(new Error(g.f('The transport does not support HTTP redirects.')));
@@ -1560,13 +1578,37 @@ User.extendedLogin = function (credentials, include, callback) {
     UserModel.afterRemote('extendedLogin', function (ctx) {
       console.log("After remote extendedlogin is launched");
       ctx.res.cookie('access_token', ctx.result.id, { signed: true, maxAge: 1000 * 60 * 60 * 5 });
-      //These are all 'trash' cookies in order to confuse the hacker who tries to penetrate kl,klo cookies
+      // //These are all 'trash' cookies in order to confuse the hacker who tries to penetrate kl,klo cookies
       ctx.res.cookie('kloo', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
       ctx.res.cookie('klk', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
       ctx.res.cookie('olk', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
 
+
       return Promise.resolve();
     });
+
+    UserModel.afterRemote('loginAs', (ctx, model, next) => {
+      console.log("After remote loginAs is launched");
+      ctx = setAuthCookies(ctx);
+      next();
+    });
+
+    UserModel.afterRemote('registerOrLoginByUniqueField', (ctx, model, next) => {
+      console.log("After remote registerOrLoginByUniqueField is launched");
+      ctx = setAuthCookies(ctx);
+      next();
+    });
+
+    function setAuthCookies(ctx) {
+      ctx.res.cookie('access_token', ctx.result.accessToken, { signed: true, maxAge: 1000 * 60 * 60 * 5 });
+      ctx.res.cookie('klo', ctx.result.klo, { signed: false, maxAge: 1000 * 60 * 60 * 5 });
+      ctx.res.cookie('kl', ctx.result.kl, { signed: false, maxAge: 1000 * 60 * 60 * 5 });
+      // //These are all 'trash' cookies in order to confuse the hacker who tries to penetrate kl,klo cookies
+      ctx.res.cookie('kloo', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
+      ctx.res.cookie('klk', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
+      ctx.res.cookie('olk', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
+      return ctx;
+    }
 
     UserModel.afterRemote('logout', function (ctx) {
       console.log("After remote logout is launched");
@@ -1574,15 +1616,15 @@ User.extendedLogin = function (credentials, include, callback) {
       return Promise.resolve();
     });
 
-    UserModel.remoteMethod('authenticate',{
-      http: { verb: 'get'},
+    UserModel.remoteMethod('authenticate', {
+      http: { verb: 'get' },
       description: 'Carmel:Confirm a user authentication',
       accepts: [
         { arg: "options", type: "object", http: "optionsFromRequest" }
       ],
-      returns: { type: 'object',root:true }
+      returns: { type: 'object', root: true }
     }
-  );
+    );
 
     // default models
     assert(loopback.Email, 'Email model must be defined before User model');
@@ -1607,8 +1649,8 @@ User.extendedLogin = function (credentials, include, callback) {
       });
     } else {
       // Regular(Non-realm) users validation
-      UserModel.validatesUniquenessOf('email', {message: 'Email already exists'});
-      UserModel.validatesUniquenessOf('username', {message: 'User already exists'});
+      UserModel.validatesUniquenessOf('email', { message: 'Email already exists' });
+      UserModel.validatesUniquenessOf('username', { message: 'User already exists' });
     }
 
     return UserModel;
@@ -1628,7 +1670,7 @@ User.extendedLogin = function (credentials, include, callback) {
   // Access token to normalize email credentials
   User.observe('access', function normalizeEmailCase(ctx, next) {
     if (!ctx.Model.settings.caseSensitiveEmail && ctx.query.where &&
-        ctx.query.where.email && typeof(ctx.query.where.email) === 'string') {
+      ctx.query.where.email && typeof (ctx.query.where.email) === 'string') {
       ctx.query.where.email = ctx.query.where.email.toLowerCase();
     }
     next();
@@ -1687,9 +1729,9 @@ User.extendedLogin = function (credentials, include, callback) {
       where[pkName] = ctx.instance[pkName];
     }
 
-    ctx.Model.find({where: where}, ctx.options, function(err, userInstances) {
+    ctx.Model.find({ where: where }, ctx.options, function (err, userInstances) {
       if (err) return next(err);
-      ctx.hookState.originalUserData = userInstances.map(function(u) {
+      ctx.hookState.originalUserData = userInstances.map(function (u) {
         var user = {};
         user[pkName] = u[pkName];
         user.email = u.email;
@@ -1710,7 +1752,7 @@ User.extendedLogin = function (credentials, include, callback) {
           ctx.instance.emailVerified = false;
         }
       } else if (ctx.data.email) {
-        emailChanged = ctx.hookState.originalUserData.some(function(data) {
+        emailChanged = ctx.hookState.originalUserData.some(function (data) {
           return data.email != ctx.data.email;
         });
         if (emailChanged && ctx.Model.settings.emailVerificationRequired) {
@@ -1734,17 +1776,17 @@ User.extendedLogin = function (credentials, include, callback) {
 
     if (ctx.options.preserveAccessTokens) return next();
 
-    var userIdsToExpire = ctx.hookState.originalUserData.filter(function(u) {
+    var userIdsToExpire = ctx.hookState.originalUserData.filter(function (u) {
       return (newEmail && u.email !== newEmail) ||
         (newPassword && u.password !== newPassword);
-    }).map(function(u) {
+    }).map(function (u) {
       return u[pkName];
     });
     ctx.Model._invalidateAccessTokensOfUsers(userIdsToExpire, ctx.options, next);
   });
 
 
-  
+
 
 
 };
