@@ -21,6 +21,8 @@ const fs = require('fs');
 const base64 = require('base-64');
 const randomstring = require("randomstring");
 
+function to(promise) {return promise.then(data => {return [null, data];}).catch(err => [err]);}
+
 // bcrypt's max length is 72 bytes;
 
 // See https://github.com/kelektiv/node.bcrypt.js/blob/45f498ef6dc6e8234e58e07834ce06a50ff16352/src/node_blf.h#L59
@@ -337,13 +339,12 @@ module.exports = function(User) {
 
 
 
-
 User.registerOrLoginByUniqueField = (uField, uData, roleId, cb) => {
         (async () => {
                 let query = { where: {} };
                 query.where[uField] = uData[uField];
                 logUser("quiery", query);
-                let [err, res] = await asyncTools.to(Customuser.findOne(query));
+                let [err, res] = await to(User.findOne(query));
                 if (err) {
                         logUser("Error on serch by field", err);
                         return cb(err);
@@ -353,11 +354,11 @@ User.registerOrLoginByUniqueField = (uField, uData, roleId, cb) => {
                         return User.directLoginAs(res.id, roleId, cb);
                 }
                 //create new user in db.
-                let pass = tools.generatePassword(8);
+                let pass = Math.random().toString(36).slice(-8);
                 uData.password = pass;
                 uData.emailVerified = 1;
                 uData.verificationToken = null;
-                let [error, newUser] = await asyncTools.to(Customuser.create(uData));
+                let [error, newUser] = await to(User.create(uData));
                 if (error) {
                         return cb(err);
                 }
