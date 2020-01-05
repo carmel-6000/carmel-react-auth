@@ -46,7 +46,7 @@ class Login extends Component {
             return;
         }
         if (res.success === true) {
-            window.location = "/";
+            window.location.href = window.location.href.replace("/login", "/");
         }
 
 
@@ -213,7 +213,7 @@ class Login extends Component {
 
                         <p>
                             <button className="btn btn-link login_input" id="toggle" type="button" data-toggle="collapse" data-target=".collapses" aria-expanded="false" aria-controls="resetPassDiv logForm" onClick={(event) => {
-                             event.target.innerHTML = event.target.innerHTML == "התחבר" ? 'שכחת סיסמה?' : "התחבר"
+                                event.target.innerHTML = event.target.innerHTML == "התחבר" ? 'שכחת סיסמה?' : "התחבר"
                             }}>
                                 שכחת סיסמה?
                             </button>
