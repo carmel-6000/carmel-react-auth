@@ -1,5 +1,5 @@
-import React, { Component, Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Route, Link, withRouter } from "react-router-dom";
+import React, { Component } from 'react';//, Suspense, lazy
+import { Route, Link, withRouter } from "react-router-dom";
 import { Redirect } from 'react-router';
 import Auth from './Auth';
 import b from 'base-64';
@@ -114,7 +114,7 @@ class _MultipleRoute extends Component {
         let hasc = comps[intersection[0]] && this.haveAccess;
         let Co = <div />;
         if (hasc) { Co = comps[intersection[0]] }
-        return hasc ? (<Co {...props} />) : (<Link to="/">Go back to login 1</Link>);
+        return this.haveAccess ? (<Co {...props} />) : (<Link to="/">Go back to login 1</Link>);
         ;
       }}
       />
