@@ -1,3 +1,4 @@
+
 // Copyright IBM Corp. 2014,2019. All Rights Reserved.
 // Node module: loopback
 // This file is licensed under the MIT License.
@@ -338,34 +339,73 @@ module.exports = function (User) {
 
 
 
-  User.registerOrLoginByUniqueField = (uField, uData, roleId, cb) => {
+  User.registerOrLoginByUniqueField = (uField, uData, roleId, cb, ctx = null, updateCustomFields = []) => {
+    /**
+     * @param {String} uField Unique field that identifies the user.
+     * @param {Object} uData  User data to create.
+     * @param {Number} roleId Role number to save in case that the user dosent exists.
+     * @param {function} cb Callback (obviously)
+     * @param ctx OPTIONAL if you have ctx, send it and your cookies will be filled with accessToken, kl, klo.
+     * @param {Array} updateCustomFields OPTIONAL, array of fields names to compare and update if there is a diff betweem uData and what we have in DB.  
+     */
+
+
     (async () => {
+      const { CustomUser, RoleMapping } = User.app.models;
       let query = { where: {} };
       query.where[uField] = uData[uField];
       logUser("quiery", query);
-      let [err, res] = await asyncTools.to(Customuser.findOne(query));
+      let [err, res] = await to(CustomUser.findOne(query));
       if (err) {
         logUser("Error on serch by field", err);
         return cb(err);
       }
       if (res) {
         logUser(`found by ${uField}`, res);
-        return User.directLoginAs(res.id, roleId, cb);
+        let dataToUpdate = {};
+
+        updateCustomFields.forEach(field_name => {
+          if (typeof uData[field_name] !== 'undefined' && uData[field_name] != res[field_name]) {//I used != because some fields gets a string and saved as number.
+            dataToUpdate[field_name] = uData[field_name];
+          }
+        });
+        if (Object.keys(dataToUpdate).length) {
+          let [err] = await to(res.updateAttributes(dataToUpdate));
+          if (err) {
+            return cb(err);
+          }
+          logUser("Updated fields to be:", dataToUpdate);
+        }
+
+        return User.directLoginAs(res.id, roleId, cb, ctx);
       }
       //create new user in db.
-      let pass = tools.generatePassword(8);
+      let pass = generatePassword(8);
       uData.password = pass;
       uData.emailVerified = 1;
       uData.verificationToken = null;
-      let [error, newUser] = await asyncTools.to(Customuser.create(uData));
+      let [error, newUser] = await to(CustomUser.create(uData));
       if (error) {
-        return cb(err);
+        return cb(error);
       }
-      logUser("~~we created new user~~\n", newUser, newUser.id);
 
-      return User.directLoginAs(newUser.id, roleId, cb); //creates accessToken for user
+      if (roleId) {
+        let roleMapData = {
+          principalType: "USER",
+          principalId: newUser.id,
+          roleId
+        }
+        let [error, newRole] = await to(RoleMapping.create(roleMapData));
+        if (error) {
+          return cb(error);
+        }
+        logUser("~~we created new user~~\n", newUser, newUser.id, newRole.id);
+      }
+
+      return User.directLoginAs(newUser.id, roleId, cb, ctx); //creates accessToken for user
     })();
   }
+
 
   User.loginAs = function (uid, ctx, cb) {
     console.log("ctx")
@@ -394,8 +434,8 @@ module.exports = function (User) {
 
 
 
-  User.directLoginAs = function (userId, roleId = null, fn) {
-
+  User.directLoginAs = function (userId, roleId = null, fn, ctx = null) {
+    const { CustomUser } = User.app.models;
     logUser("User.directLoginAs is launched with userId", userId);
 
     userId = parseInt(userId);
@@ -408,7 +448,7 @@ module.exports = function (User) {
     var realmRequired = false;//!!(self.settings.realmRequired || self.settings.realmDelimiter); 
     var query = { id: userId };
     logUser("query?", query);
-    this.findOne({ where: query }, (err, user) => {
+    CustomUser.findOne({ where: query }, (err, user) => {
       logUser("User.findOne results", user);
       var defaultError = new Error('login failed');
       defaultError.statusCode = 401;
@@ -418,7 +458,7 @@ module.exports = function (User) {
       async function tokenHandler(err, token) {
         if (err) return fn(err);
         token.__data.user = user;
-        if (roleId !== null) {
+        if (roleId == null) {
           token.__data.roleCode = null;
           token.__data.klo = "";
           token.__data.kl = "";
@@ -430,6 +470,17 @@ module.exports = function (User) {
           token.__data.kl = klos.kl;
           return fn(null, token);
         })
+      }
+
+      function setAuthCookies(ctx) {
+        ctx.res.cookie('access_token', ctx.result.accessToken, { signed: true, maxAge: 1000 * 60 * 60 * 5 });
+        ctx.res.cookie('klo', ctx.result.klo);
+        ctx.res.cookie('kl', ctx.result.kl);
+        // //These are all 'trash' cookies in order to confuse the hacker who tries to penetrate kl,klo cookies
+        ctx.res.cookie('kloo', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
+        ctx.res.cookie('klk', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
+        ctx.res.cookie('olk', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
+        return ctx;
       }
 
 
@@ -450,6 +501,10 @@ module.exports = function (User) {
 
         logUser("user.createAccessToken.length is NOT 2 ?", user.createAccessToken.length);
         user.createAccessToken(credentials.ttl, credentials, tokenHandler);
+      }
+
+      if (ctx) {
+        // setAuthCookies(ctx)
       }
     });
     return fn.promise;
@@ -518,8 +573,10 @@ module.exports = function (User) {
           }
         }
         logUser("COMPS?", comps);
+        let regex = /==|=/gm;
         res.kl = uRole.role && uRole.role.roleKey ? uRole.role.roleKey : "";
-        res.klo = base64.encode(JSON.stringify(comps)).replace("=", '');
+        res.klo = base64.encode(JSON.stringify(comps)).replace(regex, '');
+        // res.klo = JSON.stringify(comps);
         return res;
 
       } catch (err) {
@@ -1582,7 +1639,8 @@ module.exports = function (User) {
       ctx.res.cookie('kloo', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
       ctx.res.cookie('klk', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
       ctx.res.cookie('olk', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
-
+      ctx.res.cookie('klo', ctx.result.klo);
+      ctx.res.cookie('kl', ctx.result.kl);
 
       return Promise.resolve();
     });
@@ -1601,8 +1659,8 @@ module.exports = function (User) {
 
     function setAuthCookies(ctx) {
       ctx.res.cookie('access_token', ctx.result.accessToken, { signed: true, maxAge: 1000 * 60 * 60 * 5 });
-      ctx.res.cookie('klo', ctx.result.klo, { signed: false, maxAge: 1000 * 60 * 60 * 5 });
-      ctx.res.cookie('kl', ctx.result.kl, { signed: false, maxAge: 1000 * 60 * 60 * 5 });
+      ctx.res.cookie('klo', ctx.result.klo);
+      ctx.res.cookie('kl', ctx.result.kl);
       // //These are all 'trash' cookies in order to confuse the hacker who tries to penetrate kl,klo cookies
       ctx.res.cookie('kloo', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
       ctx.res.cookie('klk', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
@@ -1810,4 +1868,20 @@ function joinUrlPath(args) {
       next.slice(1) : next;
   }
   return result;
+}
+
+function generatePassword(length = 8) {
+  var charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#$",
+    retVal = "";
+  for (var i = 0, n = charset.length; i < length; ++i) {
+    retVal += charset.charAt(Math.floor(Math.random() * n));
+  }
+  return retVal;
+}
+
+function to(promise) {
+  return promise.then(data => {
+    return [null, data];
+  })
+    .catch(err => [err]);
 }
