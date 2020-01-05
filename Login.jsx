@@ -213,8 +213,7 @@ class Login extends Component {
 
                         <p>
                             <button className="btn btn-link login_input" id="toggle" type="button" data-toggle="collapse" data-target=".collapses" aria-expanded="false" aria-controls="resetPassDiv logForm" onClick={(event) => {
-                                let btn = document.getElementById("toggle");
-                                btn.innerHTML = btn.innerHTML == "התחבר" ? 'שכחת סיסמה?' : "התחבר"
+                             event.target.innerHTML = event.target.innerHTML == "התחבר" ? 'שכחת סיסמה?' : "התחבר"
                             }}>
                                 שכחת סיסמה?
                             </button>
