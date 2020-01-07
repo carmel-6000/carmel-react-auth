@@ -2,10 +2,7 @@ import AsyncTools from '../tools/AsyncTools';
 import GenericTools from '../tools/GenericTools'
 import Authentication from './Authentication';
 import NtfFactory from '../notifications/NtfFactory';
-function isCordova() { //TODO move to tools;
-  return document.URL.indexOf('http://') === -1 &&
-    document.URL.indexOf('https://') === -1
-}
+
 const Auth = {
 
   _isAuthenticated: false,
@@ -81,8 +78,11 @@ const Auth = {
       return new Promise((res, rej) => { res({ success: false, msg: err }) });
     }
     this._isAuthenticated = true;
-    this.setItem('klo', res.klo, false, true);
-    this.setItem('kl', res.kl, false, true);
+    if (GenericTools.isCordova()) {
+      this.setItem('klo', res.klo, false, true);
+      this.setItem('kl', res.kl, false, true);
+      this.setItem('access_token', res.id);
+    }
     return new Promise((resolve, rej) => { resolve({ success: true, user: res }) });
   },
 
@@ -104,7 +104,7 @@ const Auth = {
     console.log("Login res", res);
     this._isAuthenticated = true;
 
-    if (isCordova()) {
+    if (GenericTools.isCordova()) {
       this.setItem('klo', res.klo, false, true);
       this.setItem('kl', res.kl, false, true);
       this.setItem('access_token', res.id);
