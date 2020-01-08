@@ -1,6 +1,6 @@
 {
   "name": "User",
-  "public":"false",
+  "public": "false",
   "properties": {
     "realm": {
       "type": "string"
@@ -22,9 +22,11 @@
   "options": {
     "caseSensitiveEmail": true
   },
-  "hidden": ["password", "verificationToken"],
+  "hidden": [
+    "password",
+    "verificationToken"
+  ],
   "acls": [
-
     {
       "principalType": "ROLE",
       "principalId": "$everyone",
@@ -34,7 +36,7 @@
       "principalType": "ROLE",
       "principalId": "SUPERADMIN",
       "permission": "ALLOW",
-      "property":"find"
+      "property": "find"
     },
     {
       "principalType": "ROLE",
@@ -128,6 +130,11 @@
       "options": {
         "disableInclude": true
       }
+    },
+    "roleMapping": {
+      "type": "hasOne",
+      "model": "RoleMapping",
+      "foreignKey": "principalId"
     }
   }
 }

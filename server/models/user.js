@@ -22,6 +22,7 @@ const fs = require('fs');
 const base64 = require('base-64');
 const randomstring = require("randomstring");
 
+
 // bcrypt's max length is 72 bytes;
 
 // See https://github.com/kelektiv/node.bcrypt.js/blob/45f498ef6dc6e8234e58e07834ce06a50ff16352/src/node_blf.h#L59
@@ -339,7 +340,7 @@ module.exports = function (User) {
 
 
 
-  User.registerOrLoginByUniqueField = (uField, uData, roleId, cb, ctx = null, updateCustomFields = []) => {
+  User.registerOrLoginByUniqueField = function (uField, uData, roleId, cb, ctx = null, updateCustomFields = []) {
     /**
      * @param {String} uField Unique field that identifies the user.
      * @param {Object} uData  User data to create.
@@ -349,13 +350,12 @@ module.exports = function (User) {
      * @param {Array} updateCustomFields OPTIONAL, array of fields names to compare and update if there is a diff betweem uData and what we have in DB.  
      */
 
-
     (async () => {
-      const { CustomUser, RoleMapping } = User.app.models;
+      const { RoleMapping } = User.app.models;
       let query = { where: {} };
       query.where[uField] = uData[uField];
       logUser("quiery", query);
-      let [err, res] = await to(CustomUser.findOne(query));
+      let [err, res] = await to(this.findOne(query));
       if (err) {
         logUser("Error on serch by field", err);
         return cb(err);
@@ -377,14 +377,14 @@ module.exports = function (User) {
           logUser("Updated fields to be:", dataToUpdate);
         }
 
-        return User.directLoginAs(res.id, roleId, cb, ctx);
+        return this.directLoginAs(res.id, roleId, cb, ctx);
       }
       //create new user in db.
       let pass = generatePassword(8);
       uData.password = pass;
       uData.emailVerified = 1;
       uData.verificationToken = null;
-      let [error, newUser] = await to(CustomUser.create(uData));
+      let [error, newUser] = await to(this.create(uData));
       if (error) {
         return cb(error);
       }
@@ -402,13 +402,12 @@ module.exports = function (User) {
         logUser("~~we created new user~~\n", newUser, newUser.id, newRole.id);
       }
 
-      return User.directLoginAs(newUser.id, roleId, cb, ctx); //creates accessToken for user
+      return this.directLoginAs(newUser.id, roleId, cb, ctx); //creates accessToken for user
     })();
   }
 
 
   User.loginAs = function (uid, ctx, cb) {
-    console.log("ctx")
 
     const token = ctx && ctx.accessToken;
     const userId = token && token.userId;
@@ -435,7 +434,7 @@ module.exports = function (User) {
 
 
   User.directLoginAs = function (userId, roleId = null, fn, ctx = null) {
-    const { CustomUser } = User.app.models;
+    // const { CustomUser } = User.app.models;
     logUser("User.directLoginAs is launched with userId", userId);
 
     userId = parseInt(userId);
@@ -447,8 +446,8 @@ module.exports = function (User) {
     var realmDelimiter;
     var realmRequired = false;//!!(self.settings.realmRequired || self.settings.realmDelimiter); 
     var query = { id: userId };
-    logUser("query?", query);
-    CustomUser.findOne({ where: query }, (err, user) => {
+    logUser("query?", query, this);
+    this.findOne({ where: query, include: { "roleMapping": 'role' } }, (err, user) => {
       logUser("User.findOne results", user);
       var defaultError = new Error('login failed');
       defaultError.statusCode = 401;
@@ -458,29 +457,18 @@ module.exports = function (User) {
       async function tokenHandler(err, token) {
         if (err) return fn(err);
         token.__data.user = user;
-        if (roleId == null) {
+        if (!user.roleMapping || !user.roleMapping) {
           token.__data.roleCode = null;
           token.__data.klo = "";
           token.__data.kl = "";
           return fn(err, token);
         }
 
-        getKlos(userId).then(klos => {
+        getKlos(userId, user.roleMapping()).then(klos => {
           token.__data.klo = klos.klo;
           token.__data.kl = klos.kl;
           return fn(null, token);
         })
-      }
-
-      function setAuthCookies(ctx) {
-        ctx.res.cookie('access_token', ctx.result.accessToken, { signed: true, maxAge: 1000 * 60 * 60 * 5 });
-        ctx.res.cookie('klo', ctx.result.klo);
-        ctx.res.cookie('kl', ctx.result.kl);
-        // //These are all 'trash' cookies in order to confuse the hacker who tries to penetrate kl,klo cookies
-        ctx.res.cookie('kloo', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
-        ctx.res.cookie('klk', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
-        ctx.res.cookie('olk', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
-        return ctx;
       }
 
 
@@ -542,16 +530,19 @@ module.exports = function (User) {
     });
   };
 
-  async function getKlos(userId) {
+  async function getKlos(userId, userRoleMap = null) {
     let rolemap = User.app.models.RoleMapping;
     let res = { kl: "", klo: "" };
     try {
-      let userrole = await rolemap.findOne({ include: ['role'], where: { principalId: userId } });
+
+      if (!userRoleMap)
+        userRoleMap = await rolemap.findOne({ include: ['role'], where: { principalId: userId } });
 
 
       let uRole = {};
       try {
-        uRole = JSON.parse(JSON.stringify(userrole));
+        console.log("user role map", userRoleMap)
+        uRole = JSON.parse(JSON.stringify(userRoleMap));
         uRole = uRole == null || !uRole ? {} : uRole;
       } catch (err) {
         logUser("The current user is not associated with any role");
