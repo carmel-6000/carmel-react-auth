@@ -1,7 +1,7 @@
 import AsyncTools from '../tools/AsyncTools';
 import GenericTools from '../tools/GenericTools'
 import Authentication from './Authentication';
-import NtfFactory from '../notifications/NtfFactory';
+// import NtfFactory from '../notifications/client/NtfFactory';
 
 const Auth = {
 
@@ -151,7 +151,7 @@ const Auth = {
     this.removeItem('olk');
 
     GenericTools.deleteAllCookies(); //needed?
-    NtfFactory.getInstance().unsubscribe();
+    // NtfFactory.getInstance().unsubscribe();
     this._isAuthenticated = false;
     cb && cb();
     window.location.href = window.location.origin;
