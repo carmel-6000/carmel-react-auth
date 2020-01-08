@@ -82,6 +82,8 @@ const Auth = {
       this.setItem('klo', res.klo, false, true);
       this.setItem('kl', res.kl, false, true);
       this.setItem('access_token', res.id);
+      this.setItem('kloo', res.kloo, false, true);
+      this.setItem('klk', res.klk, false, true);
     }
     return new Promise((resolve, rej) => { resolve({ success: true, user: res }) });
   },
@@ -107,6 +109,8 @@ const Auth = {
     if (GenericTools.isCordova()) {
       this.setItem('klo', res.klo, false, true);
       this.setItem('kl', res.kl, false, true);
+      this.setItem('kloo', res.kloo, false, true);
+      this.setItem('klk', res.klk, false, true);
       this.setItem('access_token', res.id);
     }
     return new Promise((resolve, rej) => { resolve({ success: true, user: res }) });
