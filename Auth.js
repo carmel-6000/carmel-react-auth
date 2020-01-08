@@ -93,7 +93,7 @@ const Auth = {
   },
 
   async authenticate(email, pw, cb) {
-    const [res, err] = await AsyncTools.superFetch('/api/CustomUsers/elogin/', {
+    const [res, err] = await AsyncTools.superFetch('/api/CustomUsers/elogin/?include=user', {
       method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email, password: pw })
     });
@@ -105,7 +105,7 @@ const Auth = {
 
     console.log("Login res", res);
     this._isAuthenticated = true;
-
+    let user = res;
     if (GenericTools.isCordova()) {
       this.setItem('klo', res.klo, false, true);
       this.setItem('kl', res.kl, false, true);
@@ -113,7 +113,7 @@ const Auth = {
       this.setItem('klk', res.klk, false, true);
       this.setItem('access_token', res.id);
     }
-    return new Promise((resolve, rej) => { resolve({ success: true, user: res }) });
+    return new Promise((resolve, rej) => { resolve({ success: true, user }) });
     //return cb({ success: true }, res);
 
   },
