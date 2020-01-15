@@ -5,6 +5,7 @@ import { Redirect } from 'react-router';
 import ValidateTool from '../tools/ValidateTool'
 import ElementsHandler from '../../handlers/ElementsHandler'
 import { Dialog, DialogTitle, Button, DialogContent, DialogActions } from '@material-ui/core';
+import GenericTools from '../tools/GenericTools'
 
 class Login extends Component {
 
@@ -46,11 +47,9 @@ class Login extends Component {
             return;
         }
         if (res.success === true) {
-            window.location = "/";
+            let redir = this.props.redirectUrl || "/";
+            GenericTools.safe_redirect(redir);
         }
-
-
-
 
     }
 
@@ -213,8 +212,7 @@ class Login extends Component {
 
                         <p>
                             <button className="btn btn-link login_input" id="toggle" type="button" data-toggle="collapse" data-target=".collapses" aria-expanded="false" aria-controls="resetPassDiv logForm" onClick={(event) => {
-                                let btn = document.getElementById("toggle");
-                                btn.innerHTML = btn.innerHTML == "התחבר" ? 'שכחת סיסמה?' : "התחבר"
+                                event.target.innerHTML = event.target.innerHTML == "התחבר" ? 'שכחת סיסמה?' : "התחבר"
                             }}>
                                 שכחת סיסמה?
                             </button>

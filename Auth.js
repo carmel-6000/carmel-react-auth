@@ -1,13 +1,14 @@
 import AsyncTools from '../tools/AsyncTools';
 import GenericTools from '../tools/GenericTools'
 import Authentication from './Authentication';
+// import NtfFactory from '../notifications/client/NtfFactory';
 
 const Auth = {
 
   _isAuthenticated: false,
 
-  getKls(){
-    let kls={kl:this.getItem('kl'),klo:this.getItem('klo')};    
+  getKls() {
+    let kls = { kl: this.getItem('kl'), klo: this.getItem('klo') };
     //console.log("KLS? (auth.js)",kls);
     return kls;
   },
@@ -21,8 +22,8 @@ const Auth = {
   },
 
   //Since we are now using cookies, there is no need to use this method anymore
-  isAuthenticatedSync(cb) {    
-    let authentication=Authentication.getInstance();
+  isAuthenticatedSync(cb) {
+    let authentication = Authentication.getInstance();
     authentication.isAuthenticatedSync(cb);
   },
 
@@ -57,38 +58,38 @@ const Auth = {
     }
   },
 
-  async superAuthFetch(url, payload = null, redirOnFailure=false) {
+  async superAuthFetch(url, payload = null, redirOnFailure = false) {
     let [res, err] = await AsyncTools.superFetch(url, payload);
-    if (err && err.error && err.error.statusCode === 401 && redirOnFailure===true) {
+    if (err && err.error && err.error.statusCode === 401 && redirOnFailure === true) {
       Auth.logout(() => window.location.href = window.location.origin); //FORCE LOGOUT.      
     }
     return [res, err];
   },
 
-  async loginWithUniqueField(key,value,pw,cb){
+  async loginWithUniqueField(key, value, pw, cb) {
 
     const [res, err] = await AsyncTools.superFetch('/api/CustomUsers/elogin/', {
       method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key,value, password: pw })
+      body: JSON.stringify({ key, value, password: pw })
     });
 
     if (err) {
       this._isAuthenticated = false;
-      return new Promise((res,rej)=>{res({success:false,msg:err})});
+      return new Promise((res, rej) => { res({ success: false, msg: err }) });
     }
-    
-    console.log("Login res",res);
     this._isAuthenticated = true;
-
-    this.setItem('klo',res.klo,false,true);
-    this.setItem('kl',res.kl,false,true);
-
-    return new Promise((res,rej)=>{res({success:true})});
-
+    if (GenericTools.isCordova()) {
+      this.setItem('klo', res.klo, false, true);
+      this.setItem('kl', res.kl, false, true);
+      this.setItem('access_token', res.id, false, true);
+      this.setItem('kloo', res.kloo, false, true);
+      this.setItem('klk', res.klk, false, true);
+    }
+    return new Promise((resolve, rej) => { resolve({ success: true, user: res }) });
   },
-  
+
   async login(email, pw, cb) {
-    return this.authenticate(email,pw,cb);
+    return this.authenticate(email, pw, cb);
   },
 
   async authenticate(email, pw, cb, ttl = (60 * 60 * 5)) {
@@ -99,60 +100,53 @@ const Auth = {
 
     if (err) {
       this._isAuthenticated = false;
-      return new Promise((res,rej)=>{res({success:false,msg:err})});
+      return new Promise((res, rej) => { res({ success: false, msg: err }) });
     }
-    
-    console.log("Login res",res);
+
+    console.log("Login res", res);
     this._isAuthenticated = true;
 
-    
-    this.setItem('klo',res.klo,false,true);
-    this.setItem('kl',res.kl,false,true);
-
-    return new Promise((res,rej)=>{res({success:true})});
+    if (GenericTools.isCordova()) {
+      this.setItem('klo', res.klo, false, true);
+      this.setItem('kl', res.kl, false, true);
+      this.setItem('kloo', res.kloo, false, true);
+      this.setItem('klk', res.klk, false, true);
+      this.setItem('access_token', res.id);
+    }
+    return new Promise((resolve, rej) => { resolve({ success: true, user: res }) });
     //return cb({ success: true }, res);
 
   },
 
-  async loginAs(uid,cb){
+  async loginAs(uid, cb) {
 
-    let [at,err]=await Auth.superAuthFetch('/api/CustomUsers/login-as', {
-            method: 'POST',
-            headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-            body: JSON.stringify({uid:uid})
+    let [at, err] = await Auth.superAuthFetch('/api/CustomUsers/login-as', {
+      method: 'POST',
+      headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid: uid })
     });
 
     if (err) {
       this._isAuthenticated = false;
-      return new Promise((res,rej)=>{res({success:false,msg:err})});
+      return new Promise((res, rej) => { res({ success: false, msg: err }) });
     }
 
-    console.log("Login res",at);
+    console.log("Login res", at);
     this._isAuthenticated = true;
 
-    this.setItem("access_token",at.accessToken);
-    //This stuff needs to be set up 
-    this.setItem('klo',"",false,true);
-    this.setItem('kl',"",false,true);
+    // this.setItem("access_token", at.accessToken);
+    // //This stuff needs to be set up 
+    // this.setItem('klo', at.klo, false, true);
+    // this.setItem('kl', at.kl, false, true);
 
-    return new Promise((res,rej)=>{res({success:true})});
-
-
+    return new Promise((res, rej) => { res({ success: true }) });
   },
-
-
   logout(cb) {
-    
-    this.removeItem('access_token');
-    this.removeItem('kl');
-    this.removeItem('klo');
-    this.removeItem('klk');
-    this.removeItem('kloo');
-    this.removeItem('olk');
-
-    GenericTools.deleteAllCookies(); //needed?
+    GenericTools.deleteAllCookies();
+    // NtfFactory.getInstance().unsubscribe();
     this._isAuthenticated = false;
     cb && cb();
+    GenericTools.safe_redirect('/');
     return;
   },
   register(fd, message) {
@@ -175,7 +169,7 @@ const Auth = {
         else {
           if (res.error.code)
             console.log(res.error.message)
-          else if (res.error.details.codes.email[0] = "uniqueness")
+          else if (res.error.details.codes.email[0] === "uniqueness")
             console.log("This email is alredy registered in our system.")
 
         }
@@ -225,8 +219,8 @@ const Auth = {
     let time;
 
     function resetTimer() {
-        clearTimeout(time);
-        time = setTimeout(()=>Auth.logout(cb), 10 * 60 * 1000) //10 mins
+      clearTimeout(time);
+      time = setTimeout(() => Auth.logout(cb), 10 * 60 * 1000) //10 mins
     }
 
     window.onload = resetTimer();
@@ -243,14 +237,14 @@ const Auth = {
     document.addEventListener("keypress", resetTimer);
   },
 
-  
-  superFetch(url, payload = null,redirOnFailure=false){return this.superAuthFetch(url,payload,redirOnFailure);},
+
+  superFetch(url, payload = null, redirOnFailure = false) { return this.superAuthFetch(url, payload, redirOnFailure); },
   //DEPRECATED
-  authFetchJsonify(url, payload = null,redirOnFailure=false) {return this.superAuthFetch(url,payload,redirOnFailure);},
+  authFetchJsonify(url, payload = null, redirOnFailure = false) { return this.superAuthFetch(url, payload, redirOnFailure); },
   //DEPRECATED
-  authFetch(url, payload = null,redirOnFailure=false){return this.superAuthFetch(url,payload,redirOnFailure);},
+  authFetch(url, payload = null, redirOnFailure = false) { return this.superAuthFetch(url, payload, redirOnFailure); },
   //DEPRECATED 
-  getUserId() { return 0;}, 
+  getUserId() { return 0; },
 
 }
 
