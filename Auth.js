@@ -91,10 +91,10 @@ const Auth = {
     return this.authenticate(email,pw,cb);
   },
 
-  async authenticate(email, pw, cb) {
+  async authenticate(email, pw, cb, ttl = (60 * 60 * 5)) {
     const [res, err] = await AsyncTools.superFetch('/api/CustomUsers/elogin/', {
       method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email, password: pw })
+      body: JSON.stringify({ email: email, password: pw, ttl })
     });
 
     if (err) {
@@ -184,11 +184,25 @@ const Auth = {
       })
 
   },
+
+  // input: fd - array or object - that consist of data of a new user
+  // output: { error: _string_, ok: _bool_ }
+  // this function asyncronically adds a new user to the CustomUser table
+  // if it succeeds it return {ok:true}
+  // if there's an error it returns the error and ok:false
   async registerAsync(fd, message) {
     var payload = {};
-    fd.forEach(function (value, key) {
-      payload[key] = value;
-    });
+
+    if (!fd || typeof fd !== "object") return { error: 'EMPTY_DATA', ok: false };
+    if (Array.isArray(fd)) {
+      fd.forEach(function (value, key) {
+        payload[key] = value;
+      });
+    } else {
+      for (const [key, value] of Object.entries(fd)) {
+        payload[key] = value;
+      }
+    }
 
     let res = await fetch('/api/CustomUsers', {
       headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },

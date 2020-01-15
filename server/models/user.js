@@ -1231,6 +1231,7 @@ User.extendedLogin = function (credentials, include, callback) {
           accessToken: accessToken,
           user: user,
           options: options,
+          emailMsg: options.emailMsg
         });
       }
     });
@@ -1355,7 +1356,11 @@ User.extendedLogin = function (credentials, include, callback) {
             origin = "http://" + origin;
         var url = origin + '/reset-password';
 
-        var html = 'Click <a href="' + url + '?access_token=' + info.accessToken.id + '">here</a> to reset your password';
+        var html = info.emailMsg ? 
+          (info.emailMsg.start +
+            ' <a href="' + url + '?access_token=' + info.accessToken.id + '">' + info.emailMsg.click + '</a> ' +
+            info.emailMsg.end) :
+          ('Click <a href="' + url + '?access_token=' + info.accessToken.id + '">here</a> to reset your password');
 
         UserModel.app.models.Email.send({
             to: info.email,

@@ -157,13 +157,13 @@ class Login extends Component {
     }
 
 
-    reset = async (e) => {
+    reset = async (e, emailMsg = null) => {
         e.preventDefault();
         let email = this.refs.resetEmailInput.value;
         let [res, err] = await Auth.superAuthFetch('/api/CustomUsers/reset', {
             headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
             method: "POST",
-            body: JSON.stringify({ email: email, origin: window.location.origin + (window.location.hash[0] == "#" ? "/#" : "") })
+            body: JSON.stringify({ email, origin: window.location.origin + (window.location.hash[0] == "#" ? "/#" : ""), emailMsg })
         })
 
         this.setState({
