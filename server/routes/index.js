@@ -9,13 +9,6 @@ module.exports = function (app) {
             let cookieKeys = ['access_token', 'kl', 'klo', 'klk', 'kloo', 'olk'];
             for (let key of cookieKeys) { res.clearCookie(key); }
         }
-
-        // TODO Shira: do we need to re-save accesstoken in cookies after we validate it?
-        // I don't think so....
-        // if (cookieVal) {
-        //     let cookieOptions = cookieVal ? { signed: true, maxAge: 1000 * 60 * 60 * 5 } : {};
-        //     res.cookie("access_token", cookieVal, cookieOptions);
-        // }
         
         next();
     });
