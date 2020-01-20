@@ -73,14 +73,14 @@ class _PrivateRoute extends Component {
 
 
   render() {
-    const { compName, component: Component, ...rest } = this.props;
+    const { compName, component: Component, /*notFound: NotFound,*/ ...rest } = this.props;
     if (this.klsk.indexOf(compName) == -1) {
       console.log("compName(%s) is excluded", compName);
-      return <div></div>;
+      return /*NotFound ? <NotFound /> :*/ <div/>;
     }
     return (<Route key={0} {...rest} render={props => {
       return this.haveAccess ?
-        (<Component {...props} />) : <Link to="/">Go back to login2</Link>;
+        (<Component {...props} />) : (/*NotFound ? <NotFound /> :*/ <Link to="/">Go back to login2</Link>);
     }}
     />
     );
@@ -102,19 +102,19 @@ class _MultipleRoute extends Component {
     this.haveAccess = Auth.isAuthenticated();
   }
   render() {
-    const { comps, component: Component, ...rest } = this.props;
+    const { comps, component: Component, /*notFound: NotFound,*/ ...rest } = this.props;
     let k = Object.keys(comps);
     if (!this.klsk) return <div></div>;
     const intersection = this.klsk.filter(element => k.includes(element));
     if (!intersection.length) {
-      return (<Link to="/">Go back to login</Link>);
+      return (/*NotFound ? <NotFound /> :*/ <Link to="/">Go back to login</Link>);
     }
     return (
       <Route exact key={0} {...rest} render={props => {
         let hasc = comps[intersection[0]] && this.haveAccess;
         let Co = <div />;
         if (hasc) { Co = comps[intersection[0]] }
-        return this.haveAccess ? (<Co {...props} />) : (<Link to="/">Go back to login 1</Link>);
+        return this.haveAccess ? (<Co {...props} />) : (/*NotFound ? <NotFound /> :*/ <Link to="/">Go back to login 1</Link>);
         ;
       }}
       />
@@ -152,4 +152,24 @@ class _HomeRoute extends Component {
 }
 const HomeRoute = withRouter(_HomeRoute);
 
-export { PrivateRoute, PrivateRouteAsync, HomeRoute, MultipleRoute };
+
+// PublicRoute is for routes/components that are only public
+// Authenticated users cannot access a public route
+// class _PublicRoute extends Component {
+//   constructor(props) {
+//     super(props);
+//     this.haveAccess = Auth.isAuthenticated();
+//   }
+//   render() {
+//     const { component: Component, ...rest } = this.props;
+//     if(this.haveAccess) return <PrivateRoute component={Component} {...rest} />
+//     return <Route {...rest} render={(props) => ( <Component {...props} /> )} />
+//   }
+// }
+// const PublicRoute = withRouter(_PublicRoute);
+const PublicRoute = ({ component: Component, ...rest }) => {
+  if (Auth.isAuthenticated()) return <PrivateRoute component={Component} {...rest} />
+  return <Route {...rest} render={(props) => ( <Component {...props} /> )} />
+}
+
+export { PrivateRoute, PrivateRouteAsync, HomeRoute, MultipleRoute, PublicRoute };
