@@ -541,7 +541,7 @@ module.exports = function (User) {
 
       let uRole = {};
       try {
-        console.log("user role map", userRoleMap)
+        logUser("user role map", userRoleMap)
         uRole = JSON.parse(JSON.stringify(userRoleMap));
         uRole = uRole == null || !uRole ? {} : uRole;
       } catch (err) {
