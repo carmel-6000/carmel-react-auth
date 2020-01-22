@@ -12,6 +12,7 @@ example:
 ```
 
 2. ***Reset password***
+You will find the Reset-password option in ***Login.jsx***. 
 
 In order to intergrate this feature, you need to:
      A. Add the route ```<Route path="/reset-password" component={ResetPassword} />``` to your App.js . This is the route that the user will see when he will click the link sent to his mail.
@@ -22,8 +23,7 @@ model-config-
     "dataSource": "email"
   },
 ```
-
-You will find the Reset-password option in ***Login.jsx***. 
+**Notice**: Going to route reset-password wont help you if you dont have reset-password accessToken. Take a look in ```Login.jsx```.
 
 3. ***Under development***
 * Logout
