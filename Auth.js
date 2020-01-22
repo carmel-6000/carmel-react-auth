@@ -88,14 +88,14 @@ const Auth = {
     return new Promise((resolve, rej) => { resolve({ success: true, user: res }) });
   },
 
-  async login(email, pw, cb) {
-    return this.authenticate(email, pw, cb);
+  async login(email, pw, isTV, cb) {
+    return this.authenticate(email, pw, isTV, cb);
   },
 
-  async authenticate(email, pw, cb) {
+  async authenticate(email, pw, isTV, cb) {
     const [res, err] = await AsyncTools.superFetch('/api/CustomUsers/elogin/?include=user', {
       method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email, password: pw })
+      body: JSON.stringify({ email: email, password: pw, isTV })
     });
 
     if (err) {

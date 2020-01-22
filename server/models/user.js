@@ -503,6 +503,7 @@ module.exports = function (User) {
 
 
   User.extendedLogin = function (credentials, include, callback) {
+    const { isTV } = credentials;
     // Invoke the default login function\
     //let userModel = CustomUser.app.models.User;
     //logUser("this: ", this);
@@ -516,7 +517,7 @@ module.exports = function (User) {
       logUser("User is logged in with loginToken", loginToken);
       loginToken = loginToken.toObject();
 
-      getKlos(loginToken.userId).then(klos => {
+      getKlos(loginToken.userId, isTV).then(klos => {
         //kl == role key, that represents user role
         loginToken.kl = klos.kl;
         //klo == array of view components that user is allowed to access on base64
@@ -530,7 +531,7 @@ module.exports = function (User) {
     });
   };
 
-  async function getKlos(userId, userRoleMap = null) {
+  async function getKlos(userId, isTV, userRoleMap = null) {
     let rolemap = User.app.models.RoleMapping;
     let res = { kl: "", klo: "" };
     try {
@@ -556,6 +557,7 @@ module.exports = function (User) {
         const rolesAccess = JSON.parse(fs.readFileSync(configFile, 'utf8'));
         //if (rolesAccess[])
         logUser("uRole", uRole);
+        if (isTV && uRole.role.name === "MEMBER") uRole.role.name = "MEMBERTV";
         if (uRole.role && uRole.role.name && uRole.role.name !== '' && rolesAccess.hasOwnProperty(uRole.role.name) && rolesAccess[uRole.role.name]['comps']) {
           comps.a = rolesAccess[uRole.role.name]['comps'];
           logUser("Valid comps for role %s", uRole.role.name, comps);
