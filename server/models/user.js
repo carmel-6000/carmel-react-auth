@@ -1402,6 +1402,67 @@ module.exports = function (User) {
       }
       next();
     });
+    
+
+    //send verification email after registration 
+    UserModel.afterRemote('create', function (context, user, next) {
+      
+      const defaultEmailOptions = {
+        url: "localhost:3000",
+        host: "0.0.0.0",
+        port: "8080",
+        from: "carmelvideos@gmail.com",
+        redirect: `http://localhost:3000/login?popup=verifiedLogin`,
+        protocol: "http"
+      };
+
+      const dataSources = UserModel.app.dataSources;
+      const myEmailDataSource = dataSources && dataSources.myEmailDataSource && dataSources.myEmailDataSource.settings;
+      let emailOptions = myEmailDataSource && myEmailDataSource.emailOptions;
+      
+      if (!emailOptions) emailOptions = defaultEmailOptions;
+      else if (!emailOptions.redirect) {
+        let url = emailOptions.url || defaultEmailOptions.url;
+        let protocol = emailOptions.protocol || defaultEmailOptions.protocol;
+        emailOptions.redirect = `${protocol}://${url}/login?popup=verifiedLogin`;
+      }
+
+      logUser("Verification email options are", emailOptions);
+
+      const options = {
+        mailer: UserModel.app.models.Email,
+        type: 'email',
+        to: user.email,
+        // from is not relevant if we are sending via nodemailer 
+        // and there's a from email in datasources
+        // (user.js has to get a not empty from)
+        from: emailOptions.from || defaultEmailOptions.from,
+        subject: context.args.data.subject || "",
+        text: context.args.data.start + '<a href="{href}">' + context.args.data.click + '</a><br>' + context.args.data.end,
+        template: path.resolve(__dirname, '../../server/views/verify.ejs'),
+        templateFn: (verifyOptions, options, cb) => {
+          return cb(null, verifyOptions.text)
+        },
+        redirect: emailOptions.redirect,
+        user: user,
+        host: emailOptions.host || defaultEmailOptions.host,
+        port: emailOptions.port || defaultEmailOptions.port,
+        protocol: emailOptions.protocol || defaultEmailOptions.protocol
+      };
+
+      //send the email, and callback is invoked after the actions takes place
+      if (!user.emailVerified) { //not sure this if is neccessary
+        user.verify(options, function (err, response) {
+          if (err) {
+            UserModel.deleteById(user.id);
+            return next(err);
+          }
+
+          logUser("The verification email was now sent with the email-options: ", options);
+          return next();
+        });
+      } else return next();
+	  });
 
 
     UserModel.beforeRemote('resetPassword', function (ctx, model, next) {
