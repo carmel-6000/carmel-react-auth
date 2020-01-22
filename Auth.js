@@ -184,8 +184,8 @@ const Auth = {
   // this function asyncronically adds a new user to the CustomUser table
   // if it succeeds it return {ok:true}
   // if there's an error it returns the error and ok:false
-  async registerAsync(fd, message) {
-    var payload = message || {};
+  async registerAsync(fd, message = null) {
+    var payload = message ? message : {};
 
     if (!fd || typeof fd !== "object") return { error: 'EMPTY_DATA', ok: false };
     if (Array.isArray(fd)) {
