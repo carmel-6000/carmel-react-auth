@@ -185,7 +185,7 @@ const Auth = {
   // if it succeeds it return {ok:true}
   // if there's an error it returns the error and ok:false
   async registerAsync(fd, message) {
-    var payload = {};
+    var payload = message || {};
 
     if (!fd || typeof fd !== "object") return { error: 'EMPTY_DATA', ok: false };
     if (Array.isArray(fd)) {
