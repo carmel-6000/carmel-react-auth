@@ -20,7 +20,10 @@
     "verificationToken": "string"
   },
   "options": {
-    "caseSensitiveEmail": true
+    "caseSensitiveEmail": true,
+    "mysql": {
+      "table": "CustomUser"
+    }
   },
   "hidden": [
     "password",

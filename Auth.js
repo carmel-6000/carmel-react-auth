@@ -81,7 +81,7 @@ const Auth = {
     if (GenericTools.isCordova()) {
       this.setItem('klo', res.klo, false, true);
       this.setItem('kl', res.kl, false, true);
-      this.setItem('access_token', res.id);
+      this.setItem('access_token', res.id, false, true);
       this.setItem('kloo', res.kloo, false, true);
       this.setItem('klk', res.klk, false, true);
     }
@@ -139,22 +139,22 @@ const Auth = {
     // this.setItem('klo', at.klo, false, true);
     // this.setItem('kl', at.kl, false, true);
 
+    if (GenericTools.isCordova()) {
+      this.setItem('klo', at.klo, false, true);
+      this.setItem('kl', at.kl, false, true);
+      this.setItem('access_token', at.id);
+      this.setItem('kloo', at.kloo, false, true);
+      this.setItem('klk', at.klk, false, true);
+    }
+
     return new Promise((res, rej) => { res({ success: true }) });
   },
   logout(cb) {
-
-    this.removeItem('access_token');
-    this.removeItem('kl');
-    this.removeItem('klo');
-    this.removeItem('klk');
-    this.removeItem('kloo');
-    this.removeItem('olk');
-
-    GenericTools.deleteAllCookies(); //needed?
+    GenericTools.deleteAllCookies();
     // NtfFactory.getInstance().unsubscribe();
     this._isAuthenticated = false;
     cb && cb();
-    window.location.href = window.location.origin;
+    GenericTools.safe_redirect('/');
     return;
   },
   register(fd, message) {
