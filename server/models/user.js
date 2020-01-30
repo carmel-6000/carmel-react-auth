@@ -354,7 +354,7 @@ module.exports = function (User) {
       const { RoleMapping } = User.app.models;
       let query = { where: {} };
       query.where[uField] = uData[uField];
-      logUser("quiery", query);
+      logUser("query", query);
       let [err, res] = await to(this.findOne(query));
       if (err) {
         logUser("Error on serch by field", err);
@@ -424,7 +424,7 @@ module.exports = function (User) {
       logUser("err?", err);
       logUser("Returning Access token (only id)?", at);
 
-
+      if (err) return cb(err);
       cb(null, { accessToken: at.id, kl: at.__data.kl, klo: at.__data.klo });
 
     })
@@ -451,7 +451,14 @@ module.exports = function (User) {
       logUser("User.findOne results", user);
       var defaultError = new Error('login failed');
       defaultError.statusCode = 401;
-
+      if (this.settings.emailVerificationRequired && !user.emailVerified) {
+        // Fail to log in if email verification is not done yet
+        let errToReturn = new Error(g.f('login failed as the email has not been verified'));
+        errToReturn.statusCode = 401;
+        errToReturn.code = 'LOGIN_FAILED_EMAIL_NOT_VERIFIED';
+        logUser('User email has not been verified');
+        return fn(errToReturn)
+      }
       defaultError.code = 'LOGIN_FAILED';
       var credentials = { ttl: 60 * 60, password: 'wrong-one', email: user.email };
       async function tokenHandler(err, token) {

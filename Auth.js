@@ -139,6 +139,14 @@ const Auth = {
     // this.setItem('klo', at.klo, false, true);
     // this.setItem('kl', at.kl, false, true);
 
+    if (GenericTools.isCordova()) {
+      this.setItem('klo', at.klo, false, true);
+      this.setItem('kl', at.kl, false, true);
+      this.setItem('access_token', at.id);
+      this.setItem('kloo', at.kloo, false, true);
+      this.setItem('klk', at.klk, false, true);
+    }
+
     return new Promise((res, rej) => { res({ success: true }) });
   },
   logout(cb) {
