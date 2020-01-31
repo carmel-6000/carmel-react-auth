@@ -22,7 +22,6 @@ class ResetPassword extends Component {
         let pass = this.refs.pwd.value, confPass = this.refs.confPwd.value, passErr, confErr;
         passErr = ValidateFields.validatePasswordInput(pass, true)
         confErr = ValidateFields.validateConfirmPasswordInput(confPass, true, pass);
-        //console.log(pass, confPass, passErr + confErr === '')
         if (passErr + confErr === '') {
 
             let [res, err] = await Auth.superAuthFetch('/api/CustomUsers/reset-password?access_token=' + this.token, {
