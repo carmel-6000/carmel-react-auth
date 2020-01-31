@@ -1440,7 +1440,7 @@ module.exports = function (User) {
         mailer: UserModel.app.models.Email,
         type: 'email',
         to: user.email,
-        // from is not relevant if we are sending via nodemailer 
+        // "from" is not relevant if we are sending via nodemailer 
         // and there's a from email in datasources
         // (user.js has to get a not empty from)
         from: emailOptions.from || defaultEmailOptions.from,

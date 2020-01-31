@@ -1,6 +1,9 @@
 {
   "name": "RoleMapping",
   "description": "Map principals to roles",
+  "hidden": [
+    "principalId"
+  ],
   "properties": {
     "id": {
       "type": "string",
