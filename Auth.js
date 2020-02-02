@@ -151,6 +151,14 @@ const Auth = {
   },
   logout(cb) {
     GenericTools.deleteAllCookies();
+    if (GenericTools.isCordova()) {
+      this.removeItem('access_token');
+      this.removeItem('kl');
+      this.removeItem('klo');
+      this.removeItem('klk');
+      this.removeItem('kloo');
+      this.removeItem('olk');
+    }
     // NtfFactory.getInstance().unsubscribe();
     this._isAuthenticated = false;
     cb && cb();
