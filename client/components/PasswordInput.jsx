@@ -12,7 +12,6 @@ import Visibility from '@material-ui/icons/Visibility';
 import VisibilityOff from '@material-ui/icons/VisibilityOff';
 import IconButton from '@material-ui/core/IconButton';
 
-// import "../components/PasswordInput.css"
 const passwordStyle = {
     display: "flex",
     flexDirection: "column",
@@ -132,10 +131,10 @@ class PasswordInput extends Component {
             <div>
                 <div style={passwordStyle}>
                     <FormControl autoComplete='off'>
-                        <InputLabel htmlFor="standard-adornment-password">Password</InputLabel>
+                        <InputLabel htmlFor="standard-adornment-password" >{this.props.passwordLabel || "enter password"}</InputLabel>
                         <Input onCopy={this.onCopy} style={fieldStyle}
                             // type: "password",
-                            type={!this.state.displyPassword ? "password" : "text"} value={this.state.password} onKeyUp={this.onKeyUpPassword} label={this.props.passwordLabel || "enter password"} onChange={this.onChangePassword}
+                            type={!this.state.displyPassword ? "password" : "text"} value={this.state.password} onKeyUp={this.onKeyUpPassword}  onChange={this.onChangePassword}
                             endAdornment={<InputAdornment position="end">
                                 <IconButton
                                     aria-label="toggle password visibility"
