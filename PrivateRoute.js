@@ -154,7 +154,7 @@ const HomeRoute = withRouter(_HomeRoute);
 
 
 // PublicRoute is for routes/components that are only public
-// Authenticated users cannot access a public route
+// Authenticated users cannot access a public route unless it's specified in roles-access.config
 // class _PublicRoute extends Component {
 //   constructor(props) {
 //     super(props);

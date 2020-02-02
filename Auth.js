@@ -212,7 +212,10 @@ const Auth = {
     if (!res.ok) {
       let [err, res2] = await AsyncTools.to(res.json());
       if (err) return { error: err, ok: false };
-      return { error: res2.error.details ? Object.values(res2.error.details.messages) : Object.values(res2.error.code), ok: false };
+      return {
+        error: res2.error.details ? Object.values(res2.error.details.messages) :
+          (res2.error.code ? Object.values(res2.error.code) : "REGISTRATION_ERROR"), ok: false
+      };
     }
 
     return { ok: true };
