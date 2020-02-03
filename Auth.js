@@ -63,7 +63,7 @@ const Auth = {
       console.log('entered the if (no internet)')
       return [null, 'NO_INTERNET'];
     }
-    
+
     let [res, err] = await AsyncTools.superFetch(url, payload);
     if (err && err.error && err.error.statusCode === 401 && redirOnFailure === true) {
       Auth.logout(() => window.location.href = window.location.origin); //FORCE LOGOUT.      
@@ -190,6 +190,9 @@ const Auth = {
   // if it succeeds it return {ok:true}
   // if there's an error it returns the error and ok:false
   async registerAsync(fd, message = null) {
+    if (!navigator.onLine) {
+      return { error: 'NO_INTERNET', ok: false };
+    }
     var payload = message ? message : {};
 
     if (!fd || typeof fd !== "object") return { error: 'EMPTY_DATA', ok: false };
@@ -202,7 +205,6 @@ const Auth = {
         payload[key] = value;
       }
     }
-
     let res = await fetch('/api/CustomUsers', {
       headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
       method: "POST",
