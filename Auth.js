@@ -144,10 +144,26 @@ const Auth = {
     // this.setItem('klo', at.klo, false, true);
     // this.setItem('kl', at.kl, false, true);
 
+    if (GenericTools.isCordova()) {
+      this.setItem('klo', at.klo, false, true);
+      this.setItem('kl', at.kl, false, true);
+      this.setItem('access_token', at.id);
+      this.setItem('kloo', at.kloo, false, true);
+      this.setItem('klk', at.klk, false, true);
+    }
+
     return new Promise((res, rej) => { res({ success: true }) });
   },
   logout(cb) {
     GenericTools.deleteAllCookies();
+    if (GenericTools.isCordova()) {
+      this.removeItem('access_token');
+      this.removeItem('kl');
+      this.removeItem('klo');
+      this.removeItem('klk');
+      this.removeItem('kloo');
+      this.removeItem('olk');
+    }
     // NtfFactory.getInstance().unsubscribe();
     this._isAuthenticated = false;
     cb && cb();
@@ -185,6 +201,7 @@ const Auth = {
   },
 
   // input: fd - array or object - that consist of data of a new user
+  //        message - customized confirm email text
   // output: { error: _string_, ok: _bool_ }
   // this function asyncronically adds a new user to the CustomUser table
   // if it succeeds it return {ok:true}
@@ -194,29 +211,22 @@ const Auth = {
       return { error: 'NO_INTERNET', ok: false };
     }
     var payload = message ? message : {};
-
     if (!fd || typeof fd !== "object") return { error: 'EMPTY_DATA', ok: false };
-    if (Array.isArray(fd)) {
-      fd.forEach(function (value, key) {
-        payload[key] = value;
-      });
-    } else {
-      for (const [key, value] of Object.entries(fd)) {
-        payload[key] = value;
-      }
-    }
+    if (Array.isArray(fd)) fd.forEach(function (value, key) { payload[key] = value; });
+    else for (const [key, value] of Object.entries(fd)) { payload[key] = value; }
+
     let res = await fetch('/api/CustomUsers', {
       headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
       method: "POST",
       body: JSON.stringify(payload)
     });
-
     if (!res.ok) {
       let [err, res2] = await AsyncTools.to(res.json());
-      if (err) {
-        return { error: err, ok: false };
-      }
-      return { error: res2.error.details ? Object.values(res2.error.details.messages) : Object.values(res2.error.code), ok: false };
+      if (err) return { error: err, ok: false };
+      return {
+        error: res2.error.details ? Object.values(res2.error.details.messages) :
+          (res2.error.code ? Object.values(res2.error.code) : "REGISTRATION_ERROR"), ok: false
+      };
     }
 
     return { ok: true };

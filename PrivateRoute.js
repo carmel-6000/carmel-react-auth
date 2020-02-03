@@ -73,14 +73,14 @@ class _PrivateRoute extends Component {
 
 
   render() {
-    const { compName, component: Component, /*notFound: NotFound,*/ ...rest } = this.props;
+    const { compName, component: Component, notFound: NotFound, ...rest } = this.props;
     if (this.klsk.indexOf(compName) == -1) {
       console.log("compName(%s) is excluded", compName);
-      return /*NotFound ? <NotFound /> :*/ <div/>;
+      return NotFound ? <NotFound /> : <div/>;
     }
     return (<Route key={0} {...rest} render={props => {
       return this.haveAccess ?
-        (<Component {...props} />) : (/*NotFound ? <NotFound /> :*/ <Link to="/">Go back to login2</Link>);
+        (<Component {...props} />) : (NotFound ? <NotFound /> : <Link to="/">Go back to login2</Link>);
     }}
     />
     );
@@ -102,19 +102,19 @@ class _MultipleRoute extends Component {
     this.haveAccess = Auth.isAuthenticated();
   }
   render() {
-    const { comps, component: Component, /*notFound: NotFound,*/ ...rest } = this.props;
+    const { comps, component: Component, notFound: NotFound, ...rest } = this.props;
     let k = Object.keys(comps);
     if (!this.klsk) return <div></div>;
     const intersection = this.klsk.filter(element => k.includes(element));
     if (!intersection.length) {
-      return (/*NotFound ? <NotFound /> :*/ <Link to="/">Go back to login</Link>);
+      return (NotFound ? <NotFound /> : <Link to="/">Go back to login</Link>);
     }
     return (
       <Route exact key={0} {...rest} render={props => {
         let hasc = comps[intersection[0]] && this.haveAccess;
         let Co = <div />;
         if (hasc) { Co = comps[intersection[0]] }
-        return this.haveAccess ? (<Co {...props} />) : (/*NotFound ? <NotFound /> :*/ <Link to="/">Go back to login 1</Link>);
+        return this.haveAccess ? (<Co {...props} />) : (NotFound ? <NotFound /> : <Link to="/">Go back to login 1</Link>);
         ;
       }}
       />
@@ -154,7 +154,7 @@ const HomeRoute = withRouter(_HomeRoute);
 
 
 // PublicRoute is for routes/components that are only public
-// Authenticated users cannot access a public route
+// Authenticated users cannot access a public route unless it's specified in roles-access.config
 // class _PublicRoute extends Component {
 //   constructor(props) {
 //     super(props);
