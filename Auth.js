@@ -4,7 +4,6 @@ import Authentication from './Authentication';
 // import NtfFactory from '../notifications/client/NtfFactory';
 
 const Auth = {
-
   _isAuthenticated: false,
   getKls() {
     let kls = { kl: this.getItem('kl'), klo: this.getItem('klo') };
