@@ -6,7 +6,6 @@ import Authentication from './Authentication';
 const Auth = {
 
   _isAuthenticated: false,
-
   getKls() {
     let kls = { kl: this.getItem('kl'), klo: this.getItem('klo') };
     //console.log("KLS? (auth.js)",kls);
