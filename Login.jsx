@@ -24,9 +24,10 @@ class Login extends Component {
             resetPassMsg: ""
         }
         this.elementsHandler = new ElementsHandler(this);
+        this.handleLogin = this.handleLogin.bind(this);
     }
 
-    handleLogin = async (e) => {
+    async handleLogin(e) {
         e.preventDefault();
 
         let email = this.refs.email.value;
