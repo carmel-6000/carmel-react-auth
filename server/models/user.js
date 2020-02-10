@@ -377,7 +377,7 @@ module.exports = function (User) {
           logUser("Updated fields to be:", dataToUpdate);
         }
 
-        return this.directLoginAs(res.id, roleId, cb, ctx);
+        return this.directLoginAs(res.id, roleId, cb, ctx, ttl);
       }
       //create new user in db.
       let pass = generatePassword(8);
