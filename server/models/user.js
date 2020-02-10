@@ -21,7 +21,7 @@ var logUser = require('debug')('model:user');
 const fs = require('fs');
 const base64 = require('base-64');
 const randomstring = require("randomstring");
-
+const Constants = require("./../../consts/Constants");
 
 // bcrypt's max length is 72 bytes;
 
@@ -514,27 +514,107 @@ module.exports = function (User) {
     //let userModel = CustomUser.app.models.User;
     //logUser("this: ", this);
     //logUser("login: ", CustomUser.login);
+    function getDateNowTime () {
+      // from this format -> 2/7/2020, 9:46:11
+      // to this format   -> 2020-02-07T09:37:36.000Z
+      let now = new Date(Date.now()).toLocaleString("en-US", { timeZone: "Asia/Jerusalem",  hour12:false });
+      let nowArr = now.split(", ");
+      let dateArr = nowArr[0].split("/");
+      let month = dateArr[0].length === 2 ? dateArr[0]: "0"+dateArr[0];
+      let day = dateArr[1].length === 2 ? dateArr[1]: "0"+dateArr[1];
+      let date = dateArr[2]+"-"+month+"-"+day;
+      let time = nowArr[1];
+      let datetime = date+"T"+time+".000Z";
+      datetime = new Date(datetime);
+      return datetime;
+    }
 
-    this.login(credentials, include, function (loginErr, loginToken) {
-      if (loginErr) {
-        logUser("Login error", loginErr);
-        return callback(loginErr);
+    (async (callback)=>{
+      const models = User.app.models;
+      const alModel = models.AccessLogger;
+      const cuModel = models.CustomUser;
+      const pwdModel = models.Passwords; //TODO Shira
+      const BLOCK_COUNT = Constants.login.BLOCK_COUNT;
+      const BLOCK_TIME = Constants.login.BLOCK_TIME;
+      let now = getDateNowTime();
+      
+      let [alFindErr, alFindRes] = await to(alModel.find({ email:credentials.email, order: 'created DESC'}));
+      if(alFindErr) return callback(alFindErr);
+
+      if(alFindRes && alFindRes[0] && alFindRes[0].created){
+        let created = new Date(alFindRes[0].created);
+        let diff = (now - created);
+
+        if(diff >= BLOCK_TIME){
+          let [cuUpsertErr,cuUpsertRes] = await to(cuModel.upsertWithWhere(
+            {email:credentials.email}, {loginAccess: 0}
+          ));
+
+          if(cuUpsertErr) return callback(cuUpsertErr);   
+          let [alDestroyErr, alDestroyRes] = await to(alModel.destroyAll({email:credentials.email}));
+          if(alDestroyErr) return callback(alDestroyErr);
+        }
       }
-      logUser("User is logged in with loginToken", loginToken);
-      loginToken = loginToken.toObject();
 
-      getKlos(loginToken.userId).then(klos => {
-        //kl == role key, that represents user role
-        loginToken.kl = klos.kl;
-        //klo == array of view components that user is allowed to access on base64
-        loginToken.klo = klos.klo;
+      let [cuAccessErr, cuAccessRes] = await to(cuModel.findOne(
+        {where:{email:credentials.email, loginAccess: 1}, fields:{loginAccess:true}}
+      ));
 
-        logUser("Extended login output:", loginToken);
+      if(cuAccessErr || cuAccessRes) return callback(cuAccessErr || {code: Constants.errorCodes.USER_BLOCKED});
+      
+      this.login(credentials, include, async function (loginErr, loginToken) {
+        
+        if (loginErr) {
 
-        return callback(null, loginToken);
+          let [uFindErr, uFindRes] = await to(User.findOne({where:{email:credentials.email } }));
+          if (uFindRes) {
+            let [alCreateErr, alCreateRes] = await to(alModel.create({email: credentials.email, created:now}));
+          }
+
+          [alFindErr, alFindRes] = await to(alModel.find({ email:credentials.email}));
+          if(alFindRes && alFindRes.length >= BLOCK_COUNT){
+            let counter=0;
+            for(let alElem of alFindRes ){
+              alElem.created = new Date(alElem.created);
+              if(now-alElem.created <= BLOCK_TIME) counter++;
+            }
+
+            if(counter >= BLOCK_COUNT){
+              let [cuUpsertErr,cuUpsertRes] = await to(cuModel.upsertWithWhere(
+                {email:credentials.email}, {loginAccess: 1}
+              ));
+              console.log("success blocking user??", cuUpsertRes);
+            }
+          }
+
+          logUser("Login error", loginErr);
+          return callback(loginErr);
+        }
+
+        let [alDestroyErr, alDestroyRes] = await to(alModel.destroyAll({email:credentials.email}));
+        if(alDestroyErr) return callback(alDestroyErr);
+
+        logUser("User is logged in with loginToken", loginToken);
+        loginToken = loginToken.toObject();
+
+        let pwdResetRequired = await pwdModel.checkForResetPassword(loginToken.userId) ;
+        if(pwdResetRequired) loginToken.pwdResetRequired = true;
+
+        getKlos(loginToken.userId).then(klos => {
+          //kl == role key, that represents user role
+          loginToken.kl = klos.kl;
+          //klo == array of view components that user is allowed to access on base64
+          loginToken.klo = klos.klo;
+
+          logUser("Extended login output:", loginToken);
+
+          delete loginToken.userId; //are we using this somewhere in client side????
+          return callback(null, loginToken);
+        });
+        //return component arr and save in session storage
       });
-      //return component arr and save in session storage
-    });
+
+    })(callback);
   };
 
   async function getKlos(userId, userRoleMap = null) {
@@ -782,7 +862,7 @@ module.exports = function (User) {
 
     // Make sure to use the constructor of the (sub)class
     // where the method is invoked from (`this` instead of `User`)
-    this.findById(userId, options, (err, inst) => {
+    this.findById(userId, options, async (err, inst) => {
       if (err) return cb(err);
 
       if (!inst) {
@@ -793,8 +873,15 @@ module.exports = function (User) {
         });
         return cb(err);
       }
+      const passwordsModel = this.app.models.Passwords;
+      let pwdExists = await passwordsModel.checkIfPasswordExists(userId, newPassword);
+      if(pwdExists.exists) return cb({ code: Constants.errorCodes.PASSOWRD_ALREADY_USED });
+      //////TODO Shira
+      let pwdUpsertRes = await passwordsModel.upsertPwd(userId, newPassword);
+      // if(!pwdUpsertRes.success) return cb({}); //needed??
 
       inst.setPassword(newPassword, options, cb);
+
     });
 
     return cb.promise;
@@ -1436,6 +1523,12 @@ module.exports = function (User) {
 
       logUser("Verification email options are", emailOptions);
 
+      //////TODO Shira
+      (async()=>{
+        const passwordsModel = this.app.models.Passwords;
+        let pwdUpsertRes = await passwordsModel.upsertPwd(user.id, user.password);
+        // if(!pwdUpsertRes.success) return cb({}); //needed?? - maybe delete user and exit function
+      })();
       const options = {
         mailer: UserModel.app.models.Email,
         type: 'email',

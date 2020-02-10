@@ -28,11 +28,13 @@ class ResetPassword extends Component {
                 method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
                 body: JSON.stringify({ newPassword: pass })
             });
-            if (res) {
-                this.setState({ infoModal: true, modalText: "הסיסמה שונתה בהצלחה!" });
-            }
-            else this.setState({ infoModal: true, modalText:  "פג תוקף מייל האימות. חזור לדף הבית ושלח מייל חדש."  });
-
+            let modalText = "פג תוקף מייל האימות. חזור לדף הבית ושלח מייל חדש.";
+            if(err || !res) {
+                if(err.error && err.error.code === "PASSOWRD_ALREADY_USED") 
+                    modalText = "סיסמה זו הייתה כבר בשימוש, בחר סיסמה אחרת.";
+            } 
+            else modalText = "הסיסמה שונתה בהצלחה!";
+            this.setState({ infoModal: true, modalText});
         }
         else this.setState({ errConf: confErr, errPass: passErr });
     }

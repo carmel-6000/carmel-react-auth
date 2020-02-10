@@ -63,7 +63,7 @@ const Auth = {
       console.log('entered the if (no internet)')
       return [null, 'NO_INTERNET'];
     }
-    
+
     let [res, err] = await AsyncTools.superFetch(url, payload);
     if (err && err.error && err.error.statusCode === 401 && redirOnFailure === true) {
       Auth.logout(() => window.location.href = window.location.origin); //FORCE LOGOUT.      
@@ -93,14 +93,14 @@ const Auth = {
     return new Promise((resolve, rej) => { resolve({ success: true, user: res }) });
   },
 
-  async login(email, pw, cb) {
-    return this.authenticate(email, pw, cb);
+  async login(email, pw, cb, obj = {}) {
+    return this.authenticate(email, pw, cb, obj);
   },
 
-  async authenticate(email, pw, cb, ttl = (60 * 60 * 5)) {
+  async authenticate(email, pw, cb, { ttl = (60 * 60 * 5), captcha = null }) {
     const [res, err] = await AsyncTools.superFetch('/api/CustomUsers/elogin/', {
       method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email, password: pw, ttl })
+      body: JSON.stringify({ email: email, password: pw, ttl, captcha })
     });
 
     if (err) {
