@@ -340,7 +340,7 @@ module.exports = function (User) {
 
 
 
-  User.registerOrLoginByUniqueField = function (uField, uData, roleId, cb, ctx = null, updateCustomFields = []) {
+  User.registerOrLoginByUniqueField = function (uField, uData, roleId, cb, ctx = null, updateCustomFields = [], ttl = null) {
     /**
      * @param {String} uField Unique field that identifies the user.
      * @param {Object} uData  User data to create.
@@ -377,7 +377,7 @@ module.exports = function (User) {
           logUser("Updated fields to be:", dataToUpdate);
         }
 
-        return this.directLoginAs(res.id, roleId, cb, ctx);
+        return this.directLoginAs(res.id, roleId, cb, ctx, ttl);
       }
       //create new user in db.
       let pass = generatePassword(8);
@@ -402,7 +402,7 @@ module.exports = function (User) {
         logUser("~~we created new user~~\n", newUser, newUser.id, newRole.id);
       }
 
-      return this.directLoginAs(newUser.id, roleId, cb, ctx); //creates accessToken for user
+      return this.directLoginAs(newUser.id, roleId, cb, ctx, ttl); //creates accessToken for user
     })();
   }
 
@@ -433,7 +433,7 @@ module.exports = function (User) {
 
 
 
-  User.directLoginAs = function (userId, roleId = null, fn, ctx = null) {
+  User.directLoginAs = function (userId, roleId = null, fn, ctx = null, ttl = null) {
     // const { CustomUser } = User.app.models;
     logUser("User.directLoginAs is launched with userId", userId);
 
@@ -460,7 +460,7 @@ module.exports = function (User) {
         return fn(errToReturn)
       }
       defaultError.code = 'LOGIN_FAILED';
-      var credentials = { ttl: 60 * 60, password: 'wrong-one', email: user.email };
+      var credentials = { ttl: ttl || 60 * 60, password: 'wrong-one', email: user.email }; //todo check 
       async function tokenHandler(err, token) {
         if (err) return fn(err);
         token.__data.user = user;

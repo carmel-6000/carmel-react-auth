@@ -3,6 +3,7 @@ import queryString from 'querystring';
 import Auth from '../../Auth'
 import ValidateFields from '../../../tools/ValidateFields'
 import { Dialog, DialogTitle, Button, DialogContent, DialogActions } from '@material-ui/core';
+import GenericTools from '../../../tools/GenericTools';
 
 class ResetPassword extends Component {
     constructor(props) {
@@ -13,10 +14,10 @@ class ResetPassword extends Component {
             this.token = params['?access_token'];
         }
         catch (err) {
-            window.location.href = window.location.origin;
+            GenericTools.safe_redirect('/');
         }
     }
-    
+
     submit = async (e) => {
         e.preventDefault();
         let pass = this.refs.pwd.value, confPass = this.refs.confPwd.value, passErr, confErr;
@@ -41,7 +42,7 @@ class ResetPassword extends Component {
 
     render() {
         //console.log('render')
-        return <div className="container justify-content-center mt-5">
+        return <div className="container justify-content-center mt-5 reset-password">
             <div className='loginBox'>
 
                 <form className="form" onSubmit={this.submit}>

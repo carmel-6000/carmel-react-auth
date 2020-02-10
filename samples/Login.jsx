@@ -1,16 +1,17 @@
 import React, { Component } from 'react';
 import './_Login.scss';
-import Auth from './Auth';
+import Auth from '../Auth';
 import { Redirect } from 'react-router';
-import ValidateTool from '../tools/ValidateTool'
-import ElementsHandler from '../../handlers/ElementsHandler'
+import ValidateTool from '../../tools/ValidateTool'
+import ElementsHandler from '../../../handlers/ElementsHandler'
 import { Dialog, DialogTitle, Button, DialogContent, DialogActions } from '@material-ui/core';
-import GenericTools from '../tools/GenericTools'
+import GenericTools from '../../tools/GenericTools'
 
 class Login extends Component {
 
     constructor(props) {
         super(props);
+
         this.state = {
             isLoading: false,
             redirTo: false,
@@ -24,10 +25,9 @@ class Login extends Component {
             resetPassMsg: ""
         }
         this.elementsHandler = new ElementsHandler(this);
-        this.handleLogin = this.handleLogin.bind(this);
     }
 
-    async handleLogin(e) {
+    handleLogin = async (e) => {
         e.preventDefault();
 
         let email = this.refs.email.value;
@@ -156,13 +156,13 @@ class Login extends Component {
     }
 
 
-    reset = async (e, emailMsg = null) => {
+    reset = async (e) => {
         e.preventDefault();
         let email = this.refs.resetEmailInput.value;
         let [res, err] = await Auth.superAuthFetch('/api/CustomUsers/reset', {
             headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
             method: "POST",
-            body: JSON.stringify({ email, origin: window.location.origin + (window.location.hash[0] == "#" ? "/#" : ""), emailMsg })
+            body: JSON.stringify({ email: email, origin: window.location.origin + (window.location.hash[0] == "#" ? "/#" : "") })
         })
 
         this.setState({
