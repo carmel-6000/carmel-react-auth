@@ -514,76 +514,72 @@ module.exports = function (User) {
     //let userModel = CustomUser.app.models.User;
     //logUser("this: ", this);
     //logUser("login: ", CustomUser.login);
-    function getDateNowTime () {
-      // from this format -> 2/7/2020, 9:46:11
-      // to this format   -> 2020-02-07T09:37:36.000Z
-      let now = new Date(Date.now()).toLocaleString("en-US", { timeZone: "Asia/Jerusalem",  hour12:false });
-      let nowArr = now.split(", ");
-      let dateArr = nowArr[0].split("/");
-      let month = dateArr[0].length === 2 ? dateArr[0]: "0"+dateArr[0];
-      let day = dateArr[1].length === 2 ? dateArr[1]: "0"+dateArr[1];
-      let date = dateArr[2]+"-"+month+"-"+day;
-      let time = nowArr[1];
-      let datetime = date+"T"+time+".000Z";
-      datetime = new Date(datetime);
-      return datetime;
-    }
 
-    (async (callback)=>{
+    (async (callback) => {
       const models = User.app.models;
       const alModel = models.AccessLogger;
       const cuModel = models.CustomUser;
       const pwdModel = models.Passwords; //TODO Shira
-      const BLOCK_COUNT = Constants.login.BLOCK_COUNT;
-      const BLOCK_TIME = Constants.login.BLOCK_TIME;
-      let now = getDateNowTime();
-      
-      let [alFindErr, alFindRes] = await to(alModel.find({ email:credentials.email, order: 'created DESC'}));
-      if(alFindErr) return callback(alFindErr);
 
-      if(alFindRes && alFindRes[0] && alFindRes[0].created){
-        let created = new Date(alFindRes[0].created);
+      let authConfig = getAuthConfig();
+      let BLOCK_COUNT = authConfig.BLOCK_COUNT_LOGIN;
+      let BLOCK_TIME = authConfig.BLOCK_TIME_LOGIN;
+      let now = getDateNowTime(Date.now());
+
+      let [alFindErr, alFindRes] = await to(alModel.find({ email: credentials.email, order: 'created DESC' }));
+      if (alFindErr) return callback(alFindErr);
+
+      let created = null;
+      if (alFindRes && alFindRes[0] && alFindRes[0].created) {
+        created = new Date(alFindRes[0].created);
         let diff = (now - created);
 
-        if(diff >= BLOCK_TIME){
-          let [cuUpsertErr,cuUpsertRes] = await to(cuModel.upsertWithWhere(
-            {email:credentials.email}, {loginAccess: 0}
+        if (diff >= BLOCK_TIME) {
+          let [cuUpsertErr, cuUpsertRes] = await to(cuModel.upsertWithWhere(
+            { email: credentials.email }, { loginAccess: 0 }
           ));
 
-          if(cuUpsertErr) return callback(cuUpsertErr);   
-          let [alDestroyErr, alDestroyRes] = await to(alModel.destroyAll({email:credentials.email}));
-          if(alDestroyErr) return callback(alDestroyErr);
+          if (cuUpsertErr) return callback(cuUpsertErr);
+          let [alDestroyErr, alDestroyRes] = await to(alModel.destroyAll({ email: credentials.email }));
+          if (alDestroyErr) return callback(alDestroyErr);
         }
       }
 
       let [cuAccessErr, cuAccessRes] = await to(cuModel.findOne(
-        {where:{email:credentials.email, loginAccess: 1}, fields:{loginAccess:true}}
+        { where: { email: credentials.email, loginAccess: 1 }, fields: { loginAccess: true } }
       ));
-
-      if(cuAccessErr || cuAccessRes) return callback(cuAccessErr || {code: Constants.errorCodes.USER_BLOCKED});
       
+      if(created){
+        let blockTime = authConfig.BLOCK_TIME_LOGIN/60000
+        let minutes = blockTime*60000;//BLOCK_TIME * 10;
+        if (cuAccessErr || cuAccessRes) 
+          return callback(cuAccessErr || { 
+            code: authConfig.USER_BLOCKED_ERROR_CODE, 
+            access_time: getDateNowTime((created.getTime() + minutes), false) 
+          });
+      }
+
       this.login(credentials, include, async function (loginErr, loginToken) {
-        
+
         if (loginErr) {
 
-          let [uFindErr, uFindRes] = await to(User.findOne({where:{email:credentials.email } }));
+          let [uFindErr, uFindRes] = await to(User.findOne({ where: { email: credentials.email } }));
           if (uFindRes) {
-            let [alCreateErr, alCreateRes] = await to(alModel.create({email: credentials.email, created:now}));
+            let [alCreateErr, alCreateRes] = await to(alModel.create({ email: credentials.email, created: now }));
           }
 
-          [alFindErr, alFindRes] = await to(alModel.find({ email:credentials.email}));
-          if(alFindRes && alFindRes.length >= BLOCK_COUNT){
-            let counter=0;
-            for(let alElem of alFindRes ){
+          [alFindErr, alFindRes] = await to(alModel.find({ email: credentials.email }));
+          if (alFindRes && alFindRes.length >= BLOCK_COUNT) {
+            let counter = 0;
+            for (let alElem of alFindRes) {
               alElem.created = new Date(alElem.created);
-              if(now-alElem.created <= BLOCK_TIME) counter++;
+              if (now - alElem.created <= BLOCK_TIME) counter++;
             }
 
-            if(counter >= BLOCK_COUNT){
-              let [cuUpsertErr,cuUpsertRes] = await to(cuModel.upsertWithWhere(
-                {email:credentials.email}, {loginAccess: 1}
+            if (counter >= BLOCK_COUNT) {
+              let [cuUpsertErr, cuUpsertRes] = await to(cuModel.upsertWithWhere(
+                { email: credentials.email }, { loginAccess: 1 }
               ));
-              console.log("success blocking user??", cuUpsertRes);
             }
           }
 
@@ -591,14 +587,14 @@ module.exports = function (User) {
           return callback(loginErr);
         }
 
-        let [alDestroyErr, alDestroyRes] = await to(alModel.destroyAll({email:credentials.email}));
-        if(alDestroyErr) return callback(alDestroyErr);
+        let [alDestroyErr, alDestroyRes] = await to(alModel.destroyAll({ email: credentials.email }));
+        if (alDestroyErr) return callback(alDestroyErr);
 
         logUser("User is logged in with loginToken", loginToken);
         loginToken = loginToken.toObject();
 
-        let pwdResetRequired = await pwdModel.checkForResetPassword(loginToken.userId) ;
-        if(pwdResetRequired) loginToken.pwdResetRequired = true;
+        let pwdResetRequired = await pwdModel.checkForResetPassword(loginToken.userId);
+        if (pwdResetRequired) loginToken.pwdResetRequired = true;
 
         getKlos(loginToken.userId).then(klos => {
           //kl == role key, that represents user role
@@ -873,9 +869,12 @@ module.exports = function (User) {
         });
         return cb(err);
       }
+
+      let authConfig = getAuthConfig();
+
       const passwordsModel = this.app.models.Passwords;
       let pwdExists = await passwordsModel.checkIfPasswordExists(userId, newPassword);
-      if(pwdExists.exists) return cb({ code: Constants.errorCodes.PASSOWRD_ALREADY_USED });
+      if (pwdExists.exists) return cb({ code: authConfig.PASSOWRD_ALREADY_USED_ERROR_CODE });
       //////TODO Shira
       let pwdUpsertRes = await passwordsModel.upsertPwd(userId, newPassword);
       // if(!pwdUpsertRes.success) return cb({}); //needed??
@@ -1496,35 +1495,35 @@ module.exports = function (User) {
       }
       next();
     });
-    
+
 
     //send verification email after registration 
     UserModel.afterRemote('create', function (context, user, next) {
-      
+
       const defaultEmailOptions = {
         url: "localhost:3000",
         host: "0.0.0.0",
         port: "8080",
         from: "carmelvideos@gmail.com",
-        redirect: `http://localhost:3000/login?popup=verifiedLogin`,
+        redirect: `http://localhost:3000/#/login?popup=verifiedLogin`,
         protocol: "http"
       };
 
       const dataSources = UserModel.app.dataSources;
       const myEmailDataSource = dataSources && dataSources.myEmailDataSource && dataSources.myEmailDataSource.settings;
       let emailOptions = myEmailDataSource && myEmailDataSource.emailOptions;
-      
+
       if (!emailOptions) emailOptions = defaultEmailOptions;
       else if (!emailOptions.redirect) {
         let url = emailOptions.url || defaultEmailOptions.url;
         let protocol = emailOptions.protocol || defaultEmailOptions.protocol;
-        emailOptions.redirect = `${protocol}://${url}/login?popup=verifiedLogin`;
+        emailOptions.redirect = `${protocol}://${url}/#/login?popup=verifiedLogin`;
       }
 
       logUser("Verification email options are", emailOptions);
 
       //////TODO Shira
-      (async()=>{
+      (async () => {
         const passwordsModel = this.app.models.Passwords;
         let pwdUpsertRes = await passwordsModel.upsertPwd(user.id, user.password);
         // if(!pwdUpsertRes.success) return cb({}); //needed?? - maybe delete user and exit function
@@ -1562,7 +1561,7 @@ module.exports = function (User) {
           return next();
         });
       } else return next();
-	  });
+    });
 
 
     UserModel.beforeRemote('resetPassword', function (ctx, model, next) {
@@ -1571,27 +1570,27 @@ module.exports = function (User) {
     });
 
     UserModel.on('resetPasswordRequest', function (info) {
-        let origin = info.options.origin;
-        logUser(info.email); // the email of the requested user
-        logUser(info.accessToken.id); // the temp access token to allow password reset
+      let origin = info.options.origin;
+      logUser(info.email); // the email of the requested user
+      logUser(info.accessToken.id); // the temp access token to allow password reset
 
-        if (origin.indexOf("http") != 0)
-            origin = "http://" + origin;
-        var url = origin + '/reset-password';
-        var html = info.emailMsg ? 
-          (info.emailMsg.start +
-            ' <a href="' + url + '?access_token=' + info.accessToken.id + '">' + info.emailMsg.click + '</a> ' +
-            info.emailMsg.end) :
-          ('Click <a href="' + url + '?access_token=' + info.accessToken.id + '">here</a> to reset your password');
+      if (origin.indexOf("http") != 0)
+        origin = "http://" + origin;
+      var url = origin + '/reset-password';
+      var html = info.emailMsg ?
+        (info.emailMsg.start +
+          ' <a href="' + url + '?access_token=' + info.accessToken.id + '">' + info.emailMsg.click + '</a> ' +
+          info.emailMsg.end) :
+        ('Click <a href="' + url + '?access_token=' + info.accessToken.id + '">here</a> to reset your password');
 
-        UserModel.app.models.Email.send({
-            to: info.email,
-            subject: (info.emailMsg && info.emailMsg.subject) || 'Password reset',
-            html: html
-        }, function (err) {
-            if (err) return console.log('> error sending password reset email', err);
-            console.log('> sending password reset email to:', info.email);
-        });
+      UserModel.app.models.Email.send({
+        to: info.email,
+        subject: (info.emailMsg && info.emailMsg.subject) || 'Password reset',
+        html: html
+      }, function (err) {
+        if (err) return console.log('> error sending password reset email', err);
+        console.log('> sending password reset email to:', info.email);
+      });
     });
 
 
@@ -2040,4 +2039,45 @@ function to(promise) {
     return [null, data];
   })
     .catch(err => [err]);
+}
+
+// accepts: d - date
+//          useOffset - if we want to use israel's timezone
+// returns: datetime with format to post to database
+function getDateNowTime(d = Date.now(), useOffset = true) {
+  // from this format -> 2/7/2020, 9:46:11
+  // to this format   -> 2020-02-07T09:37:36.000Z
+  if(!useOffset) {return new Date(d);}
+  let now = new Date(d).toLocaleString("en-US", { timeZone: "Asia/Jerusalem", hour12: false });
+  let nowArr = now.split(", ");
+  let dateArr = nowArr[0].split("/");
+  let month = dateArr[0].length === 2 ? dateArr[0] : "0" + dateArr[0];
+  let day = dateArr[1].length === 2 ? dateArr[1] : "0" + dateArr[1];
+  let date = dateArr[2] + "-" + month + "-" + day;
+  let time = nowArr[1];
+  let datetime = date + "T" + time + ".000Z";
+  datetime = new Date(datetime);
+  return datetime;
+}
+
+function getAuthConfig() {
+  const defaultAuthConfig = {
+    PASSOWRD_ALREADY_USED_ERROR_CODE: "PASSOWRD_ALREADY_USED",
+    USER_BLOCKED_ERROR_CODE: "USER_BLOCKED",
+    BLOCK_COUNT_LOGIN: 5,
+    BLOCK_TIME_LOGIN: 600000
+  };
+  const fileName = process.env.NODE_ENV ? `config.${process.env.NODE_ENV}.json` : 'config.json';
+  const configFile = path.join(__dirname, '../../../../../server', fileName);
+  logUser("configFile", configFile);
+  let authConfig = defaultAuthConfig;
+  try {
+    const config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
+    authConfig = config.auth || defaultAuthConfig;
+  } catch (err) {
+    logUser(`Could not fetch /server/${fileName} and parse it`);
+    authConfig = defaultAuthConfig;
+  }
+
+  return authConfig;
 }
