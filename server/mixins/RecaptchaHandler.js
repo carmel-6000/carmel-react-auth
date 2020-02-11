@@ -1,5 +1,5 @@
 'use strict';
-const verify = require('../../server/lib/recaptcha')
+const verify = require('../lib/recaptcha')
 require('dotenv').config()
 const SECRET_KEY = process.env.REACT_APP_RECAPTCHA_SECRET_KEY;
 

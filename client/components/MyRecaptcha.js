@@ -9,17 +9,24 @@ export default class MyRecaptcha extends Component {
     }
 
     rOnLoaded = () => {
+        console.log("rOnExpired", this.recaptcha)
         this.recaptcha = this.recaptcha.current
 
         this.recaptcha && this.recaptcha.execute(process.env.REACT_APP_RECAPTCHA_SITE_KEY, { action: 'homepage' })
             .then((token) => {
+
                 sessionStorage.setItem('captcha', token);
                 this.props.onResolved(token)
-                this.recaptcha.reset()
+                // this.recaptcha.reset()
             });
+        // if (this.captcha === null) {
 
-        this.captcha = sessionStorage.getItem("captcha")
-        this.props.onResolved(this.captcha)
+        this.recaptcha = sessionStorage.getItem("captcha")
+        this.props.onResolved(this.recaptcha)
+
+        // }
+        // this.props.onResolved(this.captcha)
+
     }
 
     rOnExpired = () => {
