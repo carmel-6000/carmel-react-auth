@@ -1,7 +1,6 @@
 import AsyncTools from '../tools/AsyncTools';
 import GenericTools from '../tools/GenericTools'
 import Authentication from './Authentication';
-// import NtfFactory from '../notifications/client/NtfFactory';
 
 const Auth = {
   _isAuthenticated: false,
