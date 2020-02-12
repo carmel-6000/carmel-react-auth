@@ -21,7 +21,6 @@ var logUser = require('debug')('model:user');
 const fs = require('fs');
 const base64 = require('base-64');
 const randomstring = require("randomstring");
-const Constants = require("./../../consts/Constants");
 
 // bcrypt's max length is 72 bytes;
 
@@ -1424,9 +1423,10 @@ module.exports = function (User) {
         if(!isMatch){
           return cb({success:false,code:"NOT_MATCH_PASSWORDS"})
         }
+        let authConfig = getAuthConfig();
         const passwordsModel = User.app.models.Passwords;
         let pwdExists = await passwordsModel.checkIfPasswordExists(userId, newPassword);
-        if(pwdExists.exists) return cb({ code: Constants.errorCodes.PASSOWRD_ALREADY_USED });
+        if(pwdExists.exists) return cb({ code: authConfig.PASSOWRD_ALREADY_USED_ERROR_CODE });
         //////TODO Shira
         let pwdUpsertRes = await passwordsModel.upsertPwd(userId, newPassword);
         // if(!pwdUpsertRes.success) return cb({}); //needed??
