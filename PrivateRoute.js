@@ -49,11 +49,18 @@ class _PrivateRouteAsync extends Component {
 
 const PrivateRouteAsync = withRouter(_PrivateRouteAsync);
 
-
-class _PrivateRoute extends Component {
+//PrivateRoute purpose
+//This component aims to provide a distinct separation between two access modes:
+//(1) No access: either there's no authentication (anonymous user), or either there's no access according to roles-access.config.json
+//In that case (no access), we will NOT expose any route at all to the user for the sake of security, 
+//we will render a <div /> which stands for NULL.
+//(2) Access permitted: The desired component will be rendered into the route.
+//Please do not change any of this functionality without consulting Eran
+class PrivateRoute extends Component {
 
   constructor(props) {
     super(props);
+    
     let kls = Auth.getKls();
     this.klsk = [];
     this.dhp = null;
@@ -71,22 +78,21 @@ class _PrivateRoute extends Component {
     this.haveAccess = Auth.isAuthenticated();
   }
 
-
   render() {
-    const { compName, component: Component, notFound: NotFound, ...rest } = this.props;
-    if (this.klsk.indexOf(compName) == -1) {
+    const { compName, component: Component, ...rest } = this.props;
+    
+    if (this.klsk.indexOf(compName) == -1 || !this.haveAccess) {
       console.log("compName(%s) is excluded", compName);
-      return NotFound ? <NotFound /> : <div/>;
+      return <div />;
     }
+    console.log("ARE we here?!");
     return (<Route key={0} {...rest} render={props => {
-      return this.haveAccess ?
-        (<Component {...props} />) : (NotFound ? <NotFound /> : <Link to="/">Go back to login2</Link>);
-    }}
-    />
-    );
+        return <Component {...props} />;
+    }} />);
   }
 }
-const PrivateRoute = withRouter(_PrivateRoute);
+//const PrivateRoute = withRouter(_PrivateRoute);
+//const PrivateRoute=_PrivateRoute;
 
 class _MultipleRoute extends Component {
   constructor(props) {
@@ -102,19 +108,19 @@ class _MultipleRoute extends Component {
     this.haveAccess = Auth.isAuthenticated();
   }
   render() {
-    const { comps, component: Component, notFound: NotFound, ...rest } = this.props;
+    const { comps, component: Component, ...rest } = this.props;
     let k = Object.keys(comps);
     if (!this.klsk) return <div></div>;
     const intersection = this.klsk.filter(element => k.includes(element));
     if (!intersection.length) {
-      return (NotFound ? <NotFound /> : <Link to="/">Go back to login</Link>);
+      return <Link to="/">Go back to login</Link>;
     }
     return (
       <Route exact key={0} {...rest} render={props => {
         let hasc = comps[intersection[0]] && this.haveAccess;
         let Co = <div />;
         if (hasc) { Co = comps[intersection[0]] }
-        return this.haveAccess ? (<Co {...props} />) : (NotFound ? <NotFound /> : <Link to="/">Go back to login 1</Link>);
+        return this.haveAccess ? (<Co {...props} />) : <Link to="/">Go back to login 1</Link>;
         ;
       }}
       />
@@ -152,12 +158,20 @@ class _HomeRoute extends Component {
 }
 const HomeRoute = withRouter(_HomeRoute);
 
-
-// PublicRoute is for routes/components that are only public
-// Authenticated users cannot access a public route unless it's specified in roles-access.config
-const PublicRoute = ({ component: Component, ...rest }) => {
+// PublicPrivateRoute purpose
+// It separates between two access modes and user types:
+// (1) Anonymous users:
+//     The desired component will be rendered into the route.
+// (2) Logged-in users: 
+//     Authenticated users cannot access a public route unless it's specified in roles-access.config
+// Use case scenario: 
+// If a page should be restricted to authenticated users but enabled to anonymous users we should use PublicPrivateRoute
+// Whereas inside roles-access.config the user's role access is specified.
+// Example:
+// login or registration pages should be PUBLIC for anonymous users but DISABLED for logged-in users!
+const PublicPrivateRoute = ({ component: Component, ...rest }) => {
   if (Auth.isAuthenticated()) return <PrivateRoute component={Component} {...rest} />
   return <Route {...rest} render={(props) => ( <Component {...props} /> )} />
 }
 
-export { PrivateRoute, PrivateRouteAsync, HomeRoute, MultipleRoute, PublicRoute };
+export { PrivateRoute, PrivateRouteAsync, HomeRoute, MultipleRoute, PublicPrivateRoute };
