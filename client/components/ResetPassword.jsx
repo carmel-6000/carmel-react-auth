@@ -9,7 +9,7 @@ class ResetPassword extends Component {
     constructor(props) {
         super(props);
         let params = queryString.parse(this.props.location.search);
-        this.state = { errPass: '', errConf: '', infoModal: false, modalText: "" };
+        this.state = { errPass: '', errConf: '', infoModal: false, modalText: "",errorCode:"" };
         try {
             this.token = params['?access_token'];
         }
@@ -30,12 +30,16 @@ class ResetPassword extends Component {
                 body: JSON.stringify({ newPassword: pass })
             });
             let modalText = "פג תוקף מייל האימות. חזור לדף הבית ושלח מייל חדש.";
+            let errorCode = "";
             if(err || !res) {
-                if(err.error && err.error.code === "PASSOWRD_ALREADY_USED") 
+                errorCode = "EMAIL_NOT_VALID"
+                if(err.error && err.error.code === "PASSOWRD_ALREADY_USED") {
                     modalText = "סיסמה זו הייתה כבר בשימוש, בחר סיסמה אחרת.";
+                    errorCode = "PASSOWRD_ALREADY_USED";
+                }
             } 
             else modalText = "הסיסמה שונתה בהצלחה!";
-            this.setState({ infoModal: true, modalText});
+            this.setState({ infoModal: true, modalText, errorCode });
         }
         else this.setState({ errConf: confErr, errPass: passErr });
     }
