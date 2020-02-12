@@ -530,7 +530,7 @@ module.exports = function (User) {
       if (alFindErr) return callback(alFindErr);
 
       let created = null;
-      if (alFindRes && alFindRes[0] && alFindRes[0].created) {
+      if (alFindRes && alFindRes[0] && alFindRes[0].created && alFindRes[0].email === credentials.email) {
         created = new Date(alFindRes[0].created);
         let diff = (now - created);
 
@@ -1394,6 +1394,50 @@ module.exports = function (User) {
     return cb.promise;
   };
 
+  User.setNewPassword = function (userId, oldPassword,newPassword, options, cb) {
+      assert(userId != null && userId !== '', 'userId is a required argument');
+      assert(!!newPassword, 'newPassword is a required argument');
+      assert(!!oldPassword, 'newPassword is a required argument');
+  
+      if (cb === undefined && typeof options === 'function') {
+        cb = options;
+        options = undefined;
+      }
+      cb = cb || utils.createPromiseCallback();
+  
+      // Make sure to use the constructor of the (sub)class
+      // where the method is invoked from (`this` instead of `User`)
+      this.findById(userId, options, async (err, inst) => {
+        if (err) return cb(err);
+  
+        if (!inst) {
+          const err = new Error(`User ${userId} not found`);
+          Object.assign(err, {
+            code: 'USER_NOT_FOUND',
+            statusCode: 401,
+          });
+          return cb(err);
+        }
+        let userPwd = inst.password;
+        let [errComp,isMatch] = await to(bcrypt.compare(oldPassword,userPwd))
+        if(errComp  ) {return cb(err)}
+        if(!isMatch){
+          return cb({success:false,code:"NOT_MATCH_PASSWORDS"})
+        }
+        const passwordsModel = User.app.models.Passwords;
+        let pwdExists = await passwordsModel.checkIfPasswordExists(userId, newPassword);
+        if(pwdExists.exists) return cb({ code: Constants.errorCodes.PASSOWRD_ALREADY_USED });
+        //////TODO Shira
+        let pwdUpsertRes = await passwordsModel.upsertPwd(userId, newPassword);
+        // if(!pwdUpsertRes.success) return cb({}); //needed??
+  
+        inst.setPassword(newPassword, options, cb);
+  
+      });
+  
+      return cb.promise
+
+  }
   /*!
    * Hash the plain password
    */
@@ -1741,7 +1785,19 @@ module.exports = function (User) {
         http: { verb: 'POST', path: '/change-password' },
       }
     );
-
+    UserModel.remoteMethod(
+      'setNewPassword',
+      {
+        description: 'Change a user\'s password.',
+        accepts: [
+          { arg: 'id', type: 'any', http: getUserIdFromRequestContext },
+          { arg: 'oldPassword', type: 'string', required: true, http: { source: 'form' } },
+          { arg: 'newPassword', type: 'string', required: true, http: { source: 'form' } },
+          { arg: 'options', type: 'object', http: 'optionsFromRequest' },
+        ],
+        http: { verb: 'POST', path: '/set-new-password' },
+      }
+    );
     const setPasswordScopes = UserModel.settings.restrictResetPasswordTokenScope ?
       ['reset-password'] : undefined;
 
@@ -2067,7 +2123,7 @@ function getAuthConfig() {
     BLOCK_COUNT_LOGIN: 5,
     BLOCK_TIME_LOGIN: 600000
   };
-  const fileName = process.env.NODE_ENV ? `config.${process.env.NODE_ENV}.json` : 'config.json';
+  const fileName = process.env.NODE_ENV === 'production' ? `config.${process.env.NODE_ENV}.json` : 'config.json';
   const configFile = path.join(__dirname, '../../../../../server', fileName);
   logUser("configFile", configFile);
   let authConfig = defaultAuthConfig;
