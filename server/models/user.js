@@ -2067,7 +2067,7 @@ function getAuthConfig() {
     BLOCK_COUNT_LOGIN: 5,
     BLOCK_TIME_LOGIN: 600000
   };
-  const fileName = process.env.NODE_ENV ? `config.${process.env.NODE_ENV}.json` : 'config.json';
+  const fileName = process.env.NODE_ENV === 'production' ? `config.${process.env.NODE_ENV}.json` : 'config.json';
   const configFile = path.join(__dirname, '../../../../../server', fileName);
   logUser("configFile", configFile);
   let authConfig = defaultAuthConfig;
