@@ -2073,7 +2073,7 @@ function getAuthConfig() {
   let authConfig = defaultAuthConfig;
   try {
     const config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
-    authConfig = config.auth || defaultAuthConfig;
+    authConfig = config.modules && config.modules.auth || defaultAuthConfig;
   } catch (err) {
     logUser(`Could not fetch /server/${fileName} and parse it`);
     authConfig = defaultAuthConfig;
