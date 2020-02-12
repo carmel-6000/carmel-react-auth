@@ -1568,7 +1568,7 @@ module.exports = function (User) {
 
       //////TODO Shira
       (async () => {
-        const passwordsModel = this.app.models.Passwords;
+        const passwordsModel = UserModel.app.models.Passwords;
         let pwdUpsertRes = await passwordsModel.upsertPwd(user.id, user.password);
         // if(!pwdUpsertRes.success) return cb({}); //needed?? - maybe delete user and exit function
       })();
