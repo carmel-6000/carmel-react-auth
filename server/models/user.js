@@ -530,7 +530,7 @@ module.exports = function (User) {
       if (alFindErr) return callback(alFindErr);
 
       let created = null;
-      if (alFindRes && alFindRes[0] && alFindRes[0].created) {
+      if (alFindRes && alFindRes[0] && alFindRes[0].created && alFindRes[0].email === credentials.email) {
         created = new Date(alFindRes[0].created);
         let diff = (now - created);
 
