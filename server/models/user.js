@@ -513,7 +513,7 @@ module.exports = function (User) {
     //let userModel = CustomUser.app.models.User;
     //logUser("this: ", this);
     //logUser("login: ", CustomUser.login);
-
+    
     (async (callback) => {
       const models = User.app.models;
       const alModel = models.AccessLogger;
@@ -522,7 +522,7 @@ module.exports = function (User) {
 
       let authConfig = getAuthConfig();
       let BLOCK_COUNT = authConfig.BLOCK_COUNT_LOGIN;
-      let BLOCK_TIME = authConfig.BLOCK_TIME_LOGIN;
+      let BLOCK_TIME = authConfig.BLOCK_TIME_MS_LOGIN;
       let now = getDateNowTime(Date.now());
 
       let [alFindErr, alFindRes] = await to(alModel.find({ email: credentials.email, order: 'created DESC' }));
@@ -549,8 +549,8 @@ module.exports = function (User) {
       ));
       
       if(created){
-        let blockTime = authConfig.BLOCK_TIME_LOGIN/60000
-        let minutes = blockTime*60000;//BLOCK_TIME * 10;
+        let blockTime = authConfig.BLOCK_TIME_MS_LOGIN/60000
+        let minutes = blockTime*60000;
         if (cuAccessErr || cuAccessRes) 
           return callback(cuAccessErr || { 
             code: authConfig.USER_BLOCKED_ERROR_CODE, 
@@ -1565,6 +1565,7 @@ module.exports = function (User) {
       }
 
       logUser("Verification email options are", emailOptions);
+      logUser("If you wish to have different email options, you can declare them in datasources.");
 
       //////TODO Shira
       (async () => {
@@ -2121,11 +2122,11 @@ function getAuthConfig() {
     PASSOWRD_ALREADY_USED_ERROR_CODE: "PASSOWRD_ALREADY_USED",
     USER_BLOCKED_ERROR_CODE: "USER_BLOCKED",
     BLOCK_COUNT_LOGIN: 5,
-    BLOCK_TIME_LOGIN: 600000
+    BLOCK_TIME_MS_LOGIN: 600000
   };
   const fileName = process.env.NODE_ENV === 'production' ? `config.${process.env.NODE_ENV}.json` : 'config.json';
   const configFile = path.join(__dirname, '../../../../../server', fileName);
-  logUser("configFile", configFile);
+  logUser("configFile path", configFile);
   let authConfig = defaultAuthConfig;
   try {
     const config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
@@ -2135,5 +2136,7 @@ function getAuthConfig() {
     authConfig = defaultAuthConfig;
   }
 
+  logUser("Auth config value is ", authConfig);
+  logUser("If you wish to have different authConfig values, you can declare them in config.");
   return authConfig;
 }
