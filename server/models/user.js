@@ -525,7 +525,7 @@ module.exports = function (User) {
       let BLOCK_TIME = authConfig.BLOCK_TIME_MS_LOGIN;
       let now = getDateNowTime(Date.now());
 
-      let [alFindErr, alFindRes] = await to(alModel.find({ email: credentials.email, order: 'created DESC' }));
+      let [alFindErr, alFindRes] = await to(alModel.find({ where: {email: credentials.email}, order: 'created DESC' }));
       if (alFindErr) return callback(alFindErr);
 
       let created = null;
@@ -567,7 +567,7 @@ module.exports = function (User) {
             let [alCreateErr, alCreateRes] = await to(alModel.create({ email: credentials.email, created: now }));
           }
 
-          [alFindErr, alFindRes] = await to(alModel.find({ email: credentials.email }));
+          [alFindErr, alFindRes] = await to(alModel.find({ where: {email: credentials.email }}));
           if (alFindRes && alFindRes.length >= BLOCK_COUNT) {
             let counter = 0;
             for (let alElem of alFindRes) {
