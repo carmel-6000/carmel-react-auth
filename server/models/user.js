@@ -526,7 +526,6 @@ module.exports = function (User) {
       let now = getDateNowTime(Date.now());
 
       let [alFindErr, alFindRes] = await to(alModel.find({ where: {email: credentials.email}, order: 'created DESC' }));
-      console.log("1 alFindErr", alFindErr);
       if (alFindErr) return callback(alFindErr);
 
       let created = null;
@@ -538,11 +537,8 @@ module.exports = function (User) {
           let [cuUpsertErr, cuUpsertRes] = await to(cuModel.upsertWithWhere(
             { email: credentials.email }, { loginAccess: 0 }
           ));
-
-          console.log("2 cuUpsertErr", cuUpsertErr);
           if (cuUpsertErr) return callback(cuUpsertErr);
           let [alDestroyErr, alDestroyRes] = await to(alModel.destroyAll({ email: credentials.email }));
-          console.log("3 alDestroyErr", alDestroyErr);
           if (alDestroyErr) return callback(alDestroyErr);
         }
       }
@@ -550,17 +546,13 @@ module.exports = function (User) {
       let [cuAccessErr, cuAccessRes] = await to(cuModel.findOne(
         { where: { email: credentials.email, loginAccess: 1 }, fields: { loginAccess: true } }
       ));
-      console.log("4 cuAccessErr", cuAccessErr)
       if (cuAccessErr) return callback(cuAccessErr);
 
-      console.log("5 created", created);
       if(created){
         let blockTime = authConfig.BLOCK_TIME_MS_LOGIN/60000
         let minutes = blockTime*60000;
         if (cuAccessRes) {
-          console.log("6 cuAccessRes", cuAccessRes)
           let accessTime = getDateNowTime((created.getTime() + minutes), false);
-          console.log("cb code",  authConfig.USER_BLOCKED_ERROR_CODE, "accesstime", accessTime);
           return callback({ 
             code: authConfig.USER_BLOCKED_ERROR_CODE, 
             access_time: accessTime
