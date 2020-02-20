@@ -559,9 +559,11 @@ module.exports = function (User) {
         let minutes = blockTime*60000;
         if (cuAccessRes) {
           console.log("6 cuAccessRes", cuAccessRes)
+          let accessTime = getDateNowTime((created.getTime() + minutes), false);
+          console.log("cb code",  authConfig.USER_BLOCKED_ERROR_CODE, "accesstime", accessTime);
           return callback({ 
             code: authConfig.USER_BLOCKED_ERROR_CODE, 
-            access_time: getDateNowTime((created.getTime() + minutes), false) 
+            access_time: accessTime
           });
         }
       }
