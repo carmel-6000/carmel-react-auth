@@ -554,7 +554,7 @@ module.exports = function (User) {
         if (cuAccessRes) {
           let accessTime = getDateNowTime((created.getTime() + minutes), false);
           return callback({ 
-            code: authConfig.USER_BLOCKED_ERROR_CODE, 
+            code: "USER_BLOCKED", 
             access_time: accessTime
           });
         }
@@ -875,7 +875,7 @@ module.exports = function (User) {
 
       const passwordsModel = this.app.models.Passwords;
       let pwdExists = await passwordsModel.checkIfPasswordExists(userId, newPassword);
-      if (pwdExists.exists) return cb({ code: authConfig.PASSOWRD_ALREADY_USED_ERROR_CODE });
+      if (pwdExists.exists) return cb({ code: "PASSWORD_ALREADY_USED" });
       //////TODO Shira
       let pwdUpsertRes = await passwordsModel.upsertPwd(userId, newPassword);
       // if(!pwdUpsertRes.success) return cb({}); //needed??
@@ -1428,7 +1428,7 @@ module.exports = function (User) {
         let authConfig = getAuthConfig();
         const passwordsModel = User.app.models.Passwords;
         let pwdExists = await passwordsModel.checkIfPasswordExists(userId, newPassword);
-        if(pwdExists.exists) return cb({ code: authConfig.PASSOWRD_ALREADY_USED_ERROR_CODE });
+        if(pwdExists.exists) return cb({ code: "PASSWORD_ALREADY_USED" });
         //////TODO Shira
         let pwdUpsertRes = await passwordsModel.upsertPwd(userId, newPassword);
         // if(!pwdUpsertRes.success) return cb({}); //needed??
@@ -2121,8 +2121,6 @@ function getDateNowTime(d = Date.now(), useOffset = true) {
 
 function getAuthConfig() {
   const defaultAuthConfig = {
-    PASSOWRD_ALREADY_USED_ERROR_CODE: "PASSOWRD_ALREADY_USED",
-    USER_BLOCKED_ERROR_CODE: "USER_BLOCKED",
     BLOCK_COUNT_LOGIN: 5,
     BLOCK_TIME_MS_LOGIN: 600000
   };

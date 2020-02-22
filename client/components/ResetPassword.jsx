@@ -33,9 +33,9 @@ class ResetPassword extends Component {
             let errorCode = "";
             if(err || !res) {
                 errorCode = "EMAIL_NOT_VALID"
-                if(err.error && err.error.code === "PASSOWRD_ALREADY_USED") {
+                if(err.error && err.error.code === "PASSWORD_ALREADY_USED") {
                     modalText = "סיסמה זו הייתה כבר בשימוש, בחר סיסמה אחרת.";
-                    errorCode = "PASSOWRD_ALREADY_USED";
+                    errorCode = "PASSWORD_ALREADY_USED";
                 }
             } 
             else modalText = "הסיסמה שונתה בהצלחה!";

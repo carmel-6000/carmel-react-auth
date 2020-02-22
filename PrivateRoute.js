@@ -85,7 +85,7 @@ class PrivateRoute extends Component {
       console.log("compName(%s) is excluded", compName);
       return <div />;
     }
-    console.log("ARE we here?!");
+    // console.log("ARE we here?!");
     return (<Route key={0} {...rest} render={props => {
         return <Component {...props} />;
     }} />);
