@@ -1638,7 +1638,7 @@ module.exports = function (User) {
       ctx.res.cookie('klk', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
       ctx.res.cookie('olk', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
       ctx.res.cookie('klo', ctx.result.klo, { signed: false, maxAge: 1000 * 60 * 60 * 5 });
-      ctx.res.cookie('kl', ctx.result.kl), { signed: false, maxAge: 1000 * 60 * 60 * 5 };
+      ctx.res.cookie('kl', ctx.result.kl, { signed: false, maxAge: 1000 * 60 * 60 * 5 });
 
       return Promise.resolve();
     });
