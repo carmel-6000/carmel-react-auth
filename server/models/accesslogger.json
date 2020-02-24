@@ -2,7 +2,14 @@
     "name": "AccessLogger",
     "pathLink": "AccessLoggers",
     "isPublic": false,
-    "mixins": {},
+    "mixins": {
+        "ExcludeModelFields": true
+    },
+    "excludeFields": [
+        "id",
+        "email",
+        "created"
+    ],
     "properties": {
         "id": {
             "type": "Number",

@@ -1,6 +1,12 @@
 {
   "name": "RoleMapping",
   "description": "Map principals to roles",
+  "mixins": {
+    "ExcludeModelFields": true
+  },
+  "excludeFields": [
+    "principalId"
+  ],
   "hidden": [
     "principalId"
   ],

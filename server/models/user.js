@@ -1584,7 +1584,7 @@ module.exports = function (User) {
         // (user.js has to get a not empty from)
         from: emailOptions.from || defaultEmailOptions.from,
         subject: context.args.data.subject || "",
-        text: context.args.data.start + '<a href="{href}">' + context.args.data.click + '</a><br>' + context.args.data.end,
+        text: context.args.data.style + context.args.data.start + '<a href="{href}">' + context.args.data.click + '</a><br>' + context.args.data.end,
         template: path.resolve(__dirname, '../../server/views/verify.ejs'),
         templateFn: (verifyOptions, options, cb) => {
           return cb(null, verifyOptions.text)
