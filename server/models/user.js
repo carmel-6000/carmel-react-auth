@@ -1535,7 +1535,6 @@ module.exports = function (User) {
 
     // Make sure emailVerified is not set by creation
     UserModel.beforeRemote('create', function (ctx, user, next) {
-      console.log("before remote create is now launched");
       var body = ctx.req.body;
       if (body && body.emailVerified) {
         body.emailVerified = false;
@@ -1567,8 +1566,8 @@ module.exports = function (User) {
         emailOptions.redirect = `${protocol}://${url}/#/login?popup=verifiedLogin`;
       }
 
-      console.log("Verification email options are", emailOptions);
-      console.log("If you wish to have different email options, you can declare them in datasources.");
+      logUser("Verification email options are", emailOptions);
+      logUser("If you wish to have different email options, you can declare them in datasources.");
 
       //////TODO Shira
       (async () => {
@@ -1612,10 +1611,10 @@ module.exports = function (User) {
             return next(err);
           }
 
-          console.log("The verification email was now sent with the email-options: ", options);
+          logUser("The verification email was now sent with the email-options: ", options);
           return next();
         });
-      } else {console.log("error sending verification email");return next();}
+      } else {logUser("error sending verification email");return next();}
     });
 
 
