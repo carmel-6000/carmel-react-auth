@@ -1566,8 +1566,8 @@ module.exports = function (User) {
         emailOptions.redirect = `${protocol}://${url}/#/login?popup=verifiedLogin`;
       }
 
-      logUser("Verification email options are", emailOptions);
-      logUser("If you wish to have different email options, you can declare them in datasources.");
+      console.log("Verification email options are", emailOptions);
+      console.log("If you wish to have different email options, you can declare them in datasources.");
 
       //////TODO Shira
       (async () => {
@@ -1611,10 +1611,10 @@ module.exports = function (User) {
             return next(err);
           }
 
-          logUser("The verification email was now sent with the email-options: ", options);
+          console.log("The verification email was now sent with the email-options: ", options);
           return next();
         });
-      } else return next();
+      } else {console.log("error sending verification email");return next();}
     });
 
 
