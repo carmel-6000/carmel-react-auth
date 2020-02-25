@@ -1535,6 +1535,7 @@ module.exports = function (User) {
 
     // Make sure emailVerified is not set by creation
     UserModel.beforeRemote('create', function (ctx, user, next) {
+      console.log("before remote create is now launched");
       var body = ctx.req.body;
       if (body && body.emailVerified) {
         body.emailVerified = false;
