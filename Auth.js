@@ -76,11 +76,11 @@ const Auth = {
     }
     this._isAuthenticated = true;
     if (GenericTools.isCordova()) {
-      this.setItem('klo', res.klo, false, true);
-      this.setItem('kl', res.kl, false, true);
-      this.setItem('access_token', res.id, false, true);
-      this.setItem('kloo', res.kloo, false, true);
-      this.setItem('klk', res.klk, false, true);
+      this.setItem('klo', res.klo, false, false);
+      this.setItem('kl', res.kl, false, false);
+      this.setItem('access_token', res.id, false, false);
+      this.setItem('kloo', res.kloo, false, false);
+      this.setItem('klk', res.klk, false, false);
     }
     return new Promise((resolve, rej) => { resolve({ success: true, user: res }) });
   },
@@ -112,11 +112,11 @@ const Auth = {
     this._isAuthenticated = true;
 
     if (GenericTools.isCordova()) {
-      this.setItem('klo', res.klo, false, true);
-      this.setItem('kl', res.kl, false, true);
-      this.setItem('kloo', res.kloo, false, true);
-      this.setItem('klk', res.klk, false, true);
-      this.setItem('access_token', res.id);
+      this.setItem('klo', res.klo, false, false);
+      this.setItem('kl', res.kl, false, false);
+      this.setItem('kloo', res.kloo, false, false);
+      this.setItem('klk', res.klk, false, false);
+      this.setItem('access_token', res.id,false, false);
     }
     return new Promise((resolve, rej) => { resolve({ success: true, user: res }) });
     //return cb({ success: true }, res);
@@ -145,11 +145,11 @@ const Auth = {
     // this.setItem('kl', at.kl, false, true);
 
     if (GenericTools.isCordova()) {
-      this.setItem('klo', at.klo, false, true);
-      this.setItem('kl', at.kl, false, true);
-      this.setItem('access_token', at.id);
-      this.setItem('kloo', at.kloo, false, true);
-      this.setItem('klk', at.klk, false, true);
+      this.setItem('klo', at.klo, false, false);
+      this.setItem('kl', at.kl, false, false);
+      this.setItem('access_token', at.id,false, false);
+      this.setItem('kloo', at.kloo, false, false);
+      this.setItem('klk', at.klk, false, false);
     }
 
     return new Promise((res, rej) => { res({ success: true }) });

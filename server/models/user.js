@@ -1657,8 +1657,8 @@ module.exports = function (User) {
 
     function setAuthCookies(ctx) {
       ctx.res.cookie('access_token', ctx.result.accessToken, { signed: true, maxAge: 1000 * 60 * 60 * 5 });
-      ctx.res.cookie('klo', ctx.result.klo);
-      ctx.res.cookie('kl', ctx.result.kl);
+      ctx.res.cookie('klo', ctx.result.klo,{ signed: false, maxAge: 1000 * 60 * 60 * 5 });
+      ctx.res.cookie('kl', ctx.result.kl,{ signed: false, maxAge: 1000 * 60 * 60 * 5 });
       // //These are all 'trash' cookies in order to confuse the hacker who tries to penetrate kl,klo cookies
       ctx.res.cookie('kloo', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
       ctx.res.cookie('klk', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
