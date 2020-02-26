@@ -97,10 +97,18 @@ const Auth = {
 
     if (err) {
       this._isAuthenticated = false;
+      if (err.error) {
+        if (err.error.statusCode === 500) {
+          err.error.msg = 'אין תגובה, בדוק את החיבור לרשת שלך'
+        }
+        else {
+          err.error.msg = 'אחד או יותר מן הפרטים שהזנת אינם נכונים';
+        }
+      }
       return new Promise((res, rej) => { res({ success: false, msg: err }) });
     }
 
-    console.log("Login res", res);
+
     this._isAuthenticated = true;
 
     if (GenericTools.isCordova()) {
