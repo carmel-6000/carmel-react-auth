@@ -581,7 +581,7 @@ module.exports = function (User) {
               }));
             }
 
-            [alFindErr, alFindRes] = await to(alModel.find({ where: {email: credentials.email }}));
+            let [alFindErr, alFindRes] = await to(alModel.find({ where: {email: credentials.email }}));
             if (alFindRes && alFindRes.length >= BLOCK_COUNT_LOGIN) {
               let counter = 0;
               for (let alElem of alFindRes) {

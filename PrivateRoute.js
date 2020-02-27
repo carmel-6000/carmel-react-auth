@@ -74,14 +74,14 @@ class PrivateRoute extends Component {
   }
 
   render() {
-    const { compName, component: Component, ...rest } = this.props;
+    const { compName, component: Component, defaultRedirectComp: Drc, ...rest } = this.props;
 
     return (
 
       <Route key={0} {...rest} render={props => {
 
         if (this.klsk.indexOf(compName) == -1 || !this.haveAccess) {
-          return <Redirect to='/' />
+          return defaultRedirectComp ? <Drc /> : <Redirect to='/' />
         }
         return <Component {...props} />;
       }} />
@@ -106,7 +106,7 @@ class MultipleRoute extends Component {
   }
 
   render() {
-    const { comps, component: Component, ...rest } = this.props;
+    const { comps, component: Component, defaultRedirectComp: Drc, ...rest } = this.props;
     let k = Object.keys(comps);
     let intersection = [];
     intersection = Array.isArray(this.klsk) && this.klsk.length > 0 && this.klsk.filter(element => k.includes(element));
@@ -115,7 +115,7 @@ class MultipleRoute extends Component {
       <Route exact key={0} {...rest} render={props => {
         if (!this.haveAccess || intersection.length == 0 || this.klsk.length == 0) {
           // console.log("Multipleroutes - not authorized!")
-          return <Redirect to="/" />;
+          return defaultRedirectComp ? <Drc /> : <Redirect to="/" />;
         }
 
         let Co = comps[intersection[0]];
@@ -126,6 +126,7 @@ class MultipleRoute extends Component {
 }
 
 
+//TODO Shira - make sure it works properly with the redirect!!!
 class HomeRoute extends Component {
   constructor(props) {
     super(props);
