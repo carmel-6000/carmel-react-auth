@@ -47,13 +47,13 @@ class PrivateRouteAsync extends Component {
 }
 
 
-//PrivateRoute purpose
-//This component aims to provide a distinct separation between two access modes:
-//(1) No access: either there's no authentication (anonymous user), or either there's no access according to roles-access.config.json
-//In that case (no access), we will NOT expose any route at all to the user for the sake of security, 
-//we will render a <div /> which stands for NULL.
-//(2) Access permitted: The desired component will be rendered into the route.
-//Please do not change any of this functionality without consulting Eran
+// PrivateRoute purpose
+// This component aims to provide a distinct separation between two access modes:
+// (1) No access: either there's no authentication (anonymous user), or either there's no access according to roles-access.config.json
+// In that case (no access), we will NOT expose any route at all to the user for the sake of security, 
+// we will render a <div /> which stands for NULL.
+// (2) Access permitted: The desired component will be rendered into the route.
+// Please do not change any of this functionality without consulting Eran
 class PrivateRoute extends Component {
 
   constructor(props) {
@@ -81,7 +81,7 @@ class PrivateRoute extends Component {
       <Route key={0} {...rest} render={props => {
 
         if (this.klsk.indexOf(compName) == -1 || !this.haveAccess) {
-          return defaultRedirectComp ? <Drc /> : <Redirect to='/' />
+          return Drc ? <Drc /> : <Redirect to='/' />
         }
         return <Component {...props} />;
       }} />
@@ -91,6 +91,18 @@ class PrivateRoute extends Component {
 }
 
 
+//TODO Shira - go over this explanation...
+// MultipleRoute purpose
+// This component aims to provide a distinct separation between two access modes:
+// (1) No access: either there's no authentication (anonymous user), or either there's no access according to roles-access.config.json
+// In that case (no access), we will NOT expose any route at all to the user for the sake of security, 
+// we will redirect to '/'.
+// (2) Access permitted: The desired component will be rendered into the route.
+// Use case scenario:
+// Used if you want different components for different roles, 
+// and you want to use the same path for those components. (its like HomeRoute without default component.)
+// Example:
+//     <MultipleRoute path="/example" comps={{ "ex1": HiImAComp, "ex5w": CanYouBelieve }} />
 class MultipleRoute extends Component {
   constructor(props) {
     super(props);
@@ -115,7 +127,7 @@ class MultipleRoute extends Component {
       <Route exact key={0} {...rest} render={props => {
         if (!this.haveAccess || intersection.length == 0 || this.klsk.length == 0) {
           // console.log("Multipleroutes - not authorized!")
-          return defaultRedirectComp ? <Drc /> : <Redirect to="/" />;
+          return Drc ? <Drc /> : <Redirect to="/" />;
         }
 
         let Co = comps[intersection[0]];
@@ -127,6 +139,7 @@ class MultipleRoute extends Component {
 
 
 //TODO Shira - make sure it works properly with the redirect!!!
+//TODO Shira - write an explanation about home route
 class HomeRoute extends Component {
   constructor(props) {
     super(props);
