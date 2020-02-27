@@ -46,7 +46,9 @@ var assert = require('assert');
 
 var debug = require('debug')('loopback:user');
 
-
+//Const Error Codes
+const USER_BLOCKED_ERROR_CODE = "USER_BLOCKED";
+const PASSWORD_ALREADY_USED_ERROR_CODE = "PASSWORD_ALREADY_USED";
 
 /**
  * Built-in User model.
@@ -518,69 +520,81 @@ module.exports = function (User) {
       const models = User.app.models;
       const alModel = models.AccessLogger;
       const cuModel = models.CustomUser;
-      const pwdModel = models.Passwords; //TODO Shira
+      const pwdModel = models.Passwords;
 
-      let authConfig = getAuthConfig();
-      let BLOCK_COUNT = authConfig.BLOCK_COUNT_LOGIN;
-      let BLOCK_TIME = authConfig.BLOCK_TIME_MS_LOGIN;
-      let now = getDateNowTime(Date.now());
+      const authConfig = getAuthConfig();
+      const BLOCK_COUNT_LOGIN = authConfig.BLOCK_COUNT_LOGIN;
+      const BLOCK_TIME_MS_LOGIN = authConfig.BLOCK_TIME_MS_LOGIN;
+      const now = getDateNowTime(Date.now());
 
-      let [alFindErr, alFindRes] = await to(alModel.find({ where: {email: credentials.email}, order: 'created DESC' }));
-      if (alFindErr) return callback(alFindErr);
+      if(alModel) {
+        let [alFindErr, alFindRes] = await to(alModel.find({ 
+          where: {email: credentials.email}, order: 'created DESC' 
+        }));
+        if (alFindErr) return callback(alFindErr);
 
-      let created = null;
-      if (alFindRes && alFindRes[0] && alFindRes[0].created && alFindRes[0].email === credentials.email) {
-        created = new Date(alFindRes[0].created);
-        let diff = (now - created);
+        let created = null;
+        if (alFindRes && alFindRes[0] && alFindRes[0].created && 
+          alFindRes[0].email === credentials.email) {
+          created = new Date(alFindRes[0].created);
+          let diff = (now - created);
 
-        if (diff >= BLOCK_TIME) {
-          let [cuUpsertErr, cuUpsertRes] = await to(cuModel.upsertWithWhere(
-            { email: credentials.email }, { loginAccess: 0 }
-          ));
-          if (cuUpsertErr) return callback(cuUpsertErr);
-          let [alDestroyErr, alDestroyRes] = await to(alModel.destroyAll({ email: credentials.email }));
-          if (alDestroyErr) return callback(alDestroyErr);
+          if (diff >= BLOCK_TIME_MS_LOGIN) {
+            let [cuUpsertErr, cuUpsertRes] = await to(cuModel.upsertWithWhere(
+              { email: credentials.email }, { loginAccess: 0 }
+            ));
+            if (cuUpsertErr) return callback(cuUpsertErr);
+            let [alDestroyErr, alDestroyRes] = await to(alModel.destroyAll({ email: credentials.email }));
+            if (alDestroyErr) return callback(alDestroyErr);
+          }
         }
-      }
 
-      let [cuAccessErr, cuAccessRes] = await to(cuModel.findOne(
-        { where: { email: credentials.email, loginAccess: 1 }, fields: { loginAccess: true } }
-      ));
-      if (cuAccessErr) return callback(cuAccessErr);
+        let [cuAccessErr, cuAccessRes] = await to(cuModel.findOne({ 
+          where: { email: credentials.email, loginAccess: 1 }, 
+          fields: { loginAccess: true } 
+        }));
+        if (cuAccessErr) return callback(cuAccessErr);
 
-      if(created){
-        let blockTime = authConfig.BLOCK_TIME_MS_LOGIN/60000
-        let minutes = blockTime*60000;
-        if (cuAccessRes) {
-          let accessTime = getDateNowTime((created.getTime() + minutes), false);
-          return callback({ 
-            code: "USER_BLOCKED", 
-            access_time: accessTime
-          });
+        if(created){
+          const blockTime = authConfig.BLOCK_TIME_MS_LOGIN/60000
+          const minutes = blockTime*60000;
+          if (cuAccessRes) {
+            const accessTime = getDateNowTime((created.getTime() + minutes), false);
+            return callback({ 
+              code: USER_BLOCKED_ERROR_CODE, 
+              access_time: accessTime
+            });
+          }
         }
-      }
+    }
 
       this.login(credentials, include, async function (loginErr, loginToken) {
 
         if (loginErr) {
 
-          let [uFindErr, uFindRes] = await to(User.findOne({ where: { email: credentials.email } }));
-          if (uFindRes) {
-            let [alCreateErr, alCreateRes] = await to(alModel.create({ email: credentials.email, created: now }));
-          }
+          if(alModel) {
+            let [uFindErr, uFindRes] = await to(User.findOne({ where: { email: credentials.email }}));
 
-          [alFindErr, alFindRes] = await to(alModel.find({ where: {email: credentials.email }}));
-          if (alFindRes && alFindRes.length >= BLOCK_COUNT) {
-            let counter = 0;
-            for (let alElem of alFindRes) {
-              alElem.created = new Date(alElem.created);
-              if (now - alElem.created <= BLOCK_TIME) counter++;
+            if (uFindRes) {
+              let [alCreateErr, alCreateRes] = await to(alModel.create({ 
+                email: credentials.email, created: now 
+              }));
             }
 
-            if (counter >= BLOCK_COUNT) {
-              let [cuUpsertErr, cuUpsertRes] = await to(cuModel.upsertWithWhere(
-                { email: credentials.email }, { loginAccess: 1 }
-              ));
+            [alFindErr, alFindRes] = await to(alModel.find({ where: {email: credentials.email }}));
+            if (alFindRes && alFindRes.length >= BLOCK_COUNT_LOGIN) {
+              let counter = 0;
+              for (let alElem of alFindRes) {
+                alElem.created = new Date(alElem.created);
+                if (now - alElem.created <= BLOCK_TIME_MS_LOGIN) counter++;
+              }
+
+              if (counter >= BLOCK_COUNT_LOGIN) {
+                let [cuUpsertErr, cuUpsertRes] = await to(cuModel.upsertWithWhere(
+                  { email: credentials.email }, { loginAccess: 1 }
+                ));
+                if(cuUpsertErr || !cuUpsertRes) logUser("Error blocking user from logging in..");
+              }
             }
           }
 
@@ -588,14 +602,18 @@ module.exports = function (User) {
           return callback(loginErr);
         }
 
-        let [alDestroyErr, alDestroyRes] = await to(alModel.destroyAll({ email: credentials.email }));
-        if (alDestroyErr) return callback(alDestroyErr);
+        if(alModel) {
+          let [alDestroyErr, alDestroyRes] = await to(alModel.destroyAll({ email: credentials.email }));
+          if (alDestroyErr) return callback(alDestroyErr);
+        }
 
         logUser("User is logged in with loginToken", loginToken);
         loginToken = loginToken.toObject();
 
-        let pwdResetRequired = await pwdModel.checkForResetPassword(loginToken.userId);
-        if (pwdResetRequired) loginToken.pwdResetRequired = true;
+        if(pwdModel) {
+          let pwdResetRequired = await pwdModel.checkForResetPassword(loginToken.userId);
+          if (pwdResetRequired) loginToken.pwdResetRequired = true;
+        }
 
         getKlos(loginToken.userId).then(klos => {
           //kl == role key, that represents user role
@@ -871,15 +889,13 @@ module.exports = function (User) {
         return cb(err);
       }
 
-      let authConfig = getAuthConfig();
-
       const passwordsModel = this.app.models.Passwords;
-      let pwdExists = await passwordsModel.checkIfPasswordExists(userId, newPassword);
-      if (pwdExists.exists) return cb({ code: "PASSWORD_ALREADY_USED" });
-      //////TODO Shira
-      let pwdUpsertRes = await passwordsModel.upsertPwd(userId, newPassword);
-      // if(!pwdUpsertRes.success) return cb({}); //needed??
-
+      if(passwordsModel){
+        let pwdExists = await passwordsModel.checkIfPasswordExists(userId, newPassword);
+        if (pwdExists.exists) return cb({ code: PASSWORD_ALREADY_USED_ERROR_CODE });
+        let pwdUpsertRes = await passwordsModel.upsertPwd(userId, newPassword);
+        if(!pwdUpsertRes.success) logUser("Error upserting new password to Passwords model");
+      }
       inst.setPassword(newPassword, options, cb);
 
     });
@@ -1425,14 +1441,16 @@ module.exports = function (User) {
         if(!isMatch){
           return cb({success:false,code:"NOT_MATCH_PASSWORDS"})
         }
-        let authConfig = getAuthConfig();
+
+        //TODO Shira
         const passwordsModel = User.app.models.Passwords;
-        let pwdExists = await passwordsModel.checkIfPasswordExists(userId, newPassword);
-        if(pwdExists.exists) return cb({ code: "PASSWORD_ALREADY_USED" });
-        //////TODO Shira
-        let pwdUpsertRes = await passwordsModel.upsertPwd(userId, newPassword);
-        // if(!pwdUpsertRes.success) return cb({}); //needed??
-  
+        if(passwordsModel){
+          let pwdExists = await passwordsModel.checkIfPasswordExists(userId, newPassword);
+          if(pwdExists.exists) return cb({ code: PASSWORD_ALREADY_USED_ERROR_CODE });
+          let pwdUpsertRes = await passwordsModel.upsertPwd(userId, newPassword);
+          //needed?
+          if(!pwdUpsertRes.success) logUser("Error upserting new password to Passwords model");
+        }
         inst.setPassword(newPassword, options, cb);
   
       });
@@ -1572,8 +1590,11 @@ module.exports = function (User) {
       //////TODO Shira
       (async () => {
         const passwordsModel = UserModel.app.models.Passwords;
-        let pwdUpsertRes = await passwordsModel.upsertPwd(user.id, user.password);
-        // if(!pwdUpsertRes.success) return cb({}); //needed?? - maybe delete user and exit function
+        if(passwordsModel){
+          let pwdUpsertRes = await passwordsModel.upsertPwd(user.id, user.password);
+          //needed?
+          if(!pwdUpsertRes.success) logUser("Error upserting new password to Passwords model");
+        }
       })();
 
       const emailText = context.args.data.start + 

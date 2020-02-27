@@ -1,12 +1,11 @@
 import React, { Component } from 'react';//, Suspense, lazy
-import { Route, Link, withRouter } from "react-router-dom";
+import { Route } from "react-router-dom";
 import { Redirect } from 'react-router';
 import Auth from './Auth';
 import b from 'base-64';
 
 
-
-class _PrivateRouteAsync extends Component {
+class PrivateRouteAsync extends Component {
 
   state = { haveAccess: false, loaded: false, }
 
@@ -47,7 +46,6 @@ class _PrivateRouteAsync extends Component {
   }
 }
 
-const PrivateRouteAsync = withRouter(_PrivateRouteAsync);
 
 //PrivateRoute purpose
 //This component aims to provide a distinct separation between two access modes:
@@ -60,7 +58,7 @@ class PrivateRoute extends Component {
 
   constructor(props) {
     super(props);
-    
+
     let kls = Auth.getKls();
     this.klsk = [];
     this.dhp = null;
@@ -71,30 +69,29 @@ class PrivateRoute extends Component {
       this.klsk = klsk.a;
       this.dhp = klsk.b;
 
-    } catch (err) {
-      // console.log("ERROR", err)
-      // Auth.logout()
-    }
+    } catch (err) { }
     this.haveAccess = Auth.isAuthenticated();
   }
 
   render() {
     const { compName, component: Component, ...rest } = this.props;
-    
-    if (this.klsk.indexOf(compName) == -1 || !this.haveAccess) {
-      console.log("compName(%s) is excluded", compName);
-      return <div />;
-    }
-    // console.log("ARE we here?!");
-    return (<Route key={0} {...rest} render={props => {
+
+    return (
+
+      <Route key={0} {...rest} render={props => {
+
+        if (this.klsk.indexOf(compName) == -1 || !this.haveAccess) {
+          return <Redirect to='/' />
+        }
         return <Component {...props} />;
-    }} />);
+      }} />
+
+    );
   }
 }
-//const PrivateRoute = withRouter(_PrivateRoute);
-//const PrivateRoute=_PrivateRoute;
 
-class _MultipleRoute extends Component {
+
+class MultipleRoute extends Component {
   constructor(props) {
     super(props);
     let kls = Auth.getKls();
@@ -107,30 +104,29 @@ class _MultipleRoute extends Component {
 
     this.haveAccess = Auth.isAuthenticated();
   }
+
   render() {
     const { comps, component: Component, ...rest } = this.props;
     let k = Object.keys(comps);
-    if (!this.klsk) return <div></div>;
-    const intersection = this.klsk.filter(element => k.includes(element));
-    if (!intersection.length) {
-      return <Link to="/">Go back to login</Link>;
-    }
+    let intersection = [];
+    intersection = Array.isArray(this.klsk) && this.klsk.length > 0 && this.klsk.filter(element => k.includes(element));
+
     return (
       <Route exact key={0} {...rest} render={props => {
-        let hasc = comps[intersection[0]] && this.haveAccess;
-        let Co = <div />;
-        if (hasc) { Co = comps[intersection[0]] }
-        return this.haveAccess ? (<Co {...props} />) : <Link to="/">Go back to login 1</Link>;
-        ;
-      }}
-      />
+        if (!this.haveAccess || intersection.length == 0 || this.klsk.length == 0) {
+          // console.log("Multipleroutes - not authorized!")
+          return <Redirect to="/" />;
+        }
+
+        let Co = comps[intersection[0]];
+        return <Co {...props} />;
+      }} />
     );
   }
 }
-const MultipleRoute = withRouter(_MultipleRoute);
 
 
-class _HomeRoute extends Component {
+class HomeRoute extends Component {
   constructor(props) {
     super(props);
     let kls = Auth.getKls();
@@ -142,6 +138,7 @@ class _HomeRoute extends Component {
 
     this.haveAccess = Auth.isAuthenticated();
   }
+
   render() {
     const { comps, component: Component, ...rest } = this.props;
     return (
@@ -150,13 +147,11 @@ class _HomeRoute extends Component {
         let Dhp = <div />;
         if (hasDhp) { Dhp = comps[this.dhp]; }
         return hasDhp ? (<Dhp {...props} />) : (<Component {...props} />);
-      }}
-      />
+      }} />
     );
-
   }
 }
-const HomeRoute = withRouter(_HomeRoute);
+
 
 // PublicPrivateRoute purpose
 // It separates between two access modes and user types:
@@ -171,7 +166,9 @@ const HomeRoute = withRouter(_HomeRoute);
 // login or registration pages should be PUBLIC for anonymous users but DISABLED for logged-in users!
 const PublicPrivateRoute = ({ component: Component, ...rest }) => {
   if (Auth.isAuthenticated()) return <PrivateRoute component={Component} {...rest} />
-  return <Route {...rest} render={(props) => ( <Component {...props} /> )} />
+  return (
+    <Route {...rest} render={(props) => (<Component {...props} />)} />
+  );
 }
 
 export { PrivateRoute, PrivateRouteAsync, HomeRoute, MultipleRoute, PublicPrivateRoute };
