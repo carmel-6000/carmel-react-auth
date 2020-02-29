@@ -525,7 +525,7 @@ module.exports = function (User) {
       const authConfig = getAuthConfig();
       const BLOCK_COUNT_LOGIN = authConfig.BLOCK_COUNT_LOGIN;
       const BLOCK_TIME_MS_LOGIN = authConfig.BLOCK_TIME_MS_LOGIN;
-      const now = getDateNowTime(Date.now());
+      const now = getTimezoneDatetime(Date.now());
 
       if(alModel) {
         let [alFindErr, alFindRes] = await to(alModel.find({ 
@@ -559,7 +559,7 @@ module.exports = function (User) {
           const blockTime = authConfig.BLOCK_TIME_MS_LOGIN/60000
           const minutes = blockTime*60000;
           if (cuAccessRes) {
-            const accessTime = getDateNowTime((created.getTime() + minutes), false);
+            const accessTime = getTimezoneDatetime((created.getTime() + minutes), false);
             return callback({ 
               code: USER_BLOCKED_ERROR_CODE, 
               access_time: accessTime
@@ -1442,13 +1442,11 @@ module.exports = function (User) {
           return cb({success:false,code:"NOT_MATCH_PASSWORDS"})
         }
 
-        //TODO Shira
         const passwordsModel = User.app.models.Passwords;
         if(passwordsModel){
           let pwdExists = await passwordsModel.checkIfPasswordExists(userId, newPassword);
           if(pwdExists.exists) return cb({ code: PASSWORD_ALREADY_USED_ERROR_CODE });
           let pwdUpsertRes = await passwordsModel.upsertPwd(userId, newPassword);
-          //needed?
           if(!pwdUpsertRes.success) logUser("Error upserting new password to Passwords model");
         }
         inst.setPassword(newPassword, options, cb);
@@ -1587,12 +1585,10 @@ module.exports = function (User) {
       logUser("Verification email options are", emailOptions);
       logUser("If you wish to have different email options, you can declare them in datasources.");
 
-      //////TODO Shira
       (async () => {
         const passwordsModel = UserModel.app.models.Passwords;
         if(passwordsModel){
           let pwdUpsertRes = await passwordsModel.upsertPwd(user.id, user.password);
-          //needed?
           if(!pwdUpsertRes.success) logUser("Error upserting new password to Passwords model");
         }
       })();
@@ -2131,7 +2127,7 @@ function to(promise) {
 // accepts: d - date
 //          useOffset - if we want to use israel's timezone
 // returns: datetime with format to post to database
-function getDateNowTime(d = Date.now(), useOffset = true) {
+function getTimezoneDatetime(d = Date.now(), useOffset = true) {
   // from this format -> 2/7/2020, 9:46:11
   // to this format   -> 2020-02-07T09:37:36.000Z
   if(!useOffset) {return new Date(d);}

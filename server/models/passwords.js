@@ -31,7 +31,7 @@ module.exports = function (Passwords) {
         let [cPwdErr, cPwdRes] = await to(Passwords.create({
             password: hashedPassword,
             owner,
-            created: getDateNowTime(Date.now())
+            created: getTimezoneDatetime(Date.now())
         }));
         if (cPwdErr || !cPwdRes) return { success: false };
         if (cPwdRes) return { success: true };
@@ -71,7 +71,7 @@ module.exports = function (Passwords) {
 
         const created = pwdFindRes[0] && pwdFindRes[0].created;
         if (!created) return false;
-        const now = getDateNowTime(Date.now());
+        const now = getTimezoneDatetime(Date.now());
         const TIME_FOR_RESET_PASSWORD = 15552000000; //six months in milliseconds
         if (now - created >= TIME_FOR_RESET_PASSWORD) return true;
 
@@ -109,10 +109,10 @@ module.exports = function (Passwords) {
 // accepts: d - date
 //          useOffset - if we want to use israel's timezone
 // returns: datetime with format to post to database
-function getDateNowTime(d = Date.now(), useOffset = true) {
+function getTimezoneDatetime(d = Date.now(), useOffset = true) {
     // from this format -> 2/7/2020, 9:46:11
     // to this format   -> 2020-02-07T09:37:36.000Z
-    if(!useOffset) {return new Date(d);}
+    if (!useOffset) { return new Date(d); }
     let now = new Date(d).toLocaleString("en-US", { timeZone: "Asia/Jerusalem", hour12: false });
     let nowArr = now.split(", ");
     let dateArr = nowArr[0].split("/");
@@ -123,4 +123,4 @@ function getDateNowTime(d = Date.now(), useOffset = true) {
     let datetime = date + "T" + time + ".000Z";
     datetime = new Date(datetime);
     return datetime;
-  }
+}
