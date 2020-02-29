@@ -6,7 +6,6 @@ const Auth = {
   _isAuthenticated: false,
   getKls() {
     let kls = { kl: this.getItem('kl'), klo: this.getItem('klo') };
-    //console.log("KLS? (auth.js)",kls);
     return kls;
   },
   getAccessToken() {
@@ -27,13 +26,13 @@ const Auth = {
   setItem(id, item, localStorageOnly = false, cookiesOnly = false) {
     if (!localStorageOnly)
       document.cookie = `${id}=${item};path=/`;
+    // document.cookie = `${id}=${item};path=/;max-age=${1000 * 60 * 60 * 5}`;
     if (!cookiesOnly)
       localStorage.setItem(id, item);
   },
 
   getItem(id) {
     let cookie = GenericTools.getCookieByKey(id);
-    //console.log("COOKIE by id (%s)",id,cookie);
     if (cookie) return cookie;
     return localStorage.getItem(id);
   },
@@ -41,7 +40,6 @@ const Auth = {
   removeItem(id) {
     localStorage.removeItem(id);
     GenericTools.deleteCookieByKey(id);
-    // console.log("deleted?", this.getItem(id))
   },
 
   jsonify(res) {
@@ -64,7 +62,6 @@ const Auth = {
   },
 
   async loginWithUniqueField(key, value, pw, cb) {
-
     const [res, err] = await AsyncTools.superFetch('/api/CustomUsers/elogin/', {
       method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({ key, value, password: pw })
@@ -76,11 +73,12 @@ const Auth = {
     }
     this._isAuthenticated = true;
     if (GenericTools.isCordova()) {
-      this.setItem('klo', res.klo, false, false);
-      this.setItem('kl', res.kl, false, false);
-      this.setItem('access_token', res.id, false, false);
-      this.setItem('kloo', res.kloo, false, false);
-      this.setItem('klk', res.klk, false, false);
+      window.cordova && window.cordova.plugins.CookieManagementPlugin && window.cordova.plugins.CookieManagementPlugin.flush(); //in cordova Android, only after 30 sec the cookies are lunch. This plugin solved the problem: cordova plugin add https://github.com/surgeventures/cordova-plugin-cookie-manager
+      this.setItem('klo', res.klo, true, false);
+      this.setItem('kl', res.kl, true, false);
+      this.setItem('kloo', res.kloo, true, false);
+      this.setItem('klk', res.klk, true, false);
+      this.setItem('access_token', res.id, true, false);
     }
     return new Promise((resolve, rej) => { resolve({ success: true, user: res }) });
   },
@@ -100,19 +98,17 @@ const Auth = {
       return new Promise((res, rej) => { res({ success: false, msg: err }) });
     }
 
-    console.log("Login res", res);
     this._isAuthenticated = true;
 
     if (GenericTools.isCordova()) {
-      this.setItem('klo', res.klo, false, false);
-      this.setItem('kl', res.kl, false, false);
-      this.setItem('kloo', res.kloo, false, false);
-      this.setItem('klk', res.klk, false, false);
-      this.setItem('access_token', res.id,false, false);
+      window.cordova && window.cordova.plugins.CookieManagementPlugin && window.cordova.plugins.CookieManagementPlugin.flush(); //in cordova Android, only after 30 sec the cookies are lunch. This plugin solved the problem: cordova plugin add https://github.com/surgeventures/cordova-plugin-cookie-manager
+      this.setItem('klo', res.klo, true, false);
+      this.setItem('kl', res.kl, true, false);
+      this.setItem('kloo', res.kloo, true, false);
+      this.setItem('klk', res.klk, true, false);
+      this.setItem('access_token', res.id, true, false);
     }
     return new Promise((resolve, rej) => { resolve({ success: true, user: res }) });
-    //return cb({ success: true }, res);
-
   },
 
   async loginAs(uid, cb) {
@@ -131,24 +127,24 @@ const Auth = {
     console.log("Login res", at);
     this._isAuthenticated = true;
 
-    // this.setItem("access_token", at.accessToken);
-    // //This stuff needs to be set up 
-    // this.setItem('klo', at.klo, false, true);
-    // this.setItem('kl', at.kl, false, true);
-
     if (GenericTools.isCordova()) {
-      this.setItem('klo', at.klo, false, false);
-      this.setItem('kl', at.kl, false, false);
-      this.setItem('access_token', at.id,false, false);
-      this.setItem('kloo', at.kloo, false, false);
-      this.setItem('klk', at.klk, false, false);
+      window.cordova && window.cordova.plugins.CookieManagementPlugin && window.cordova.plugins.CookieManagementPlugin.flush(); //in cordova Android, only after 30 sec the cookies are lunch. This plugin solved the problem: cordova plugin add https://github.com/surgeventures/cordova-plugin-cookie-manager
+      this.setItem('klo', at.klo, true, false);
+      this.setItem('kl', at.kl, true, false);
+      this.setItem('access_token', at.id, true, false);
+      this.setItem('kloo', at.kloo, true, false);
+      this.setItem('klk', at.klk, true, false);
     }
 
     return new Promise((res, rej) => { res({ success: true }) });
   },
-  logout(cb) {
-    GenericTools.deleteAllCookies();
+  async logout(cb) {
+
     if (GenericTools.isCordova()) {
+      let [at, err] = await Auth.superAuthFetch('/api/CustomUsers/deleteUserItems', {
+        method: 'POST',
+        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+      });
       this.removeItem('access_token');
       this.removeItem('kl');
       this.removeItem('klo');
@@ -156,6 +152,7 @@ const Auth = {
       this.removeItem('kloo');
       this.removeItem('olk');
     }
+    GenericTools.deleteAllCookies();
     // NtfFactory.getInstance().unsubscribe();
     this._isAuthenticated = false;
     cb && cb();
