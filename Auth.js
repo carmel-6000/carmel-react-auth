@@ -73,7 +73,7 @@ const Auth = {
     }
     this._isAuthenticated = true;
     if (GenericTools.isCordova()) {
-      window.cordova && window.cordova.plugins.CookieManagementPlugin && window.cordova.plugins.CookieManagementPlugin.flush(); //in cordova Android, only after 30 sec the cookies are lunch. This plugin solved the problem: cordova plugin add https://github.com/surgeventures/cordova-plugin-cookie-manager
+      window.cordova && window.device && window.device.platform !== "iOS" && window.cordova.plugins.CookieManagementPlugin && window.cordova.plugins.CookieManagementPlugin.flush(); //in cordova Android, only after 30 sec the cookies are lunch. This plugin solved the problem: cordova plugin add https://github.com/surgeventures/cordova-plugin-cookie-manager
       this.setItem('klo', res.klo, true, false);
       this.setItem('kl', res.kl, true, false);
       this.setItem('kloo', res.kloo, true, false);
@@ -109,7 +109,7 @@ const Auth = {
     this._isAuthenticated = true;
 
     if (GenericTools.isCordova()) {
-      window.cordova && window.cordova.plugins.CookieManagementPlugin && window.cordova.plugins.CookieManagementPlugin.flush(); //in cordova Android, only after 30 sec the cookies are lunch. This plugin solved the problem: cordova plugin add https://github.com/surgeventures/cordova-plugin-cookie-manager
+      window.cordova && window.device && window.device.platform !== "iOS" && window.cordova.plugins.CookieManagementPlugin && window.cordova.plugins.CookieManagementPlugin.flush(); //in cordova Android, only after 30 sec the cookies are lunch. This plugin solved the problem: cordova plugin add https://github.com/surgeventures/cordova-plugin-cookie-manager
       this.setItem('klo', res.klo, true, false);
       this.setItem('kl', res.kl, true, false);
       this.setItem('kloo', res.kloo, true, false);
@@ -136,7 +136,7 @@ const Auth = {
     this._isAuthenticated = true;
 
     if (GenericTools.isCordova()) {
-      window.cordova && window.cordova.plugins.CookieManagementPlugin && window.cordova.plugins.CookieManagementPlugin.flush(); //in cordova Android, only after 30 sec the cookies are lunch. This plugin solved the problem: cordova plugin add https://github.com/surgeventures/cordova-plugin-cookie-manager
+      window.cordova && window.device && window.device.platform !== "iOS" && window.cordova.plugins.CookieManagementPlugin && window.cordova.plugins.CookieManagementPlugin.flush(); //in cordova Android, only after 30 sec the cookies are lunch. This plugin solved the problem: cordova plugin add https://github.com/surgeventures/cordova-plugin-cookie-manager
       this.setItem('klo', at.klo, true, false);
       this.setItem('kl', at.kl, true, false);
       this.setItem('access_token', at.id, true, false);
