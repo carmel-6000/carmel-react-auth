@@ -1509,6 +1509,23 @@ module.exports = function (User) {
       return cb.promise
 
   }
+  
+  User.deleteUserItems = function (id, cb) {
+    console.log("id", id);
+    this.relations.accessTokens.modelTo.destroyById(id, function (err, info) {
+      if (err) {
+        console.log("err", err)
+        cb(err, null);
+      } else if ('count' in info && info.count === 0) {
+        err = new Error(g.f('Could not find {{accessToken}}'));
+        console.log("err", err)
+        cb(err);
+      } else {
+        return cb(null, info)
+      }
+    });
+  };
+
   /*!
    * Hash the plain password
    */
@@ -1895,6 +1912,26 @@ module.exports = function (User) {
       }
     );
 
+    UserModel.remoteMethod(
+      'deleteUserItems',
+      {
+        description: 'deleteUserItems',
+        accepts: [
+          {
+            arg: 'access_token', type: 'string', http: function (ctx) {
+              var req = ctx && ctx.req;
+              var accessToken = req && req.accessToken;
+              var tokenID = accessToken ? accessToken.id : undefined;
+
+              return tokenID;
+            }
+          },
+        ],
+        http: { verb: 'POST', path: '/deleteUserItems' },
+        returns: { arg: 'res', type: "object", root: true },
+      }
+    );
+
     function getUserIdFromRequestContext(ctx) {
       const token = ctx.req.accessToken;
       if (!token) return;
@@ -1938,7 +1975,14 @@ module.exports = function (User) {
 
     UserModel.afterRemote('loginAs', (ctx, model, next) => {
       console.log("After remote loginAs is launched");
+      ctx = removeAuthCookies(ctx);//for cordova, remove server cookies dont work in client side
       ctx = setAuthCookies(ctx);
+      next();
+    });
+
+
+    UserModel.afterRemote('deleteUserItems', (ctx, model, next) => {
+      ctx = removeAuthCookies(ctx);
       next();
     });
 
@@ -1950,12 +1994,22 @@ module.exports = function (User) {
 
     function setAuthCookies(ctx) {
       ctx.res.cookie('access_token', ctx.result.accessToken, { signed: true, maxAge: 1000 * 60 * 60 * 5 });
-      ctx.res.cookie('klo', ctx.result.klo);
-      ctx.res.cookie('kl', ctx.result.kl);
+      ctx.res.cookie('klo', ctx.result.klo, { signed: false, maxAge: 1000 * 60 * 60 * 5 });
+      ctx.res.cookie('kl', ctx.result.kl, { signed: false, maxAge: 1000 * 60 * 60 * 5 });
       // //These are all 'trash' cookies in order to confuse the hacker who tries to penetrate kl,klo cookies
       ctx.res.cookie('kloo', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
       ctx.res.cookie('klk', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
       ctx.res.cookie('olk', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
+      return ctx;
+    }
+
+    function removeAuthCookies(ctx) {
+      ctx.res.cookie('access_token', { maxAge: Date.now() });
+      ctx.res.cookie('kloo', { maxAge: Date.now() });
+      ctx.res.cookie('klk', { maxAge: Date.now() });
+      ctx.res.cookie('olk', { maxAge: Date.now() });
+      ctx.res.cookie('klo', { maxAge: Date.now() });
+      ctx.res.cookie('kl', { maxAge: Date.now() });
       return ctx;
     }
 

@@ -21,7 +21,8 @@ class Login extends Component {
             realm: { text: "", isvalid: false },
             isValid: false,
             resetPassDialog: false,
-            resetPassMsg: ""
+            resetPassMsg: "",
+            loginMsg: ''
         }
         this.elementsHandler = new ElementsHandler(this);
         this.handleLogin = this.handleLogin.bind(this);
@@ -36,21 +37,21 @@ class Login extends Component {
         this.setState({ isLoading: true });
 
         let res = await Auth.login(email, pw);
-
-        console.log("Auth.authenticate res", res);
-
+        // console.log("Auth.authenticate res", res);
 
         this.setState({ isLoading: false });
 
         if (!res.success) {
             console.log("login failed with error", res.msg);
+            this.setState({ loginMsg: res.msg.error.msg });
             return;
         }
         //if res.success is true
         let pwdResetRequired = res.user && res.user.pwdResetRequired;
+        // console.log(this.props.redirectUrl, 'this.props.redirectUrl')
         let redirTo = this.props.redirectUrl || "/";
         if (pwdResetRequired) redirTo  = "/new-password";
-        this.setState({ redirTo  }); //needed?
+        this.setState({ redirTo, loginMsg: '' });
         GenericTools.safe_redirect(redirTo);
     }
 
@@ -191,7 +192,7 @@ class Login extends Component {
                             </div>
                             <div className='form-group'>
                                 <input className="form-control" type='password' ref='pw' placeholder='סיסמא' defaultValue="E2PSzAmJ-5-ldKnl" required />
-
+                                {this.state.loginMsg !== '' && <div className='msg-error'>{this.state.loginMsg}</div>}
                             </div>
                             <div className='form-group'>
                                 {this.state.isLoading ?
