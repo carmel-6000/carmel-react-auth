@@ -568,7 +568,9 @@ module.exports = function (User) {
   }
 
   User.updateLoginAccessOnError = async function(credentials, authConfig) {
-    const alModel = User.app.models.AccessLogger;
+    const models = User.app.models;
+    const alModel = models.AccessLogger;
+    const cuModel = models.CustomUser;
     const now = getTimezoneDatetime(Date.now());
 
     let [uFindErr, uFindRes] = await to(User.findOne({ where: { email: credentials.email }}));
@@ -609,7 +611,7 @@ module.exports = function (User) {
     //TODO Shira - change destroy to create with success true.
     const alModel = User.app.models.AccessLogger;
     let [alDestroyErr, alDestroyRes] = await to(alModel.destroyAll({ email: credentials.email }));
-    if (alDestroyErr) return callback(alDestroyErr);
+    // if (alDestroyErr) return callback(alDestroyErr);
   }
 
   User.extendedLogin = function (credentials, include, callback) {
