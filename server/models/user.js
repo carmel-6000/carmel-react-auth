@@ -507,11 +507,13 @@ module.exports = function (User) {
   }
 
 
+  const TimeCalcs = require('./../../../tools/server/lib/TimeCalcs.js');
+
   User.checkAccessBeforeLogin = async function (credentials, authConfig) {
     //get auth config for block count and block time
     const BLOCK_COUNT_LOGIN = authConfig && authConfig.BLOCK_COUNT_LOGIN || 5;
     const BLOCK_TIME_MS_LOGIN = authConfig && authConfig.BLOCK_TIME_MS_LOGIN || 600000;
-    const now = getTimezoneDatetime(Date.now());
+    const now = TimeCalcs.getTimezoneDatetime(Date.now());
 
     //define app and models
     const app = User.app;
@@ -560,7 +562,7 @@ module.exports = function (User) {
     if (cuAccessErr) throw cuAccessErr;
 
     if(created && cuAccessRes){
-      const accessTime = getTimezoneDatetime((created.getTime() + authConfig.BLOCK_TIME_MS_LOGIN), false);
+      const accessTime = TimeCalcs.getTimezoneDatetime((created.getTime() + authConfig.BLOCK_TIME_MS_LOGIN), false);
       throw { 
         callback: true,
         error: {
@@ -575,7 +577,7 @@ module.exports = function (User) {
     const models = User.app.models;
     const alModel = models.AccessLogger;
     const cuModel = models.CustomUser;
-    const now = getTimezoneDatetime(Date.now());
+    const now = TimeCalcs.getTimezoneDatetime(Date.now());
 
     let [uFindErr, uFindRes] = await to(User.findOne({ where: { email: credentials.email }}));
     if (uFindRes) {
@@ -609,7 +611,7 @@ module.exports = function (User) {
 
   User.updateLoginAccessOnSuccess = async function (credentials) {
     const alModel = User.app.models.AccessLogger;
-    const now = getTimezoneDatetime(Date.now());
+    const now = TimeCalcs.getTimezoneDatetime(Date.now());
     //success = true is success = 1
     let [alCreateErr, alCreateRes] = await to(alModel.create({ email: credentials.email, success: true, created: now }));
     if (alCreateErr) throw alCreateErr;
@@ -2229,24 +2231,4 @@ function to(promise) {
     return [null, data];
   })
     .catch(err => [err]);
-}
-
-//TODO Shira - /tools/TimeCalcs.js
-// accepts: d - date
-//          useOffset - if we want to use israel's timezone
-// returns: datetime with format to post to database
-function getTimezoneDatetime(d = Date.now(), useOffset = true) {
-  // from this format -> 2/7/2020, 9:46:11
-  // to this format   -> 2020-02-07T09:37:36.000Z
-  if(!useOffset) {return new Date(d);}
-  let now = new Date(d).toLocaleString("en-US", { timeZone: "Asia/Jerusalem", hour12: false });
-  let nowArr = now.split(", ");
-  let dateArr = nowArr[0].split("/");
-  let month = dateArr[0].length === 2 ? dateArr[0] : "0" + dateArr[0];
-  let day = dateArr[1].length === 2 ? dateArr[1] : "0" + dateArr[1];
-  let date = dateArr[2] + "-" + month + "-" + day;
-  let time = nowArr[1];
-  let datetime = date + "T" + time + ".000Z";
-  datetime = new Date(datetime);
-  return datetime;
 }
