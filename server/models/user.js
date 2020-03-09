@@ -509,6 +509,7 @@ module.exports = function (User) {
 
   User.checkAccessBeforeLogin = async function (credentials, authConfig) {
     //get auth config for block count and block time
+    const BLOCK_COUNT_LOGIN = authConfig && authConfig.BLOCK_COUNT_LOGIN || 5;
     const BLOCK_TIME_MS_LOGIN = authConfig && authConfig.BLOCK_TIME_MS_LOGIN || 600000;
     const now = getTimezoneDatetime(Date.now());
 
@@ -521,14 +522,24 @@ module.exports = function (User) {
     
     //check if user has access or is blocked before trying login
     let [alFindErr, alFindRes] = await to(alModel.find({ 
-      where: {email: credentials.email}, order: 'created DESC' 
+      where: {email: credentials.email}, order: 'created DESC', limit: BLOCK_COUNT_LOGIN 
     }));
-    if (alFindErr) throw alFindErr;
+    if (alFindErr || !alFindRes) throw alFindErr || 'LOGIN_ERROR';
+        
+    for (const row of alFindRes) {
+      if(row.success) { //success === true
+        console.log("User has access to login, now trying to login user...");
+        let [cuUpsertErr, cuUpsertRes] = await to(cuModel.upsertWithWhere(
+          { email: credentials.email }, { loginAccess: 0 }
+        ));
+        if (cuUpsertErr) throw cuUpsertErr;
+        return;
+      }
+    }
 
-    let created = null;
     //check if user has login access
-    if (alFindRes && alFindRes[0] && alFindRes[0].created && 
-      alFindRes[0].email === credentials.email) {
+    let created = null;
+    if (alFindRes[0] || alFindRes[0].created && alFindRes[0].email === credentials.email) {
       created = new Date(alFindRes[0].created);
       let diff = (now - created);
 
@@ -537,10 +548,7 @@ module.exports = function (User) {
           { email: credentials.email }, { loginAccess: 0 }
         ));
         if (cuUpsertErr) throw cuUpsertErr;
-
-        //TODO Shira - do not delete from access logger - maybe change to success true
-        let [alDestroyErr, alDestroyRes] = await to(alModel.destroyAll({ email: credentials.email }));
-        if (alDestroyErr) throw alDestroyErr;
+        return;
       }
     }
 
@@ -551,19 +559,15 @@ module.exports = function (User) {
     }));
     if (cuAccessErr) throw cuAccessErr;
 
-    if(created){
-      const blockTime = authConfig.BLOCK_TIME_MS_LOGIN/60000
-      const minutes = blockTime*60000;
-      if (cuAccessRes) {
-        const accessTime = getTimezoneDatetime((created.getTime() + minutes), false);
-        throw { 
-          callback: true,
-          error: {
-            code: USER_BLOCKED_ERROR_CODE, 
-            access_time: accessTime
-          }
-        };
-      }
+    if(created && cuAccessRes){
+      const accessTime = getTimezoneDatetime((created.getTime() + authConfig.BLOCK_TIME_MS_LOGIN), false);
+      throw { 
+        callback: true,
+        error: {
+          code: USER_BLOCKED_ERROR_CODE, 
+          access_time: accessTime
+        }
+      };
     }
   }
 
@@ -574,26 +578,22 @@ module.exports = function (User) {
     const now = getTimezoneDatetime(Date.now());
 
     let [uFindErr, uFindRes] = await to(User.findOne({ where: { email: credentials.email }}));
-
     if (uFindRes) {
       let [alCreateErr, alCreateRes] = await to(alModel.create({ 
-        email: credentials.email, created: now 
+        email: credentials.email, created: now, success: false
       }));
     }
 
     const BLOCK_COUNT_LOGIN = authConfig && authConfig.BLOCK_COUNT_LOGIN || 5;
     const BLOCK_TIME_MS_LOGIN = authConfig && authConfig.BLOCK_TIME_MS_LOGIN || 600000;
 
-    //TODO Shira - 
-    //add flag of success (true/false)
-    //order by desc and limit 5 to block user (get last 5)
-    //checl their flag - should all be not success...
-    //res<5 continue
-    //res>5 check the time diff between the oldest one and now
-    let [alFindErr, alFindRes] = await to(alModel.find({ where: {email: credentials.email }}));
+    let [alFindErr, alFindRes] = await to(alModel.find({ 
+      where: {email: credentials.email }, order: 'created DESC', limit: BLOCK_COUNT_LOGIN
+    }));
     if (alFindRes && alFindRes.length >= BLOCK_COUNT_LOGIN) {
       let counter = 0;
       for (let alElem of alFindRes) {
+        if (alElem.success) return;
         alElem.created = new Date(alElem.created);
         if (now - alElem.created <= BLOCK_TIME_MS_LOGIN) counter++;
       }
@@ -608,10 +608,11 @@ module.exports = function (User) {
   } 
 
   User.updateLoginAccessOnSuccess = async function (credentials) {
-    //TODO Shira - change destroy to create with success true.
     const alModel = User.app.models.AccessLogger;
-    let [alDestroyErr, alDestroyRes] = await to(alModel.destroyAll({ email: credentials.email }));
-    // if (alDestroyErr) return callback(alDestroyErr);
+    const now = getTimezoneDatetime(Date.now());
+    //success = true is success = 1
+    let [alCreateErr, alCreateRes] = await to(alModel.create({ email: credentials.email, success: true, created: now }));
+    if (alCreateErr) throw alCreateErr;
   }
 
   User.extendedLogin = function (credentials, include, callback) {
@@ -636,7 +637,7 @@ module.exports = function (User) {
         await User.checkAccessBeforeLogin(credentials, authConfig);
       } catch (error) {
         console.log("Error checking login access, make sure access_logger table exists");
-        if(error.callback && error.error) return callback(error.error);
+        if(error && error.callback && error.error) return callback(error.error);
       }
 
       //TODO Shira - alters and tables to create in different document
@@ -674,9 +675,7 @@ module.exports = function (User) {
           loginToken.kl = klos.kl;
           //klo == array of view components that user is allowed to access on base64
           loginToken.klo = klos.klo;
-
           logUser("Extended login output:", loginToken);
-
           delete loginToken.userId;
           return callback(null, loginToken);
         });

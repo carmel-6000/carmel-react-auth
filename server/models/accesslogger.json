@@ -8,6 +8,7 @@
     "excludeFields": [
         "id",
         "email",
+        "success",
         "created"
     ],
     "properties": {
@@ -28,21 +29,8 @@
             }
         },
         "email": "string",
-        "created": {
-            "type": "Date",
-            "required": false,
-            "length": null,
-            "precision": null,
-            "scale": null,
-            "mysql": {
-                "columnName": "created",
-                "dataType": "datetime",
-                "dataLength": null,
-                "dataPrecision": null,
-                "dataScale": null,
-                "nullable": "Y"
-            }
-        }
+        "success": "number",
+        "created": "date"
     },
     "validations": [],
     "options": {
