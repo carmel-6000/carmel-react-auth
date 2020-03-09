@@ -105,7 +105,7 @@ const Auth = {
       return new Promise((res, rej) => { res({ success: false, msg: err }) });
     }
 
-    console.log("Login res", res);
+    // console.log("Login res", res);
     this._isAuthenticated = true;
 
     if (GenericTools.isCordova()) {

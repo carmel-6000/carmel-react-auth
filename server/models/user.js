@@ -507,8 +507,107 @@ module.exports = function (User) {
   }
 
 
+  User.checkAccessBeforeLogin = async function (credentials, authConfig) {
+    //get auth config for block count and block time
+    const BLOCK_TIME_MS_LOGIN = authConfig && authConfig.BLOCK_TIME_MS_LOGIN || 600000;
+    const now = getTimezoneDatetime(Date.now());
 
+    //define app and models
+    const app = User.app;
+    const models = app && app.models;
+    if(!app || !models) throw "Error: app or models is null..";
+    const alModel = models.AccessLogger;
+    const cuModel = models.CustomUser;
+    
+    //check if user has access or is blocked before trying login
+    let [alFindErr, alFindRes] = await to(alModel.find({ 
+      where: {email: credentials.email}, order: 'created DESC' 
+    }));
+    if (alFindErr) throw alFindErr;
 
+    let created = null;
+    //check if user has login access
+    if (alFindRes && alFindRes[0] && alFindRes[0].created && 
+      alFindRes[0].email === credentials.email) {
+      created = new Date(alFindRes[0].created);
+      let diff = (now - created);
+
+      if (diff >= BLOCK_TIME_MS_LOGIN) {
+        let [cuUpsertErr, cuUpsertRes] = await to(cuModel.upsertWithWhere(
+          { email: credentials.email }, { loginAccess: 0 }
+        ));
+        if (cuUpsertErr) throw cuUpsertErr;
+
+        //TODO Shira - do not delete from access logger - maybe change to success true
+        let [alDestroyErr, alDestroyRes] = await to(alModel.destroyAll({ email: credentials.email }));
+        if (alDestroyErr) throw alDestroyErr;
+      }
+    }
+
+    //check if user is blocked
+    let [cuAccessErr, cuAccessRes] = await to(cuModel.findOne({ 
+      where: { email: credentials.email, loginAccess: 1 }, 
+      fields: { loginAccess: true } 
+    }));
+    if (cuAccessErr) throw cuAccessErr;
+
+    if(created){
+      const blockTime = authConfig.BLOCK_TIME_MS_LOGIN/60000
+      const minutes = blockTime*60000;
+      if (cuAccessRes) {
+        const accessTime = getTimezoneDatetime((created.getTime() + minutes), false);
+        throw { 
+          callback: true,
+          error: {
+            code: USER_BLOCKED_ERROR_CODE, 
+            access_time: accessTime
+          }
+        };
+      }
+    }
+  }
+
+  User.updateLoginAccessOnError = async function(credentials, authConfig) {
+    let [uFindErr, uFindRes] = await to(User.findOne({ where: { email: credentials.email }}));
+
+    if (uFindRes) {
+      let [alCreateErr, alCreateRes] = await to(alModel.create({ 
+        email: credentials.email, created: now 
+      }));
+    }
+
+    const BLOCK_COUNT_LOGIN = authConfig && authConfig.BLOCK_COUNT_LOGIN || 5;
+    const BLOCK_TIME_MS_LOGIN = authConfig && authConfig.BLOCK_TIME_MS_LOGIN || 600000;
+
+    //TODO Shira - 
+    //add flag of success (true/false)
+    //order by desc and limit 5 to block user (get last 5)
+    //checl their flag - should all be not success...
+    //res<5 continue
+    //res>5 check the time diff between the oldest one and now
+    let [alFindErr, alFindRes] = await to(alModel.find({ where: {email: credentials.email }}));
+    if (alFindRes && alFindRes.length >= BLOCK_COUNT_LOGIN) {
+      let counter = 0;
+      for (let alElem of alFindRes) {
+        alElem.created = new Date(alElem.created);
+        if (now - alElem.created <= BLOCK_TIME_MS_LOGIN) counter++;
+      }
+
+      if (counter >= BLOCK_COUNT_LOGIN) {
+        let [cuUpsertErr, cuUpsertRes] = await to(cuModel.upsertWithWhere(
+          { email: credentials.email }, { loginAccess: 1 }
+        ));
+        if(cuUpsertErr || !cuUpsertRes) logUser("Error blocking user from logging in..");
+      }
+    }
+  } 
+
+  User.updateLoginAccessOnSuccess = async function (credentials) {
+    //TODO Shira - change destroy to create with success true.
+    const alModel = User.app.models.AccessLogger;
+    let [alDestroyErr, alDestroyRes] = await to(alModel.destroyAll({ email: credentials.email }));
+    if (alDestroyErr) return callback(alDestroyErr);
+  }
 
   User.extendedLogin = function (credentials, include, callback) {
     // Invoke the default login function\
@@ -517,100 +616,50 @@ module.exports = function (User) {
     //logUser("login: ", CustomUser.login);
     
     (async (callback) => {
-      const models = User.app.models;
-      const alModel = models.AccessLogger;
-      const cuModel = models.CustomUser;
+      const app = User.app;
+      const models = app && app.models;
+      if(!app || !models) return callback("LOGIN_ERROR");
       const pwdModel = models.Passwords;
 
-      const authConfig = getAuthConfig();
-      const BLOCK_COUNT_LOGIN = authConfig.BLOCK_COUNT_LOGIN;
-      const BLOCK_TIME_MS_LOGIN = authConfig.BLOCK_TIME_MS_LOGIN;
-      const now = getTimezoneDatetime(Date.now());
+      //get auth config from config.json
+      const modulesConfig = app.get("modules");
+      const authConfig = modulesConfig && modulesConfig.auth;
+      if(!authConfig) console.log("Your config doesn't include module auth. Please add it for security reasons.");
+      logUser("Auth config is: ", authConfig);
 
-      if(alModel) {
-        let [alFindErr, alFindRes] = await to(alModel.find({ 
-          where: {email: credentials.email}, order: 'created DESC' 
-        }));
-        if (alFindErr) return callback(alFindErr);
+      try {
+        await User.checkAccessBeforeLogin(credentials, authConfig);
+      } catch (error) {
+        console.log("Error checking login access, make sure access_logger table exists");
+        if(error.callback && error.error) return callback(error.error);
+      }
 
-        let created = null;
-        if (alFindRes && alFindRes[0] && alFindRes[0].created && 
-          alFindRes[0].email === credentials.email) {
-          created = new Date(alFindRes[0].created);
-          let diff = (now - created);
-
-          if (diff >= BLOCK_TIME_MS_LOGIN) {
-            let [cuUpsertErr, cuUpsertRes] = await to(cuModel.upsertWithWhere(
-              { email: credentials.email }, { loginAccess: 0 }
-            ));
-            if (cuUpsertErr) return callback(cuUpsertErr);
-            let [alDestroyErr, alDestroyRes] = await to(alModel.destroyAll({ email: credentials.email }));
-            if (alDestroyErr) return callback(alDestroyErr);
-          }
-        }
-
-        let [cuAccessErr, cuAccessRes] = await to(cuModel.findOne({ 
-          where: { email: credentials.email, loginAccess: 1 }, 
-          fields: { loginAccess: true } 
-        }));
-        if (cuAccessErr) return callback(cuAccessErr);
-
-        if(created){
-          const blockTime = authConfig.BLOCK_TIME_MS_LOGIN/60000
-          const minutes = blockTime*60000;
-          if (cuAccessRes) {
-            const accessTime = getTimezoneDatetime((created.getTime() + minutes), false);
-            return callback({ 
-              code: USER_BLOCKED_ERROR_CODE, 
-              access_time: accessTime
-            });
-          }
-        }
-    }
+      //TODO Shira - alters and tables to create in different document
 
       this.login(credentials, include, async function (loginErr, loginToken) {
-
+        
         if (loginErr) {
-
-          if(alModel) {
-            let [uFindErr, uFindRes] = await to(User.findOne({ where: { email: credentials.email }}));
-
-            if (uFindRes) {
-              let [alCreateErr, alCreateRes] = await to(alModel.create({ 
-                email: credentials.email, created: now 
-              }));
-            }
-
-            let [alFindErr, alFindRes] = await to(alModel.find({ where: {email: credentials.email }}));
-            if (alFindRes && alFindRes.length >= BLOCK_COUNT_LOGIN) {
-              let counter = 0;
-              for (let alElem of alFindRes) {
-                alElem.created = new Date(alElem.created);
-                if (now - alElem.created <= BLOCK_TIME_MS_LOGIN) counter++;
-              }
-
-              if (counter >= BLOCK_COUNT_LOGIN) {
-                let [cuUpsertErr, cuUpsertRes] = await to(cuModel.upsertWithWhere(
-                  { email: credentials.email }, { loginAccess: 1 }
-                ));
-                if(cuUpsertErr || !cuUpsertRes) logUser("Error blocking user from logging in..");
-              }
-            }
+          try {
+            await User.updateLoginAccessOnError(credentials, authConfig);
+          } catch (error) {
+            console.log("Error updating login access, make sure access_logger table exists");
           }
 
           logUser("Login error", loginErr);
           return callback(loginErr);
         }
 
-        if(alModel) {
-          let [alDestroyErr, alDestroyRes] = await to(alModel.destroyAll({ email: credentials.email }));
-          if (alDestroyErr) return callback(alDestroyErr);
+        try {
+          await User.updateLoginAccessOnSuccess(credentials);
+        } catch (error) {
+          console.log("Error checking login access, make sure access_logger table exists");
         }
 
         logUser("User is logged in with loginToken", loginToken);
         loginToken = loginToken.toObject();
 
-        if(pwdModel) {
+        if(pwdModel && authConfig.CHECK_RESET_PASSWORD_ENABLED) {
+          //TODO Shira - get X time for reset from config
           let pwdResetRequired = await pwdModel.checkForResetPassword(loginToken.userId);
           if (pwdResetRequired) loginToken.pwdResetRequired = true;
         }
@@ -623,7 +672,7 @@ module.exports = function (User) {
 
           logUser("Extended login output:", loginToken);
 
-          delete loginToken.userId; //are we using this somewhere in client side????
+          delete loginToken.userId;
           return callback(null, loginToken);
         });
         //return component arr and save in session storage
@@ -2124,6 +2173,7 @@ function to(promise) {
     .catch(err => [err]);
 }
 
+//TODO Shira - /tools/TimeCalcs.js
 // accepts: d - date
 //          useOffset - if we want to use israel's timezone
 // returns: datetime with format to post to database
@@ -2141,26 +2191,4 @@ function getTimezoneDatetime(d = Date.now(), useOffset = true) {
   let datetime = date + "T" + time + ".000Z";
   datetime = new Date(datetime);
   return datetime;
-}
-
-function getAuthConfig() {
-  const defaultAuthConfig = {
-    BLOCK_COUNT_LOGIN: 5,
-    BLOCK_TIME_MS_LOGIN: 600000
-  };
-  const fileName = process.env.NODE_ENV === 'production' ? `config.${process.env.NODE_ENV}.json` : 'config.json';
-  const configFile = path.join(__dirname, '../../../../../server', fileName);
-  logUser("configFile path", configFile);
-  let authConfig = defaultAuthConfig;
-  try {
-    const config = JSON.parse(fs.readFileSync(configFile, 'utf8'));
-    authConfig = config.modules && config.modules.auth || defaultAuthConfig;
-  } catch (err) {
-    logUser(`Could not fetch /server/${fileName} and parse it`);
-    authConfig = defaultAuthConfig;
-  }
-
-  logUser("Auth config value is ", authConfig);
-  logUser("If you wish to have different authConfig values, you can declare them in config.");
-  return authConfig;
 }

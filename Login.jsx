@@ -42,15 +42,16 @@ class Login extends Component {
 
         this.setState({ isLoading: false });
 
-        if (res.success === false) {
+        if (!res.success) {
             console.log("login failed with error", res.msg);
             return;
         }
-        if (res.success === true) {
-            let redir = this.props.redirectUrl || "/";
-            GenericTools.safe_redirect(redir);
-        }
-
+        //if res.success is true
+        let pwdResetRequired = res.user && res.user.pwdResetRequired;
+        let redirTo = this.props.redirectUrl || "/";
+        if (pwdResetRequired) redirTo  = "/new-password";
+        this.setState({ redirTo  }); //needed?
+        GenericTools.safe_redirect(redirTo);
     }
 
     openRegModal = () => {

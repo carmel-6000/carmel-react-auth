@@ -72,6 +72,7 @@ module.exports = function (Passwords) {
         const created = pwdFindRes[0] && pwdFindRes[0].created;
         if (!created) return false;
         const now = getTimezoneDatetime(Date.now());
+        //TODO Shira - get time from config
         const TIME_FOR_RESET_PASSWORD = 15552000000; //six months in milliseconds
         if (now - created >= TIME_FOR_RESET_PASSWORD) return true;
 
