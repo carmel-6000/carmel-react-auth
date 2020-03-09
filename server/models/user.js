@@ -568,6 +568,7 @@ module.exports = function (User) {
   }
 
   User.updateLoginAccessOnError = async function(credentials, authConfig) {
+    const alModel = User.app.models.AccessLogger;
     let [uFindErr, uFindRes] = await to(User.findOne({ where: { email: credentials.email }}));
 
     if (uFindRes) {
