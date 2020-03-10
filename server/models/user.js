@@ -642,8 +642,6 @@ module.exports = function (User) {
         if(error && error.callback && error.error) return callback(error.error);
       }
 
-      //TODO Shira - alters and tables to create in different document
-
       this.login(credentials, include, async function (loginErr, loginToken) {
         
         if (loginErr) {
@@ -667,7 +665,6 @@ module.exports = function (User) {
         loginToken = loginToken.toObject();
 
         if(pwdModel && authConfig.CHECK_RESET_PASSWORD_ENABLED) {
-          //TODO Shira - get X time for reset from config
           let pwdResetRequired = await pwdModel.checkForResetPassword(loginToken.userId);
           if (pwdResetRequired) loginToken.pwdResetRequired = true;
         }

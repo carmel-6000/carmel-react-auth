@@ -74,9 +74,14 @@ module.exports = function (Passwords) {
         const created = pwdFindRes[0] && pwdFindRes[0].created;
         if (!created) return false;
         const now = TimeCalcs.getTimezoneDatetime(Date.now());
-        //TODO Shira - get time from config
-        const TIME_FOR_RESET_PASSWORD = 15552000000; //six months in milliseconds
-        if (now - created >= TIME_FOR_RESET_PASSWORD) return true;
+
+        //get auth config from config.json
+        const modulesConfig = Passwords.app.get("modules");
+        const authConfig = modulesConfig && modulesConfig.auth;
+        if (!authConfig) console.log("Your config doesn't include module auth. Please add it for security reasons.");
+
+        const CHECK_RESET_PASSWORD_AFTER_X_MS = authConfig.CHECK_RESET_PASSWORD_AFTER_X_MS || 15552000000; //six months in milliseconds
+        if (now - created >= CHECK_RESET_PASSWORD_AFTER_X_MS) return true;
 
         return false;
     }
