@@ -511,8 +511,8 @@ module.exports = function (User) {
 
   User.checkAccessBeforeLogin = async function (credentials, authConfig) {
     //get auth config for block count and block time
-    const BLOCK_COUNT_LOGIN = authConfig && authConfig.BLOCK_COUNT_LOGIN || 5;
-    const BLOCK_TIME_MS_LOGIN = authConfig && authConfig.BLOCK_TIME_MS_LOGIN || 600000;
+    const block_count_login = authConfig && authConfig.block_count_login || 5;
+    const block_time_ms_login = authConfig && authConfig.block_time_ms_login || 600000;
     const now = TimeCalcs.getTimezoneDatetime(Date.now());
 
     //define app and models
@@ -524,7 +524,7 @@ module.exports = function (User) {
     
     //check if user has access or is blocked before trying login
     let [alFindErr, alFindRes] = await to(alModel.find({ 
-      where: {email: credentials.email}, order: 'created DESC', limit: BLOCK_COUNT_LOGIN 
+      where: {email: credentials.email}, order: 'created DESC', limit: block_count_login 
     }));
     if (alFindErr || !alFindRes) throw alFindErr || 'LOGIN_ERROR';
         
@@ -545,7 +545,7 @@ module.exports = function (User) {
       created = new Date(alFindRes[0].created);
       let diff = (now - created);
 
-      if (diff >= BLOCK_TIME_MS_LOGIN) {
+      if (diff >= block_time_ms_login) {
         let [cuUpsertErr, cuUpsertRes] = await to(cuModel.upsertWithWhere(
           { email: credentials.email }, { loginAccess: 0 }
         ));
@@ -562,7 +562,7 @@ module.exports = function (User) {
     if (cuAccessErr) throw cuAccessErr;
 
     if(created && cuAccessRes){
-      const accessTime = TimeCalcs.getTimezoneDatetime((created.getTime() + authConfig.BLOCK_TIME_MS_LOGIN), false);
+      const accessTime = TimeCalcs.getTimezoneDatetime((created.getTime() + block_time_ms_login), false);
       throw { 
         callback: true,
         error: {
@@ -586,21 +586,21 @@ module.exports = function (User) {
       }));
     }
 
-    const BLOCK_COUNT_LOGIN = authConfig && authConfig.BLOCK_COUNT_LOGIN || 5;
-    const BLOCK_TIME_MS_LOGIN = authConfig && authConfig.BLOCK_TIME_MS_LOGIN || 600000;
+    const block_count_login = authConfig && authConfig.block_count_login || 5;
+    const block_time_ms_login = authConfig && authConfig.block_time_ms_login || 600000;
 
     let [alFindErr, alFindRes] = await to(alModel.find({ 
-      where: {email: credentials.email }, order: 'created DESC', limit: BLOCK_COUNT_LOGIN
+      where: {email: credentials.email }, order: 'created DESC', limit: block_count_login
     }));
-    if (alFindRes && alFindRes.length >= BLOCK_COUNT_LOGIN) {
+    if (alFindRes && alFindRes.length >= block_count_login) {
       let counter = 0;
       for (let alElem of alFindRes) {
         if (alElem.success) return;
         alElem.created = new Date(alElem.created);
-        if (now - alElem.created <= BLOCK_TIME_MS_LOGIN) counter++;
+        if (now - alElem.created <= block_time_ms_login) counter++;
       }
 
-      if (counter >= BLOCK_COUNT_LOGIN) {
+      if (counter >= block_count_login) {
         let [cuUpsertErr, cuUpsertRes] = await to(cuModel.upsertWithWhere(
           { email: credentials.email }, { loginAccess: 1 }
         ));
@@ -664,7 +664,7 @@ module.exports = function (User) {
         logUser("User is logged in with loginToken", loginToken);
         loginToken = loginToken.toObject();
 
-        if(pwdModel && authConfig.CHECK_RESET_PASSWORD_ENABLED) {
+        if(pwdModel && authConfig.check_reset_password_enabled) {
           let pwdResetRequired = await pwdModel.checkForResetPassword(loginToken.userId);
           if (pwdResetRequired) loginToken.pwdResetRequired = true;
         }

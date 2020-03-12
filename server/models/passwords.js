@@ -16,6 +16,7 @@ try {
 }
 
 module.exports = function (Passwords) {
+
     Passwords.upsertPwd = async function (owner, password) {
         let hashedPassword = Passwords.hashPassword(password)
         let [pwdFindErr, pwdFindRes] = await to(Passwords.find({
@@ -40,6 +41,7 @@ module.exports = function (Passwords) {
         return { success: false }; //needed??
     }
 
+
     Passwords.checkIfPasswordExists = async function (owner, password) {
         let [pwdFindErr, pwdFindRes] = await to(Passwords.find({
             where: { owner },
@@ -61,9 +63,19 @@ module.exports = function (Passwords) {
         return Passwords.app.models.CustomUser.hashPassword(plain)
     };
 
+
     // accepts: userId (int)
     // return: resetRequired (boolean)
     Passwords.checkForResetPassword = async function (userId) {
+        //get auth config from config.json
+        const modulesConfig = Passwords.app.get("modules");
+        const authConfig = modulesConfig && modulesConfig.auth;
+        if (!authConfig) console.log("Your config doesn't include module auth. Please add it for security reasons.");
+
+        const check_reset_password_enabled = authConfig.check_reset_password_enabled || false;
+        const check_reset_password_after_x_ms = authConfig.check_reset_password_after_x_ms || 15552000000; //six months in milliseconds
+        if(!check_reset_password_enabled) return false;
+
         let [pwdFindErr, pwdFindRes] = await to(Passwords.find({
             where: { owner: userId },
             fields: { created: true },
@@ -74,18 +86,9 @@ module.exports = function (Passwords) {
         const created = pwdFindRes[0] && pwdFindRes[0].created;
         if (!created) return false;
         const now = TimeCalcs.getTimezoneDatetime(Date.now());
-
-        //get auth config from config.json
-        const modulesConfig = Passwords.app.get("modules");
-        const authConfig = modulesConfig && modulesConfig.auth;
-        if (!authConfig) console.log("Your config doesn't include module auth. Please add it for security reasons.");
-
-        const CHECK_RESET_PASSWORD_AFTER_X_MS = authConfig.CHECK_RESET_PASSWORD_AFTER_X_MS || 15552000000; //six months in milliseconds
-        if (now - created >= CHECK_RESET_PASSWORD_AFTER_X_MS) return true;
+        if (now - created >= check_reset_password_after_x_ms) return true;
 
         return false;
     }
-
-    //-----------------REMOTE METHODS DECLARATION BEGINS
-    //-----------------REMOTE METHODS DECLARATION ENDS
+    
 };
