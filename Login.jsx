@@ -188,10 +188,10 @@ class Login extends Component {
                         <p className="mt-1">ברוכים הבאים !</p>
                         <form onSubmit={this.handleLogin} id="logForm" className="collapses show form" data-toggle="collapse">
                             <div className='form-group'>
-                                <input className="form-control" type='email' ref='email' placeholder='מייל' defaultValue="admin@carmel6000.amitnet.org" required />
+                                <input className="form-control" type='email' ref='email' placeholder='מייל' required />
                             </div>
                             <div className='form-group'>
-                                <input className="form-control" type='password' ref='pw' placeholder='סיסמא' defaultValue="E2PSzAmJ-5-ldKnl" required />
+                                <input className="form-control" type='password' ref='pw' placeholder='סיסמא' required />
                                 {this.state.loginMsg !== '' && <div className='msg-error'>{this.state.loginMsg}</div>}
                             </div>
                             <div className='form-group'>

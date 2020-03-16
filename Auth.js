@@ -105,29 +105,25 @@ const Auth = {
     return this.authenticate(email, pw, cb, obj);
   },
 
-  async authenticate(email, pw, cb, { ttl = (60 * 60 * 5), captcha = null }) {
+  async authenticate(email, pw, cb, { ttl = (60 * 60 * 5) }) {
     let url = "/api/CustomUsers/elogin";
 
     if (await this.isHooksRepository()) {
-
       this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__BEFORE_LOGIN);
-
       url = this.hooksRepository.applyFilterHook(consts.AUTH, consts.FILTER_HOOK__LOGIN_URL, url);
-
     }
+
     const [res, err] = await AsyncTools.superFetch(url, {
       method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email, password: pw, ttl, captcha })
+      body: JSON.stringify({ email: email, password: pw, ttl })
     });
 
     if (err) {
       this._isAuthenticated = false;
       if (err.error) {
+        err.error.msg = 'אחד או יותר מן הפרטים שהזנת אינם נכונים';
         if (err.error.statusCode === 500) {
           err.error.msg = 'אין תגובה, בדוק את החיבור לרשת שלך'
-        }
-        else {
-          err.error.msg = 'אחד או יותר מן הפרטים שהזנת אינם נכונים';
         }
       }
       return new Promise((res, rej) => { res({ success: false, msg: err }) });
@@ -136,9 +132,9 @@ const Auth = {
     // console.log("Login res", res);
     this._isAuthenticated = true;
     if (await this.isHooksRepository()) {
-
       this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__AFTER_LOGIN, res);// HOOK__AFTER_LOGIN
     }
+
     if (GenericTools.isCordova()) {
       window.cordova && window.device && window.device.platform !== "iOS" && window.cordova.plugins.CookieManagementPlugin && window.cordova.plugins.CookieManagementPlugin.flush(); //in cordova Android, only after 30 sec the cookies are lunch. This plugin solved the problem: cordova plugin add https://github.com/surgeventures/cordova-plugin-cookie-manager
       this.setItem('klo', res.klo, true, false);
