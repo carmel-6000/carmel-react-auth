@@ -54,10 +54,7 @@ const Auth = {
   },
 
   async superAuthFetch(url, payload = null, redirOnFailure = false) {
-    if (!navigator.onLine) {
-      console.log('entered the if (no internet)')
-      return [null, 'NO_INTERNET'];
-    }
+    if (!navigator.onLine) return [null, 'NO_INTERNET'];
 
     let [res, err] = await AsyncTools.superFetch(url, payload);
     if (err && err.error && err.error.statusCode === 401 && redirOnFailure === true) {

@@ -138,7 +138,6 @@ class MultipleRoute extends Component {
 }
 
 
-//TODO Shira - make sure it works properly with the redirect!!!
 //TODO Shira - write an explanation about home route
 class HomeRoute extends Component {
   constructor(props) {
