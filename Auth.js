@@ -8,18 +8,15 @@ const Auth = {
   _isAuthenticated: false,
   async isHooksRepository() {
     try {
-      
       if (!this.hooksRepository) {
         // let hooksFactory = require(`./../tools/client/hooks/HooksFactory`).default
-        if(hooksFactory){
+        if (hooksFactory) {
           this.hooksRepository = hooksFactory.getRepository()
+        }
       }
-      }
-     
       return true;
-    }
-    catch (err) {
-      console.log("err",err)
+    } catch (err) {
+      console.log("Hooks factory error", err)
       return false;
     }
   },
@@ -150,7 +147,7 @@ const Auth = {
       this.setItem('klk', res.klk, true, false);
       this.setItem('access_token', res.id, true, false);
     }
-   
+
     return new Promise((resolve, rej) => { resolve({ success: true, user: res }) });
   },
 
@@ -239,9 +236,8 @@ const Auth = {
   // if it succeeds it return {ok:true}
   // if there's an error it returns the error and ok:false
   async registerAsync(fd, message = null) {
-    if (!navigator.onLine) {
-      return { error: 'NO_INTERNET', ok: false };
-    }
+    if (!navigator.onLine) return { error: 'NO_INTERNET', ok: false };
+
     var payload = message ? message : {};
     if (!fd || typeof fd !== "object") return { error: 'EMPTY_DATA', ok: false };
     if (Array.isArray(fd)) fd.forEach(function (value, key) { payload[key] = value; });
