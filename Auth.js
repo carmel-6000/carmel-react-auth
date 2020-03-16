@@ -1,9 +1,28 @@
 import AsyncTools from '../tools/AsyncTools';
 import GenericTools from '../tools/GenericTools'
+import hooksFactory from "../tools/client/hooks/HooksFactory"
+import consts from "./../tools/client/hooks/consts"
 import Authentication from './Authentication';
 
 const Auth = {
   _isAuthenticated: false,
+  async isHooksRepository() {
+    try {
+      
+      if (!this.hooksRepository) {
+        // let hooksFactory = require(`./../tools/client/hooks/HooksFactory`).default
+        if(hooksFactory){
+          this.hooksRepository = hooksFactory.getRepository()
+      }
+      }
+     
+      return true;
+    }
+    catch (err) {
+      console.log("err",err)
+      return false;
+    }
+  },
   getKls() {
     let kls = { kl: this.getItem('kl'), klo: this.getItem('klo') };
     return kls;
@@ -90,7 +109,16 @@ const Auth = {
   },
 
   async authenticate(email, pw, cb, { ttl = (60 * 60 * 5), captcha = null }) {
-    const [res, err] = await AsyncTools.superFetch('/api/CustomUsers/elogin/', {
+    let url = "/api/CustomUsers/elogin";
+
+    if (await this.isHooksRepository()) {
+
+      this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__BEFORE_LOGIN);
+
+      url = this.hooksRepository.applyFilterHook(consts.AUTH, consts.FILTER_HOOK__LOGIN_URL, url);
+
+    }
+    const [res, err] = await AsyncTools.superFetch(url, {
       method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email, password: pw, ttl, captcha })
     });
@@ -110,7 +138,10 @@ const Auth = {
 
     // console.log("Login res", res);
     this._isAuthenticated = true;
+    if (await this.isHooksRepository()) {
 
+      this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__AFTER_LOGIN, res);// HOOK__AFTER_LOGIN
+    }
     if (GenericTools.isCordova()) {
       window.cordova && window.device && window.device.platform !== "iOS" && window.cordova.plugins.CookieManagementPlugin && window.cordova.plugins.CookieManagementPlugin.flush(); //in cordova Android, only after 30 sec the cookies are lunch. This plugin solved the problem: cordova plugin add https://github.com/surgeventures/cordova-plugin-cookie-manager
       this.setItem('klo', res.klo, true, false);
@@ -119,6 +150,7 @@ const Auth = {
       this.setItem('klk', res.klk, true, false);
       this.setItem('access_token', res.id, true, false);
     }
+   
     return new Promise((resolve, rej) => { resolve({ success: true, user: res }) });
   },
 
