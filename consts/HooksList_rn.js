@@ -1,7 +1,7 @@
 'use strict';
 
 import consts from "./../../tools/client/hooks/consts"
-import { AsyncStorage } from 'react-native';
+// import { AsyncStorage } from 'react-native';
 
  class HooksList {
 
@@ -52,11 +52,11 @@ import { AsyncStorage } from 'react-native';
     async afterLogin(res) {
 
         console.log("hh auth afterLogin rn",res)
-        await AsyncStorage.setItem('klo', res.klo);
-        await AsyncStorage.setItem('kl', res.kl);
-        await AsyncStorage.setItem('kloo', res.kloo);
-        await AsyncStorage.setItem('klk', res.klk);
-        await AsyncStorage.setItem('access_token', res.id);
+        // await AsyncStorage.setItem('klo', res.klo);
+        // await AsyncStorage.setItem('kl', res.kl);
+        // await AsyncStorage.setItem('kloo', res.kloo);
+        // await AsyncStorage.setItem('klk', res.klk);
+        // await AsyncStorage.setItem('access_token', res.id);
 
 
 

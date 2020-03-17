@@ -112,7 +112,6 @@ const Auth = {
       this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__BEFORE_LOGIN);
       url = this.hooksRepository.applyFilterHook(consts.AUTH, consts.FILTER_HOOK__LOGIN_URL, url);
     }
-
     const [res, err] = await AsyncTools.superFetch(url, {
       method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email, password: pw, ttl })
