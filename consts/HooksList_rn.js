@@ -51,7 +51,7 @@ import consts from "./../../tools/client/hooks/consts"
 
     async afterLogin(res) {
 
-        console.log("hh auth afterLogin rn",res)
+        console.log("hhh auth afterLogin rn",res)
         // await AsyncStorage.setItem('klo', res.klo);
         // await AsyncStorage.setItem('kl', res.kl);
         // await AsyncStorage.setItem('kloo', res.kloo);
