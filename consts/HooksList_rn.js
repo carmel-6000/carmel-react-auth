@@ -19,30 +19,21 @@ import consts from "./../../tools/client/hooks/consts"
 
         this.hooksRepository.addHook(consts.AUTH, consts.HOOK__BEFORE_LOGIN, this.beforeLogin);
         this.hooksRepository.addHook(consts.AUTH, consts.HOOK__AFTER_LOGIN, this.afterLogin);
-        this.hooksRepository.addFilterHook(consts.AUTH, consts.FILTER_HOOK__LOGIN_URL, this.filterHookUrlTry);
-        this.hooksRepository.addFilterHook(consts.AUTH, consts.FILTER_HOOK__LOGIN_URL, this.filterHookUrl);
+        this.hooksRepository.addFilterHook(consts.AUTH, consts.FILTER_HOOK__FETCH_URL, this.filterHookUrlTry);
+        this.hooksRepository.addFilterHook(consts.AUTH, consts.FILTER_HOOK__FETCH_URL, this.filterHookUrl);
     }
 
     filterHookUrl(url) {
-        // let x = url[0];	
         if (url) {
             url = "pumba.carmel6000.com" + url
         }
-        // url = "https://pumba.carmel6000.com"+url
-        // url[0] = x;
-
         console.log("url after1", url)
         return url
 
     }
     filterHookUrlTry(url) {
         console.log("urlnnnn",url)
-        // let x = url[0];	
-        // if (url) {
-            url =  "https://"+ url
-        // }
-        // url = "https://pumba.carmel6000.com"+url
-        // url[0] = x;
+        url =  "https://"+ url
 
         console.log("url after2", url)
         return url;
