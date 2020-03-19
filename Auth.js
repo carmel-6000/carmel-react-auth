@@ -110,7 +110,7 @@ const Auth = {
 
     if (await this.isHooksRepository()) {
       this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__BEFORE_LOGIN);
-      url = this.hooksRepository.applyFilterHook(consts.AUTH, consts.FILTER_HOOK__LOGIN_URL, url);
+      url = this.hooksRepository.applyFilterHook(consts.AUTH, consts.FILTER_HOOK__FETCH_URL, url);
     }
     const [res, err] = await AsyncTools.superFetch(url, {
       method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
@@ -238,11 +238,17 @@ const Auth = {
     if (Array.isArray(fd)) fd.forEach(function (value, key) { payload[key] = value; });
     else for (const [key, value] of Object.entries(fd)) { payload[key] = value; }
 
-    let res = await fetch('/api/CustomUsers', {
+    let url = "/api/CustomUsers";
+
+    if (await this.isHooksRepository()) {
+      url = this.hooksRepository.applyFilterHook(consts.AUTH, consts.FILTER_HOOK__FETCH_URL, url);
+    }
+    let res = await fetch(url, {
       headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
       method: "POST",
       body: JSON.stringify(payload)
     });
+    
     if (!res.ok) {
       let [err, res2] = await AsyncTools.to(res.json());
       if (err) return { error: err, ok: false };
