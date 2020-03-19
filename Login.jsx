@@ -50,8 +50,7 @@ class Login extends Component {
         let pwdResetRequired = res.user && res.user.pwdResetRequired;
         // console.log(this.props.redirectUrl, 'this.props.redirectUrl')
         let redirTo = this.props.redirectUrl || "/";
-        if (pwdResetRequired) redirTo  = "/new-password";
-        this.setState({ redirTo, loginMsg: '' });
+        if (pwdResetRequired) redirTo = "/new-password";
         GenericTools.safe_redirect(redirTo);
     }
 
@@ -175,68 +174,64 @@ class Login extends Component {
 
 
     render() {
-        if (this.state.redirTo != false) {
-            return (<Redirect to={{ pathname: '/', state: this.state }} />);
+        return (
+            <div className='loginPage'>
 
-        } else
-            return (
-                <div className='loginPage'>
-
-                    <div className='loginBox'>
-                        <div className='frow'>
+                <div className='loginBox'>
+                    <div className='frow'>
+                    </div>
+                    <p className="mt-1">ברוכים הבאים !</p>
+                    <form onSubmit={this.handleLogin} id="logForm" className="collapses show form" data-toggle="collapse">
+                        <div className='form-group'>
+                            <input className="form-control" type='email' ref='email' placeholder='מייל' required />
                         </div>
-                        <p className="mt-1">ברוכים הבאים !</p>
-                        <form onSubmit={this.handleLogin} id="logForm" className="collapses show form" data-toggle="collapse">
-                            <div className='form-group'>
-                                <input className="form-control" type='email' ref='email' placeholder='מייל' required />
-                            </div>
-                            <div className='form-group'>
-                                <input className="form-control" type='password' ref='pw' placeholder='סיסמא' required />
-                                {this.state.loginMsg !== '' && <div className='msg-error'>{this.state.loginMsg}</div>}
-                            </div>
-                            <div className='form-group'>
-                                {this.state.isLoading ?
-                                    <button className='btn btn-warning'>מתחבר...</button> :
-                                    <button onClick={this.handleLogin} type='button' className='btn btn-warning login_input'  >היכנס</button>
-                                }
-                            </div>
-                        </form>
+                        <div className='form-group'>
+                            <input className="form-control" type='password' ref='pw' placeholder='סיסמא' required />
+                            {this.state.loginMsg !== '' && <div className='msg-error'>{this.state.loginMsg}</div>}
+                        </div>
+                        <div className='form-group'>
+                            {this.state.isLoading ?
+                                <button className='btn btn-warning'>מתחבר...</button> :
+                                <button onClick={this.handleLogin} type='button' className='btn btn-warning login_input'  >היכנס</button>
+                            }
+                        </div>
+                    </form>
 
-                        {/* Reset section */}
-                        <div id="resetPassDiv" className="collapse collapses">
-                            <form onSubmit={this.reset}>
-                                <input ref="resetEmailInput" id="reset" type="email" className="form-control login_input" placeholder="Email" required />
-                                <button type="submit" className="btn btn-warning login_input mt-3" >
-                                    אפס סיסמה
+                    {/* Reset section */}
+                    <div id="resetPassDiv" className="collapse collapses">
+                        <form onSubmit={this.reset}>
+                            <input ref="resetEmailInput" id="reset" type="email" className="form-control login_input" placeholder="Email" required />
+                            <button type="submit" className="btn btn-warning login_input mt-3" >
+                                אפס סיסמה
                         </button>
-                            </form>
-                        </div>
-
-                        <p>
-                            <button className="btn btn-link login_input" id="toggle" type="button" data-toggle="collapse" data-target=".collapses" aria-expanded="false" aria-controls="resetPassDiv logForm" onClick={(event) => {
-                                event.target.innerHTML = event.target.innerHTML == "התחבר" ? 'שכחת סיסמה?' : "התחבר"
-                            }}>
-                                שכחת סיסמה?
-                            </button>
-                        </p>
-
+                        </form>
                     </div>
 
-                    <Dialog open={this.state.resetPassDialog} aria-labelledby="reset-modal">
-                        <DialogTitle id="reset-modal" className="float-right" >
-                            <p style={{ float: "right", margin: "0" }}>שינוי סיסמה</p>
-                        </DialogTitle>
+                    <p>
+                        <button className="btn btn-link login_input" id="toggle" type="button" data-toggle="collapse" data-target=".collapses" aria-expanded="false" aria-controls="resetPassDiv logForm" onClick={(event) => {
+                            event.target.innerHTML = event.target.innerHTML == "התחבר" ? 'שכחת סיסמה?' : "התחבר"
+                        }}>
+                            שכחת סיסמה?
+                            </button>
+                    </p>
 
-                        <DialogContent>
-                            {this.state.resetPassMsg}
-                        </DialogContent>
-                        <DialogActions>
-                            <Button onClick={() => this.setState({ resetPassDialog: false })} children="סבבה" color="primary" />
-                        </DialogActions>
-                    </Dialog>
-                    {/* End of reset section */}
                 </div>
-            )
+
+                <Dialog open={this.state.resetPassDialog} aria-labelledby="reset-modal">
+                    <DialogTitle id="reset-modal" className="float-right" >
+                        <p style={{ float: "right", margin: "0" }}>שינוי סיסמה</p>
+                    </DialogTitle>
+
+                    <DialogContent>
+                        {this.state.resetPassMsg}
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => this.setState({ resetPassDialog: false })} children="סבבה" color="primary" />
+                    </DialogActions>
+                </Dialog>
+                {/* End of reset section */}
+            </div>
+        )
     }
 }
 
