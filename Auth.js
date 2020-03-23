@@ -20,6 +20,7 @@ const Auth = {
       return false;
     }
   },
+
   getKls() {
     let kls = { kl: this.getItem('kl'), klo: this.getItem('klo') };
     return kls;
@@ -174,6 +175,9 @@ const Auth = {
     return new Promise((res, rej) => { res({ success: true }) });
   },
   async logout(cb) {
+    // if (await this.isHooksRepository()) {
+    //   this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__LOGOUT);
+    // }
 
     if (GenericTools.isCordova()) {
       let [at, err] = await Auth.superAuthFetch('/api/CustomUsers/deleteUserItems', {
@@ -187,13 +191,20 @@ const Auth = {
       this.removeItem('kloo');
       this.removeItem('olk');
     }
+
+
     GenericTools.deleteAllCookies();
     // NtfFactory.getInstance().unsubscribe();
     this._isAuthenticated = false;
     cb && cb();
+    // if (await this.isHooksRepository()) {
+    //   this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__REDIRECT_HOME);
+    // }
     GenericTools.safe_redirect('/');
     return;
   },
+
+
   register(fd, message) {
     var payload = {};
     fd.forEach(function (value, key) {
@@ -248,7 +259,7 @@ const Auth = {
       method: "POST",
       body: JSON.stringify(payload)
     });
-    
+
     if (!res.ok) {
       let [err, res2] = await AsyncTools.to(res.json());
       if (err) return { error: err, ok: false };
