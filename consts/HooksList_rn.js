@@ -19,6 +19,7 @@ class HooksList {
 
         this.hooksRepository.addHook(consts.AUTH, consts.HOOK__BEFORE_LOGIN, this.beforeLogin);
         this.hooksRepository.addHook(consts.AUTH, consts.HOOK__AFTER_LOGIN, this.afterLogin);
+        this.hooksRepository.addHook(consts.AUTH, consts.HOOK__AFTER_REGISTER, this.afterRegister);
         this.hooksRepository.addHook(consts.AUTH, consts.HOOK__LOGOUT, this.deleteAsyncStorage);
         this.hooksRepository.addFilterHook(consts.AUTH, consts.FILTER_HOOK__FETCH_URL, this.filterHookUrlTry);
         this.hooksRepository.addFilterHook(consts.AUTH, consts.FILTER_HOOK__FETCH_URL, this.filterHookUrl);
@@ -42,21 +43,28 @@ class HooksList {
     }
 
     async afterLogin(res) {
-
-        console.log("hhh auth afterLogin rn", res)
+       
         // await AsyncStorage.setItem('klo', res.klo);
         // await AsyncStorage.setItem('kl', res.kl);
         // await AsyncStorage.setItem('kloo', res.kloo);
         // await AsyncStorage.setItem('klk', res.klk);
         // await AsyncStorage.setItem('access_token', res.id);
+
+    }
+    async afterRegister(res) {
+        console.log("res register", res)
     }
 
+    async setUserData(res) {
+       
+    }
     beforeLogin() {
         console.log("hhh auth beforeLogin")
     }
 
     async  deleteAsyncStorage() {
-        console.log("2421432")
+
+        // await AsyncStorage.removeItem('userName');
         // await AsyncStorage.removeItem('klo');
         // await AsyncStorage.removeItem('kl');
         // await AsyncStorage.removeItem('kloo');

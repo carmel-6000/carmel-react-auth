@@ -175,9 +175,9 @@ const Auth = {
     return new Promise((res, rej) => { res({ success: true }) });
   },
   async logout(cb) {
-    // if (await this.isHooksRepository()) {
-    //   this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__LOGOUT);
-    // }
+    if (await this.isHooksRepository()) {
+      this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__LOGOUT);
+    }
 
     if (GenericTools.isCordova()) {
       let [at, err] = await Auth.superAuthFetch('/api/CustomUsers/deleteUserItems', {
@@ -197,9 +197,9 @@ const Auth = {
     // NtfFactory.getInstance().unsubscribe();
     this._isAuthenticated = false;
     cb && cb();
-    // if (await this.isHooksRepository()) {
-    //   this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__REDIRECT_HOME);
-    // }
+    if (await this.isHooksRepository()) {
+      this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__REDIRECT_HOME);
+    }
     GenericTools.safe_redirect('/');
     return;
   },
@@ -268,7 +268,9 @@ const Auth = {
           (res2.error.code ? Object.values(res2.error.code) : "REGISTRATION_ERROR"), ok: false
       };
     }
-
+    if (await this.isHooksRepository()) {
+      this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__AFTER_REGISTER, res);
+    }
     return { ok: true };
   },
 
