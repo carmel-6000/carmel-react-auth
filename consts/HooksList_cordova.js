@@ -1,8 +1,8 @@
 'use strict';
 
 import consts from "./../../tools/client/hooks/consts"
-import { AsyncStorage } from 'react-native';
 import GenericTools from "../../tools/GenericTools";
+import Auth from "../../auth/Auth.js";
 
 class HooksList {
 
