@@ -2,5 +2,11 @@
     "block_count_login": "",
     "block_time_ms_login": "",
     "check_reset_password_enabled": "",
-    "check_reset_password_after_x_ms": ""
+    "check_reset_password_after_x_ms": "",
+    "registration_verification_email_text": {
+        "subject": "",
+        "start": "",
+        "click": "",
+        "end": ""
+    }
 }

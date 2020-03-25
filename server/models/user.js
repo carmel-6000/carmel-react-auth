@@ -1656,18 +1656,27 @@ module.exports = function (User) {
 
       (async () => {
         const passwordsModel = UserModel.app.models.Passwords;
-        if(passwordsModel){
+        if (passwordsModel) {
           let pwdUpsertRes = await passwordsModel.upsertPwd(user.id, user.password);
-          if(!pwdUpsertRes.success) logUser("Error upserting new password to Passwords model");
+          if (!pwdUpsertRes.success) logUser("Error upserting new password to Passwords model");
         }
       })();
 
-      const emailText = context.args.data.start + 
-        '<a style="text-decoration: none;" href="{href}">' + 
-        context.args.data.click + 
-        '</a><br>' + 
-        context.args.data.end;
-      
+      //get auth config from config.json
+      const modulesConfig = UserModel.app.get("modules");
+      const authConfig = modulesConfig && modulesConfig.auth;
+      if (!authConfig) console.log("Your config doesn't include module auth. A deafult registration email will be sent.");
+      logUser("Auth config is: ", authConfig);
+
+      const emailText = authConfig && authConfig.registration_verification_email_text ?
+        (authConfig.registration_verification_email_text.start +
+          '<a style="text-decoration: none;" href="{href}">' +
+          authConfig.registration_verification_email_text.click +
+          '</a><br>' +
+          authConfig.registration_verification_email_text.end) :
+        'Click <a style="text-decoration: none;" href="{href}">here</a> to verify your email.';
+      const emailSubject = (authConfig && authConfig.registration_verification_email_text.subject) || "Verify Registration";
+
       const options = {
         mailer: UserModel.app.models.Email,
         type: 'email',
@@ -1676,7 +1685,7 @@ module.exports = function (User) {
         // and there's a from email in datasources
         // (user.js has to get a not empty from)
         from: emailOptions.from || defaultEmailOptions.from,
-        subject: context.args.data.subject || "",
+        subject: emailSubject,
         text: emailText,
         template: path.resolve(__dirname, '../../server/views/verify.ejs'),
         templateFn: (verifyOptions, options, cb) => {
@@ -1700,7 +1709,7 @@ module.exports = function (User) {
           logUser("The verification email was now sent with the email-options: ", options);
           return next();
         });
-      } else {logUser("error sending verification email");return next();}
+      } else { logUser("error sending verification email"); return next(); }
     });
 
 

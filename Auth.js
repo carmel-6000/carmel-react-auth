@@ -213,7 +213,7 @@ const Auth = {
     if (!navigator.onLine) {
       return { error: 'NO_INTERNET', ok: false };
     }
-    var payload = message ? message : {};
+    let payload = {};
     if (!fd || typeof fd !== "object") return { error: 'EMPTY_DATA', ok: false };
     if (Array.isArray(fd)) fd.forEach(function (value, key) { payload[key] = value; });
     else for (const [key, value] of Object.entries(fd)) { payload[key] = value; }
