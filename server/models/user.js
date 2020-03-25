@@ -664,7 +664,7 @@ module.exports = function (User) {
         logUser("User is logged in with loginToken", loginToken);
         loginToken = loginToken.toObject();
 
-        if(pwdModel && authConfig.check_reset_password_enabled) {
+        if(pwdModel && authConfig && authConfig.check_reset_password_enabled) {
           let pwdResetRequired = await pwdModel.checkForResetPassword(loginToken.userId);
           if (pwdResetRequired) loginToken.pwdResetRequired = true;
         }
