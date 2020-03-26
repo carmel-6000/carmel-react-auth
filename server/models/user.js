@@ -627,7 +627,7 @@ module.exports = function (User) {
       const app = User.app;
       const models = app && app.models;
       if(!app || !models) return callback("LOGIN_ERROR");
-      const pwdModel = models.Passwords;
+      const pwdModel = models.Stop;
 
       //get auth config from config.json
       const modulesConfig = app.get("modules");
@@ -635,30 +635,36 @@ module.exports = function (User) {
       if(!authConfig) console.log("Your config doesn't include module auth. Please add it for security reasons.");
       logUser("Auth config is: ", authConfig);
 
-      try {
-        await User.checkAccessBeforeLogin(credentials, authConfig);
-      } catch (error) {
-        console.log("Error checking login access. Please make sure access_logger table exists for security reasons (if it doesn't- no worries, the code didn't crash!)");
-        if(error && error.callback && error.error) return callback(error.error);
+      if (authConfig && authConfig.access_logger_enabled) {
+        try {
+          await User.checkAccessBeforeLogin(credentials, authConfig);
+        } catch (error) {
+          console.log("Error checking login access or user is blocked. Please make sure access_logger table exists for security reasons.");
+          if(error && error.callback && error.error) return callback(error.error);
+        }
       }
 
       this.login(credentials, include, async function (loginErr, loginToken) {
         
         if (loginErr) {
-          try {
-            await User.updateLoginAccessOnError(credentials, authConfig);
-          } catch (error) {
-            console.log("Error updating login access. Please make sure access_logger table exists for security reasons (if it doesn't- no worries, the code didn't crash!)");
+          if (authConfig && authConfig.access_logger_enabled) {
+            try {
+              await User.updateLoginAccessOnError(credentials, authConfig);
+            } catch (error) {
+              console.log("Error updating login access. Please make sure access_logger table exists for security reasons.");
+            }
           }
 
           logUser("Login error", loginErr);
           return callback(loginErr);
         }
 
-        try {
-          await User.updateLoginAccessOnSuccess(credentials);
-        } catch (error) {
-          console.log("Error checking login access. Please make sure access_logger table exists for security reasons (if it doesn't- no worries, the code didn't crash!)");
+        if (authConfig && authConfig.access_logger_enabled) {
+          try {
+            await User.updateLoginAccessOnSuccess(credentials);
+          } catch (error) {
+            console.log("Error checking login access. Please make sure access_logger table exists for security reasons.");
+          }
         }
 
         logUser("User is logged in with loginToken", loginToken);
@@ -941,12 +947,12 @@ module.exports = function (User) {
         return cb(err);
       }
 
-      const passwordsModel = this.app.models.Passwords;
+      const passwordsModel = this.app.models.Stop;
       if(passwordsModel){
         let pwdExists = await passwordsModel.checkIfPasswordExists(userId, newPassword);
         if (pwdExists.exists) return cb({ code: PASSWORD_ALREADY_USED_ERROR_CODE });
         let pwdUpsertRes = await passwordsModel.upsertPwd(userId, newPassword);
-        if(!pwdUpsertRes.success) logUser("Error upserting new password to Passwords model");
+        if(!pwdUpsertRes.success) logUser("Error upserting new password to Stop model");
       }
       inst.setPassword(newPassword, options, cb);
 
@@ -1493,12 +1499,12 @@ module.exports = function (User) {
           return cb({success:false,code:"NOT_MATCH_PASSWORDS"})
         }
 
-        const passwordsModel = User.app.models.Passwords;
+        const passwordsModel = User.app.models.Stop;
         if(passwordsModel){
           let pwdExists = await passwordsModel.checkIfPasswordExists(userId, newPassword);
           if(pwdExists.exists) return cb({ code: PASSWORD_ALREADY_USED_ERROR_CODE });
           let pwdUpsertRes = await passwordsModel.upsertPwd(userId, newPassword);
-          if(!pwdUpsertRes.success) logUser("Error upserting new password to Passwords model");
+          if(!pwdUpsertRes.success) logUser("Error upserting new password to Stop model");
         }
         inst.setPassword(newPassword, options, cb);
   
@@ -1654,10 +1660,10 @@ module.exports = function (User) {
       logUser("If you wish to have different email options, you can declare them in datasources.");
 
       (async () => {
-        const passwordsModel = UserModel.app.models.Passwords;
+        const passwordsModel = UserModel.app.models.Stop;
         if (passwordsModel) {
           let pwdUpsertRes = await passwordsModel.upsertPwd(user.id, user.password);
-          if (!pwdUpsertRes.success) logUser("Error upserting new password to Passwords model");
+          if (!pwdUpsertRes.success) logUser("Error upserting new password to Stop model");
         }
       })();
 
