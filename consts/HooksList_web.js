@@ -12,7 +12,7 @@ class HooksList {
     }
 
     addHooks() {
-        console.log("addHooks web")
+        // console.log("addHooks web")
         this.hooksRepository.addHook(consts.AUTH, consts.HOOK__BEFORE_LOGIN, this.beforeLogin);
         this.hooksRepository.addHook(consts.AUTH, consts.HOOK__AFTER_LOGIN, this.afterLogin);
         this.hooksRepository.addHook(consts.AUTH, consts.HOOK__LOGOUT, this.deleteAllCookies);
@@ -21,11 +21,11 @@ class HooksList {
     }
 
     async afterLogin(res) {
-        console.log("hhh auth afterLogin web", res)
+        // console.log("hhh auth afterLogin web", res)
     }
 
     beforeLogin() {
-        console.log("hhh auth beforeLogin web")
+        // console.log("hhh auth beforeLogin web")
     }
 
     deleteAllCookies() {

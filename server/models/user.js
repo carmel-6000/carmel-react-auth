@@ -638,7 +638,7 @@ module.exports = function (User) {
       try {
         await User.checkAccessBeforeLogin(credentials, authConfig);
       } catch (error) {
-        console.log("Error checking login access, make sure access_logger table exists");
+        console.log("Error checking login access. Please make sure access_logger table exists for security reasons (if it doesn't- no worries, the code didn't crash!)");
         if(error && error.callback && error.error) return callback(error.error);
       }
 
@@ -648,7 +648,7 @@ module.exports = function (User) {
           try {
             await User.updateLoginAccessOnError(credentials, authConfig);
           } catch (error) {
-            console.log("Error updating login access, make sure access_logger table exists");
+            console.log("Error updating login access. Please make sure access_logger table exists for security reasons (if it doesn't- no worries, the code didn't crash!)");
           }
 
           logUser("Login error", loginErr);
@@ -658,7 +658,7 @@ module.exports = function (User) {
         try {
           await User.updateLoginAccessOnSuccess(credentials);
         } catch (error) {
-          console.log("Error checking login access, make sure access_logger table exists");
+          console.log("Error checking login access. Please make sure access_logger table exists for security reasons (if it doesn't- no worries, the code didn't crash!)");
         }
 
         logUser("User is logged in with loginToken", loginToken);
@@ -1454,8 +1454,7 @@ module.exports = function (User) {
           email: options.email,
           accessToken: accessToken,
           user: user,
-          options: options,
-          emailMsg: options.emailMsg
+          options: options
         });
       }
     });
@@ -1668,7 +1667,7 @@ module.exports = function (User) {
       if (!authConfig) console.log("Your config doesn't include module auth. A deafult registration email will be sent.");
       logUser("Auth config is: ", authConfig);
 
-      const emailText = authConfig && authConfig.registration_verification_email_text ?
+      const emailText = (authConfig && authConfig.registration_verification_email_text) ?
         (authConfig.registration_verification_email_text.start +
           '<a style="text-decoration: none;" href="{href}">' +
           authConfig.registration_verification_email_text.click +
@@ -1725,16 +1724,23 @@ module.exports = function (User) {
 
       if (origin.indexOf("http") != 0)
         origin = "http://" + origin;
-      var url = origin + '/reset-password';
-      var html = info.emailMsg ?
-        (info.emailMsg.start +
-          ' <a href="' + url + '?access_token=' + info.accessToken.id + '">' + info.emailMsg.click + '</a> ' +
-          info.emailMsg.end) :
+      let url = origin + '/reset-password';
+      
+      //get auth config from config.json
+      const modulesConfig = UserModel.app.get("modules");
+      const authConfig = modulesConfig && modulesConfig.auth;
+      if (!authConfig) console.log("Your config doesn't include module auth. A deafult reset password email will be sent.");
+      logUser("Auth config is: ", authConfig);
+
+      let html = (authConfig && authConfig.reset_password_email_text) ?
+        (authConfig.reset_password_email_text.start +
+          ' <a href="' + url + '?access_token=' + info.accessToken.id + '">' + authConfig.reset_password_email_text.click + '</a> ' +
+          authConfig.reset_password_email_text.end) :
         ('Click <a href="' + url + '?access_token=' + info.accessToken.id + '">here</a> to reset your password');
 
       UserModel.app.models.Email.send({
         to: info.email,
-        subject: (info.emailMsg && info.emailMsg.subject) || 'Password reset',
+        subject: (authConfig.reset_password_email_text && authConfig.reset_password_email_text.subject) || 'Password Reset',
         html: html
       }, function (err) {
         if (err) return console.log('> error sending password reset email', err);

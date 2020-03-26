@@ -8,5 +8,11 @@
         "start": "",
         "click": "",
         "end": ""
+    },
+    "reset_password_email_text": {
+        "subject": "",
+        "start": "",
+        "click": "",
+        "end": ""
     }
 }
