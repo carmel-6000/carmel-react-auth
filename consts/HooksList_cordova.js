@@ -1,4 +1,4 @@
-import consts from "./../../tools/client/hooks/consts"
+import consts from "./../../tools/client/hooks/consts.json"
 import GenericTools from "../../tools/GenericTools";
 import Auth from "../../auth/Auth.js";
 

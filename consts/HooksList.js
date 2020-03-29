@@ -1,4 +1,4 @@
-import consts from "./../../tools/client/hooks/consts"
+import consts from "./../../tools/client/hooks/consts.json"
 
 class HooksList {
 
