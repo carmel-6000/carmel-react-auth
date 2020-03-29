@@ -1,6 +1,6 @@
 'use strict';
 
-import consts from "./../../tools/client/hooks/consts"
+import consts from "./../../tools/client/hooks/consts.json"
 // import { AsyncStorage } from 'react-native';
 
 class HooksList {
@@ -8,14 +8,11 @@ class HooksList {
     constructor(hooksRepository) {
 
         this.hooksRepository = hooksRepository;
-        console.log("addHooks rn")
 
 
     }
 
     addHooks() {
-
-        console.log("addHooks rn")
 
         this.hooksRepository.addHook(consts.AUTH, consts.HOOK__BEFORE_LOGIN, this.beforeLogin);
         this.hooksRepository.addHook(consts.AUTH, consts.HOOK__AFTER_LOGIN, this.afterLogin);
@@ -29,21 +26,17 @@ class HooksList {
         if (url) {
             url = "pumba.carmel6000.com" + url
         }
-        console.log("url after1", url)
         return url
 
     }
     filterHookUrlTry(url) {
-        console.log("urlnnnn", url)
+        console.log("url: ", url)
         url = "https://" + url
-
-        console.log("url after2", url)
         return url;
-
     }
 
     async afterLogin(res) {
-       
+
         // await AsyncStorage.setItem('klo', res.klo);
         // await AsyncStorage.setItem('kl', res.kl);
         // await AsyncStorage.setItem('kloo', res.kloo);
@@ -56,7 +49,7 @@ class HooksList {
     }
 
     async setUserData(res) {
-       
+
     }
     beforeLogin() {
         console.log("hhh auth beforeLogin")

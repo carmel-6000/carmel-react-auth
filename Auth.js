@@ -1,7 +1,7 @@
 import AsyncTools from '../tools/AsyncTools';
 import GenericTools from '../tools/GenericTools'
 import hooksFactory from "../tools/client/hooks/HooksFactory"
-import consts from "./../tools/client/hooks/consts"
+import consts from "./../tools/client/hooks/consts.json"
 import Authentication from './Authentication';
 
 const Auth = {
