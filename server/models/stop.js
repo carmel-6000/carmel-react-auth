@@ -1,6 +1,6 @@
 'use strict'
 const to = function (promise) { return promise.then(data => { return [null, data]; }).catch(err => [err]); };
-const TimeCalcs = require('./../../../tools/server/lib/TimeCalcs.js');
+const TimeCalcs = require('../../../tools/server/lib/TimeCalcs.js');
 
 var bcrypt;
 try {
@@ -15,11 +15,11 @@ try {
     bcrypt = require('bcryptjs');
 }
 
-module.exports = function (Passwords) {
+module.exports = function (Stop) {
 
-    Passwords.upsertPwd = async function (owner, password) {
-        let hashedPassword = Passwords.hashPassword(password)
-        let [pwdFindErr, pwdFindRes] = await to(Passwords.find({
+    Stop.upsertPwd = async function (owner, password) {
+        let hashedPassword = Stop.hashPassword(password)
+        let [pwdFindErr, pwdFindRes] = await to(Stop.find({
             where: { owner },
             fields: { id: true },
             order: 'id ASC'
@@ -27,11 +27,11 @@ module.exports = function (Passwords) {
         if (pwdFindErr) return { success: false };
 
         if (pwdFindRes[0] && pwdFindRes.length >= 3) {
-            let [dPwdErr, dPwdRes] = await to(Passwords.destroyById(pwdFindRes[0].id))
+            let [dPwdErr, dPwdRes] = await to(Stop.destroyById(pwdFindRes[0].id))
             if (dPwdErr) return { success: false };
         }
 
-        let [cPwdErr, cPwdRes] = await to(Passwords.create({
+        let [cPwdErr, cPwdRes] = await to(Stop.create({
             password: hashedPassword,
             owner,
             created: TimeCalcs.getTimezoneDatetime(Date.now())
@@ -42,8 +42,8 @@ module.exports = function (Passwords) {
     }
 
 
-    Passwords.checkIfPasswordExists = async function (owner, password) {
-        let [pwdFindErr, pwdFindRes] = await to(Passwords.find({
+    Stop.checkIfPasswordExists = async function (owner, password) {
+        let [pwdFindErr, pwdFindRes] = await to(Stop.find({
             where: { owner },
             fields: { id: true, password: true },
             order: 'id ASC'
@@ -59,16 +59,16 @@ module.exports = function (Passwords) {
     }
 
 
-    Passwords.hashPassword = function (plain) {
-        return Passwords.app.models.CustomUser.hashPassword(plain)
+    Stop.hashPassword = function (plain) {
+        return Stop.app.models.CustomUser.hashPassword(plain)
     };
 
 
     // accepts: userId (int)
     // return: resetRequired (boolean)
-    Passwords.checkForResetPassword = async function (userId) {
+    Stop.checkForResetPassword = async function (userId) {
         //get auth config from config.json
-        const modulesConfig = Passwords.app.get("modules");
+        const modulesConfig = Stop.app.get("modules");
         const authConfig = modulesConfig && modulesConfig.auth;
         if (!authConfig) console.log("Your config doesn't include module auth. Please add it for security reasons.");
 
@@ -76,7 +76,7 @@ module.exports = function (Passwords) {
         const check_reset_password_after_x_ms = authConfig.check_reset_password_after_x_ms || 15552000000; //six months in milliseconds
         if(!check_reset_password_enabled) return false;
 
-        let [pwdFindErr, pwdFindRes] = await to(Passwords.find({
+        let [pwdFindErr, pwdFindRes] = await to(Stop.find({
             where: { owner: userId },
             fields: { created: true },
             order: 'created DESC'

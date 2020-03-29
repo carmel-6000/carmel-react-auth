@@ -1,6 +1,6 @@
 {
-    "name": "Passwords",
-    "pathLink": "Passwords",
+    "name": "Stop",
+    "pathLink": "Stop",
     "isPublic": false,
     "mixins": {
         "ExcludeModelFields": true
@@ -35,7 +35,7 @@
     "validations": [],
     "options": {
         "mysql": {
-            "table": "passwords"
+            "table": "stop"
         }
     },
     "relations": {

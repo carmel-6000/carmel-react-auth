@@ -167,7 +167,7 @@ class Login extends Component {
         let [res, err] = await Auth.superAuthFetch('/api/CustomUsers/reset', {
             headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
             method: "POST",
-            body: JSON.stringify({ email, origin: window.location.origin + (window.location.hash[0] === "#" ? "/#" : ""), emailMsg })
+            body: JSON.stringify({ email, origin: window.location.origin + (window.location.hash[0] === "#" ? "/#" : "") })
         })
         if(err){
             console.log("err")
