@@ -2,7 +2,10 @@
 -- Alters for auth module
 -- For security!!
 
-CREATE TABLE `passwords` (
+--stop -- > secret table of passwords
+DROP TABLE `passwords`;
+
+CREATE TABLE `stop` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `password` varchar(255) DEFAULT NULL,
   `owner` int(11) unsigned NOT NULL,

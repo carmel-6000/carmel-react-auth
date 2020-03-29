@@ -111,7 +111,7 @@ const Auth = {
 
     if (await this.isHooksRepository()) {
       this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__BEFORE_LOGIN);
-      url = this.hooksRepository.applyFilterHook(consts.AUTH, consts.FILTER_HOOK__FETCH_URL, url);
+      url = (this.hooksRepository.applyFilterHook && this.hooksRepository.applyFilterHook(consts.AUTH, consts.FILTER_HOOK__FETCH_URL, url)) ||  "/api/CustomUsers/elogin";
     }
     const [res, err] = await AsyncTools.superFetch(url, {
       method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
@@ -244,7 +244,7 @@ const Auth = {
   async registerAsync(fd, message = null) {
     if (!navigator.onLine) return { error: 'NO_INTERNET', ok: false };
 
-    var payload = message ? message : {};
+    let payload = {};
     if (!fd || typeof fd !== "object") return { error: 'EMPTY_DATA', ok: false };
     if (Array.isArray(fd)) fd.forEach(function (value, key) { payload[key] = value; });
     else for (const [key, value] of Object.entries(fd)) { payload[key] = value; }
@@ -252,7 +252,7 @@ const Auth = {
     let url = "/api/CustomUsers";
 
     if (await this.isHooksRepository()) {
-      url = this.hooksRepository.applyFilterHook(consts.AUTH, consts.FILTER_HOOK__FETCH_URL, url);
+      url = (this.hooksRepository.applyFilterHook && this.hooksRepository.applyFilterHook(consts.AUTH, consts.FILTER_HOOK__FETCH_URL, url)) || "/api/CustomUsers";
     }
     let res = await fetch(url, {
       headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
