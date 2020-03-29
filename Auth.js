@@ -176,7 +176,7 @@ const Auth = {
   async logout(cb) {
 
     if (GenericTools.isCordova()) {
-      let [at, err] = await Auth.superAuthFetch('/api/CustomUsers/deleteUserItems', {
+      await Auth.superAuthFetch('/api/CustomUsers/deleteUserItems', {
         method: 'POST',
         headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
       });

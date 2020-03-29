@@ -151,8 +151,8 @@ class PasswordInput extends Component {
                     <div style={showMessageStyle}>{this.state.confirmPassowrdMsg}</div>
                     <Button style={buttonStyle} variant="outlined" color="primary" onClick={this.onSubmit}>submit</Button>
 
-                    <div class="progress " style={progressBarStyle}>
-                        <div class="progress-bar" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style={{ width: this.state.strength + "%", backgroundColor: this.state.color }}>
+                    <div className="progress " style={progressBarStyle}>
+                        <div className="progress-bar" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style={{ width: this.state.strength + "%", backgroundColor: this.state.color }}>
                         </div>
                     </div>
                 </div>

@@ -69,7 +69,7 @@ class Login extends Component {
                         return;
                     }
                     let part = val.split(" ");
-                    if (part.length == 1) {
+                    if (part.length === 1) {
                         this.setState({ realm: { text: "Include family name please.", isvalid: false } });
                         return;
                     }
@@ -80,6 +80,7 @@ class Login extends Component {
                     }
                     else
                         this.setState({ realm: { text: "Name must be at least 4 chars and limited for 20.", isvalid: false } });
+                    break;
                 }
             case "registerEmail":
                 {
@@ -140,6 +141,8 @@ class Login extends Component {
                     }
                     break;
                 }
+            default:
+                break;
         }
     }
 
@@ -162,7 +165,7 @@ class Login extends Component {
         let [res, err] = await Auth.superAuthFetch('/api/CustomUsers/reset', {
             headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
             method: "POST",
-            body: JSON.stringify({ email: email, origin: window.location.origin + (window.location.hash[0] == "#" ? "/#" : "") })
+            body: JSON.stringify({ email: email, origin: window.location.origin + (window.location.hash[0] === "#" ? "/#" : "") })
         })
 
         this.setState({
@@ -173,7 +176,7 @@ class Login extends Component {
 
 
     render() {
-        if (this.state.redirTo != false) {
+        if (this.state.redirTo !== false) {
             return (<Redirect to={{ pathname: '/', state: this.state }} />);
 
         } else
