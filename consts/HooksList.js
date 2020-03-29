@@ -1,5 +1,3 @@
-'use strict';
-
 import consts from "./../../tools/client/hooks/consts"
 
 class HooksList {
