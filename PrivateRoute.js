@@ -74,7 +74,7 @@ class PrivateRoute extends Component {
   }
 
   render() {
-    const { compName, component: Component, defaultRedirectComp: Drc, ...rest } = this.props;
+    const { compName, component: Component, defaultRedirectComp: Drc, ...rest} = this.props;
 
     return (
 
@@ -83,7 +83,7 @@ class PrivateRoute extends Component {
         if (this.klsk.indexOf(compName) === -1 || !this.haveAccess) {
           return Drc ? <Drc /> : <Redirect to='/' />
         }
-        return <Component {...props} />;
+        return <Component {...props} {...this.props}/>;
       }} />
 
     );
