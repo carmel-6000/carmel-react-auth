@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import './_Login.scss';
 import Auth from './Auth';
-import { Redirect } from 'react-router';
+// import { Redirect } from 'react-router';
 import ValidateTool from '../tools/ValidateTool'
 import ElementsHandler from '../../handlers/ElementsHandler'
 import { Dialog, DialogTitle, Button, DialogContent, DialogActions } from '@material-ui/core';
@@ -70,7 +70,7 @@ class Login extends Component {
                         return;
                     }
                     let part = val.split(" ");
-                    if (part.length == 1) {
+                    if (part.length === 1) {
                         this.setState({ realm: { text: "Include family name please.", isvalid: false } });
                         return;
                     }
@@ -81,6 +81,7 @@ class Login extends Component {
                     }
                     else
                         this.setState({ realm: { text: "Name must be at least 4 chars and limited for 20.", isvalid: false } });
+                    break;
                 }
             case "registerEmail":
                 {
@@ -141,7 +142,10 @@ class Login extends Component {
                     }
                     break;
                 }
+            default:
+                break;
         }
+
     }
 
 
@@ -163,9 +167,11 @@ class Login extends Component {
         let [res, err] = await Auth.superAuthFetch('/api/CustomUsers/reset', {
             headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
             method: "POST",
-            body: JSON.stringify({ email, origin: window.location.origin + (window.location.hash[0] == "#" ? "/#" : "") })
+            body: JSON.stringify({ email, origin: window.location.origin + (window.location.hash[0] === "#" ? "/#" : "") })
         })
-
+        if(err){
+            console.log("err")
+        }
         this.setState({
             resetPassDialog: true,
             resetPassMsg: res ? "נשלחה הודעת אימות לכתובת המייל" : "הכתובת אינה רשומה במערכת"
@@ -209,7 +215,7 @@ class Login extends Component {
 
                     <p>
                         <button className="btn btn-link login_input" id="toggle" type="button" data-toggle="collapse" data-target=".collapses" aria-expanded="false" aria-controls="resetPassDiv logForm" onClick={(event) => {
-                            event.target.innerHTML = event.target.innerHTML == "התחבר" ? 'שכחת סיסמה?' : "התחבר"
+                            event.target.innerHTML = event.target.innerHTML === "התחבר" ? 'שכחת סיסמה?' : "התחבר"
                         }}>
                             שכחת סיסמה?
                             </button>

@@ -15,8 +15,8 @@ class PrivateRouteAsync extends Component {
 
   checkAcces = () => {
 
-    const { userRole, history } = this.props;
-    let { haveAccess } = this.state;
+    // const { userRole, history } = this.props;
+    // let { haveAccess } = this.state;
     Auth.isAuthenticatedSync((isAuth) => {
       this.setState({ haveAccess: isAuth, loaded: true });
     });
@@ -125,7 +125,7 @@ class MultipleRoute extends Component {
 
     return (
       <Route exact key={0} {...rest} render={props => {
-        if (!this.haveAccess || intersection.length == 0 || this.klsk.length == 0) {
+        if (!this.haveAccess || intersection.length === 0 || this.klsk.length === 0) {
           // console.log("Multipleroutes - not authorized!")
           return Drc ? Drc : <Redirect to="/" />;
         }

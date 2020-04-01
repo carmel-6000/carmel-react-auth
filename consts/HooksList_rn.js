@@ -1,6 +1,4 @@
-'use strict';
-
-import consts from "./../../tools/client/hooks/consts"
+import consts from "./../../tools/client/hooks/consts.json"
 // import { AsyncStorage } from 'react-native';
 
 class HooksList {
