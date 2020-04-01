@@ -81,7 +81,7 @@ class PrivateRoute extends Component {
       <Route key={0} {...rest} render={props => {
 
         if (this.klsk.indexOf(compName) == -1 || !this.haveAccess) {
-          return Drc ? <Drc /> : <Redirect to='/' />
+          return Drc ? Drc : <Redirect to='/' />
         }
         return <Component {...props} />;
       }} />
@@ -127,7 +127,7 @@ class MultipleRoute extends Component {
       <Route exact key={0} {...rest} render={props => {
         if (!this.haveAccess || intersection.length == 0 || this.klsk.length == 0) {
           // console.log("Multipleroutes - not authorized!")
-          return Drc ? <Drc /> : <Redirect to="/" />;
+          return Drc ? Drc : <Redirect to="/" />;
         }
 
         let Co = comps[intersection[0]];
