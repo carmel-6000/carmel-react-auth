@@ -75,7 +75,7 @@ class PrivateRoute extends Component {
 
   render() {
     const { compName, component: Component, defaultRedirectComp: Drc, ...rest} = this.props;
-
+console.log("this.klsk.indexOf(compName)",compName,this.klsk,this.klsk.indexOf(compName))
     return (
 
       <Route key={0} {...rest} render={props => {
@@ -131,7 +131,7 @@ class MultipleRoute extends Component {
         }
 
         let Co = comps[intersection[0]];
-        return <Co {...props} />;
+        return <Co {...props} {...this.props}/>;
       }} />
     );
   }
