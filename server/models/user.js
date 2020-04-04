@@ -354,13 +354,23 @@ module.exports = function (User) {
     (async () => {
       const { RoleMapping } = User.app.models;
       let query = { where: {} };
-      query.where[uField] = uData[uField];
+
+      //allow multiple signin methods for single user
+      query = {where :{or:[{uField: uData[uField]}, {email: uData.email}]}}
+      // query.where[uField] = uData[uField];
       logUser("query", query);
       let [err, res] = await to(this.findOne(query));
       if (err) {
         logUser("Error on serch by field", err);
         return cb(err);
       }
+      
+      if(res && res[uField] && res[uField] != uData[uField]){
+        
+        logUser("Error on serch by field", err);
+        return cb(err);
+      }
+
       if (res) {
         logUser(`found by ${uField}`, res);
         let dataToUpdate = {};
