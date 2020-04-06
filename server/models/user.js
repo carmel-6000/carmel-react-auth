@@ -530,7 +530,7 @@ module.exports = function (User) {
         
     for (const row of alFindRes) {
       if(row.success) { //success === true
-        console.log("User has access to login, now trying to login user...");
+        logUser("User has access to login, now trying to login user...");
         let [cuUpsertErr, cuUpsertRes] = await to(cuModel.upsertWithWhere(
           { email: credentials.email }, { loginAccess: 0 }
         ));
