@@ -7,9 +7,6 @@
   "excludeFields": [
     "principalId"
   ],
-  "hidden": [
-    "principalId"
-  ],
   "properties": {
     "id": {
       "type": "string",
