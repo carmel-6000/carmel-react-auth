@@ -1654,7 +1654,7 @@ module.exports = function (User) {
         host: "0.0.0.0",
         port: "8080",
         from: "carmelvideos@gmail.com",
-        redirect: `http://localhost:3000/#/login?popup=verifiedLogin`,
+        redirect: `http://localhost:3000/login?popup=verifiedLogin`,
         protocol: "http"
       };
 
@@ -1666,7 +1666,7 @@ module.exports = function (User) {
       else if (!emailOptions.redirect) {
         let url = emailOptions.url || defaultEmailOptions.url;
         let protocol = emailOptions.protocol || defaultEmailOptions.protocol;
-        emailOptions.redirect = `${protocol}://${url}/#/login?popup=verifiedLogin`;
+        emailOptions.redirect = `${protocol}://${url}/login?popup=verifiedLogin`;
       }
 
       logUser("Verification email options are", emailOptions);
