@@ -1738,7 +1738,7 @@ module.exports = function (User) {
       if (!authConfig) console.log("Your config doesn't include module auth. A deafult reset password email will be sent.");
       logUser("Auth config is: ", authConfig);
 
-      let html = (authConfig && authConfig.reset_password_email_text) ?
+      let html = (authConfig && authConfig.reset_password_email_text && authConfig.reset_password_email_text.start) ?
         (authConfig.reset_password_email_text.start +
           ' <a href="' + url + '?access_token=' + info.accessToken.id + '">' + authConfig.reset_password_email_text.click + '</a> ' +
           authConfig.reset_password_email_text.end) :
