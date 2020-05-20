@@ -80,7 +80,7 @@ class PrivateRoute extends Component {
 
       <Route key={0} {...rest} render={props => {
 
-        if (this.klsk.indexOf(compName) == -1 || !this.haveAccess) {
+        if (this.klsk.indexOf(compName) === -1 || !this.haveAccess) {
           return Drc ? Drc : <Redirect to='/' />
         }
         return <Component {...props} />;
