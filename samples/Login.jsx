@@ -162,7 +162,7 @@ class Login extends Component {
     reset = async (e) => {
         e.preventDefault();
         let email = this.refs.resetEmailInput.value;
-        let [res, err] = await Auth.superAuthFetch('/api/CustomUsers/reset', {
+        let [res] = await Auth.superAuthFetch('/api/CustomUsers/reset', {//can assign err if needed
             headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
             method: "POST",
             body: JSON.stringify({ email: email, origin: window.location.origin + (window.location.hash[0] === "#" ? "/#" : "") })
@@ -215,7 +215,7 @@ class Login extends Component {
 
                         <p>
                             <button className="btn btn-link login_input" id="toggle" type="button" data-toggle="collapse" data-target=".collapses" aria-expanded="false" aria-controls="resetPassDiv logForm" onClick={(event) => {
-                                event.target.innerHTML = event.target.innerHTML == "התחבר" ? 'שכחת סיסמה?' : "התחבר"
+                                event.target.innerHTML = event.target.innerHTML === "התחבר" ? 'שכחת סיסמה?' : "התחבר"
                             }}>
                                 שכחת סיסמה?
                             </button>
