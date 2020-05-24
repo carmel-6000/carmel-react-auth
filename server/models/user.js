@@ -42,6 +42,7 @@ try {
 var DEFAULT_TTL = 1209600; // 2 weeks in seconds
 var DEFAULT_RESET_PW_TTL = 15 * 60; // 15 mins in seconds
 var DEFAULT_MAX_TTL = 31556926; // 1 year in seconds
+const HILMA_DEFAULT_MAX_AGE = 1000 * 60 * 60 * 5;
 var assert = require('assert');
 
 var debug = require('debug')('loopback:user');
@@ -518,18 +519,18 @@ module.exports = function (User) {
     //define app and models
     const app = User.app;
     const models = app && app.models;
-    if(!app || !models) throw "Error: app or models is null..";
+    if (!app || !models) throw "Error: app or models is null..";
     const alModel = models.AccessLogger;
     const cuModel = models.CustomUser;
-    
+
     //check if user has access or is blocked before trying login
-    let [alFindErr, alFindRes] = await to(alModel.find({ 
-      where: {email: credentials.email}, order: 'created DESC', limit: block_count_login 
+    let [alFindErr, alFindRes] = await to(alModel.find({
+      where: { email: credentials.email }, order: 'created DESC', limit: block_count_login
     }));
     if (alFindErr || !alFindRes) throw alFindErr || 'LOGIN_ERROR';
-        
+
     for (const row of alFindRes) {
-      if(row.success) { //success === true
+      if (row.success) { //success === true
         logUser("User has access to login, now trying to login user...");
         let [cuUpsertErr, cuUpsertRes] = await to(cuModel.upsertWithWhere(
           { email: credentials.email }, { loginAccess: 0 }
@@ -555,33 +556,33 @@ module.exports = function (User) {
     }
 
     //check if user is blocked
-    let [cuAccessErr, cuAccessRes] = await to(cuModel.findOne({ 
-      where: { email: credentials.email, loginAccess: 1 }, 
-      fields: { loginAccess: true } 
+    let [cuAccessErr, cuAccessRes] = await to(cuModel.findOne({
+      where: { email: credentials.email, loginAccess: 1 },
+      fields: { loginAccess: true }
     }));
     if (cuAccessErr) throw cuAccessErr;
 
-    if(created && cuAccessRes){
+    if (created && cuAccessRes) {
       const accessTime = TimeCalcs.getTimezoneDatetime((created.getTime() + block_time_ms_login), false);
-      throw { 
+      throw {
         callback: true,
         error: {
-          code: USER_BLOCKED_ERROR_CODE, 
+          code: USER_BLOCKED_ERROR_CODE,
           access_time: accessTime
         }
       };
     }
   }
 
-  User.updateLoginAccessOnError = async function(credentials, authConfig) {
+  User.updateLoginAccessOnError = async function (credentials, authConfig) {
     const models = User.app.models;
     const alModel = models.AccessLogger;
     const cuModel = models.CustomUser;
     const now = TimeCalcs.getTimezoneDatetime(Date.now());
 
-    let [uFindErr, uFindRes] = await to(User.findOne({ where: { email: credentials.email }}));
+    let [uFindErr, uFindRes] = await to(User.findOne({ where: { email: credentials.email } }));
     if (uFindRes) {
-      let [alCreateErr, alCreateRes] = await to(alModel.create({ 
+      let [alCreateErr, alCreateRes] = await to(alModel.create({
         email: credentials.email, created: now, success: false
       }));
     }
@@ -589,8 +590,8 @@ module.exports = function (User) {
     const block_count_login = authConfig && authConfig.block_count_login || 5;
     const block_time_ms_login = authConfig && authConfig.block_time_ms_login || 600000;
 
-    let [alFindErr, alFindRes] = await to(alModel.find({ 
-      where: {email: credentials.email }, order: 'created DESC', limit: block_count_login
+    let [alFindErr, alFindRes] = await to(alModel.find({
+      where: { email: credentials.email }, order: 'created DESC', limit: block_count_login
     }));
     if (alFindRes && alFindRes.length >= block_count_login) {
       let counter = 0;
@@ -604,10 +605,10 @@ module.exports = function (User) {
         let [cuUpsertErr, cuUpsertRes] = await to(cuModel.upsertWithWhere(
           { email: credentials.email }, { loginAccess: 1 }
         ));
-        if(cuUpsertErr || !cuUpsertRes) logUser("Error blocking user from logging in..");
+        if (cuUpsertErr || !cuUpsertRes) logUser("Error blocking user from logging in..");
       }
     }
-  } 
+  }
 
   User.updateLoginAccessOnSuccess = async function (credentials) {
     const alModel = User.app.models.AccessLogger;
@@ -622,17 +623,17 @@ module.exports = function (User) {
     //let userModel = CustomUser.app.models.User;
     //logUser("this: ", this);
     //logUser("login: ", CustomUser.login);
-    
+
     (async (callback) => {
       const app = User.app;
       const models = app && app.models;
-      if(!app || !models) return callback("LOGIN_ERROR");
+      if (!app || !models) return callback("LOGIN_ERROR");
       const pwdModel = models.Stop;
 
       //get auth config from config.json
       const modulesConfig = app.get("modules");
       const authConfig = modulesConfig && modulesConfig.auth;
-      if(!authConfig) console.log("Your config doesn't include module auth. Please add it for security reasons.");
+      if (!authConfig) console.log("Your config doesn't include module auth. Please add it for security reasons.");
       logUser("Auth config is: ", authConfig);
 
       if (authConfig && authConfig.access_logger_enabled) {
@@ -640,12 +641,12 @@ module.exports = function (User) {
           await User.checkAccessBeforeLogin(credentials, authConfig);
         } catch (error) {
           console.log("Error checking login access or user is blocked. Please make sure access_logger table exists for security reasons.");
-          if(error && error.callback && error.error) return callback(error.error);
+          if (error && error.callback && error.error) return callback(error.error);
         }
       }
 
       this.login(credentials, include, async function (loginErr, loginToken) {
-        
+
         if (loginErr) {
           if (authConfig && authConfig.access_logger_enabled) {
             try {
@@ -670,7 +671,7 @@ module.exports = function (User) {
         logUser("User is logged in with loginToken", loginToken);
         loginToken = loginToken.toObject();
 
-        if(pwdModel && authConfig && authConfig.check_reset_password_enabled) {
+        if (pwdModel && authConfig && authConfig.check_reset_password_enabled) {
           let pwdResetRequired = await pwdModel.checkForResetPassword(loginToken.userId);
           if (pwdResetRequired) loginToken.pwdResetRequired = true;
         }
@@ -948,11 +949,11 @@ module.exports = function (User) {
       }
 
       const passwordsModel = this.app.models.Stop;
-      if(passwordsModel){
+      if (passwordsModel) {
         let pwdExists = await passwordsModel.checkIfPasswordExists(userId, newPassword);
         if (pwdExists.exists) return cb({ code: PASSWORD_ALREADY_USED_ERROR_CODE });
         let pwdUpsertRes = await passwordsModel.upsertPwd(userId, newPassword);
-        if(!pwdUpsertRes.success) logUser("Error upserting new password to Stop model");
+        if (!pwdUpsertRes.success) logUser("Error upserting new password to Stop model");
       }
       inst.setPassword(newPassword, options, cb);
 
@@ -1468,52 +1469,52 @@ module.exports = function (User) {
     return cb.promise;
   };
 
-  User.setNewPassword = function (userId, oldPassword,newPassword, options, cb) {
-      assert(userId != null && userId !== '', 'userId is a required argument');
-      assert(!!newPassword, 'newPassword is a required argument');
-      assert(!!oldPassword, 'newPassword is a required argument');
-  
-      if (cb === undefined && typeof options === 'function') {
-        cb = options;
-        options = undefined;
-      }
-      cb = cb || utils.createPromiseCallback();
-  
-      // Make sure to use the constructor of the (sub)class
-      // where the method is invoked from (`this` instead of `User`)
-      this.findById(userId, options, async (err, inst) => {
-        if (err) return cb(err);
-  
-        if (!inst) {
-          const err = new Error(`User ${userId} not found`);
-          Object.assign(err, {
-            code: 'USER_NOT_FOUND',
-            statusCode: 401,
-          });
-          return cb(err);
-        }
-        let userPwd = inst.password;
-        let [errComp,isMatch] = await to(bcrypt.compare(oldPassword,userPwd))
-        if(errComp  ) {return cb(err)}
-        if(!isMatch){
-          return cb({success:false,code:"NOT_MATCH_PASSWORDS"})
-        }
+  User.setNewPassword = function (userId, oldPassword, newPassword, options, cb) {
+    assert(userId != null && userId !== '', 'userId is a required argument');
+    assert(!!newPassword, 'newPassword is a required argument');
+    assert(!!oldPassword, 'newPassword is a required argument');
 
-        const passwordsModel = User.app.models.Stop;
-        if(passwordsModel){
-          let pwdExists = await passwordsModel.checkIfPasswordExists(userId, newPassword);
-          if(pwdExists.exists) return cb({ code: PASSWORD_ALREADY_USED_ERROR_CODE });
-          let pwdUpsertRes = await passwordsModel.upsertPwd(userId, newPassword);
-          if(!pwdUpsertRes.success) logUser("Error upserting new password to Stop model");
-        }
-        inst.setPassword(newPassword, options, cb);
-  
-      });
-  
-      return cb.promise
+    if (cb === undefined && typeof options === 'function') {
+      cb = options;
+      options = undefined;
+    }
+    cb = cb || utils.createPromiseCallback();
+
+    // Make sure to use the constructor of the (sub)class
+    // where the method is invoked from (`this` instead of `User`)
+    this.findById(userId, options, async (err, inst) => {
+      if (err) return cb(err);
+
+      if (!inst) {
+        const err = new Error(`User ${userId} not found`);
+        Object.assign(err, {
+          code: 'USER_NOT_FOUND',
+          statusCode: 401,
+        });
+        return cb(err);
+      }
+      let userPwd = inst.password;
+      let [errComp, isMatch] = await to(bcrypt.compare(oldPassword, userPwd))
+      if (errComp) { return cb(err) }
+      if (!isMatch) {
+        return cb({ success: false, code: "NOT_MATCH_PASSWORDS" })
+      }
+
+      const passwordsModel = User.app.models.Stop;
+      if (passwordsModel) {
+        let pwdExists = await passwordsModel.checkIfPasswordExists(userId, newPassword);
+        if (pwdExists.exists) return cb({ code: PASSWORD_ALREADY_USED_ERROR_CODE });
+        let pwdUpsertRes = await passwordsModel.upsertPwd(userId, newPassword);
+        if (!pwdUpsertRes.success) logUser("Error upserting new password to Stop model");
+      }
+      inst.setPassword(newPassword, options, cb);
+
+    });
+
+    return cb.promise
 
   }
-  
+
   User.deleteUserItems = function (id, cb) {
     console.log("id", id);
     this.relations.accessTokens.modelTo.destroyById(id, function (err, info) {
@@ -1731,7 +1732,7 @@ module.exports = function (User) {
       if (origin.indexOf("http") != 0)
         origin = "http://" + origin;
       let url = origin + '/reset-password';
-      
+
       //get auth config from config.json
       const modulesConfig = UserModel.app.get("modules");
       const authConfig = modulesConfig && modulesConfig.auth;
@@ -1982,13 +1983,20 @@ module.exports = function (User) {
 
     UserModel.afterRemote('extendedLogin', function (ctx) {
       console.log("After remote extendedlogin is launched");
-      ctx.res.cookie('access_token', ctx.result.id, { signed: true, maxAge: 1000 * 60 * 60 * 5 });
+
+      let expires;
+      if (ctx.result && ctx.result.ttl) {
+        expires = new Date(Date.now() + (ctx.result.ttl * 1000));
+      }
+      else expires = new Date(Date.now() + HILMA_DEFAULT_MAX_AGE);
+
+      ctx.res.cookie('access_token', ctx.result.id, { signed: true, expires });
       // //These are all 'trash' cookies in order to confuse the hacker who tries to penetrate kl,klo cookies
-      ctx.res.cookie('kloo', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
-      ctx.res.cookie('klk', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
-      ctx.res.cookie('olk', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
-      ctx.res.cookie('klo', ctx.result.klo, { signed: false, maxAge: 1000 * 60 * 60 * 5 });
-      ctx.res.cookie('kl', ctx.result.kl, { signed: false, maxAge: 1000 * 60 * 60 * 5 });
+      ctx.res.cookie('kloo', randomstring.generate(), { signed: true, expires });
+      ctx.res.cookie('klk', randomstring.generate(), { signed: true, expires });
+      ctx.res.cookie('olk', randomstring.generate(), { signed: true, expires });
+      ctx.res.cookie('klo', ctx.result.klo, { signed: false, expires });
+      ctx.res.cookie('kl', ctx.result.kl, { signed: false, expires });
 
       return Promise.resolve();
     });
@@ -2013,13 +2021,18 @@ module.exports = function (User) {
     });
 
     function setAuthCookies(ctx) {
-      ctx.res.cookie('access_token', ctx.result.accessToken, { signed: true, maxAge: 1000 * 60 * 60 * 5 });
-      ctx.res.cookie('klo', ctx.result.klo, { signed: false, maxAge: 1000 * 60 * 60 * 5 });
-      ctx.res.cookie('kl', ctx.result.kl, { signed: false, maxAge: 1000 * 60 * 60 * 5 });
+      let expires;
+      if (ctx.result && ctx.result.ttl)
+        expires = new Date(Date.now() + (ctx.result.ttl * 60));
+      else expires = new Date(Date.now() + HILMA_DEFAULT_MAX_AGE);
+
+      ctx.res.cookie('access_token', ctx.result.accessToken, { signed: true, expires });
+      ctx.res.cookie('klo', ctx.result.klo, { signed: false, expires });
+      ctx.res.cookie('kl', ctx.result.kl, { signed: false, expires });
       // //These are all 'trash' cookies in order to confuse the hacker who tries to penetrate kl,klo cookies
-      ctx.res.cookie('kloo', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
-      ctx.res.cookie('klk', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
-      ctx.res.cookie('olk', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
+      ctx.res.cookie('kloo', randomstring.generate(), { signed: true, expires });
+      ctx.res.cookie('klk', randomstring.generate(), { signed: true, expires });
+      ctx.res.cookie('olk', randomstring.generate(), { signed: true, expires });
       return ctx;
     }
 

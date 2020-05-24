@@ -108,7 +108,6 @@ const Auth = {
 
   async authenticate(email, pw, cb, { ttl = (60 * 60 * 5) }) {
     let url = "/api/CustomUsers/elogin";
-
     if (await this.isHooksRepository()) {
       this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__BEFORE_LOGIN);
       url = (this.hooksRepository.applyFilterHook && this.hooksRepository.applyFilterHook(consts.AUTH, consts.FILTER_HOOK__FETCH_URL, url)) || "/api/CustomUsers/elogin";

@@ -28,7 +28,7 @@ class Login extends Component {
         this.handleLogin = this.handleLogin.bind(this);
     }
 
-    async handleLogin(e) {
+    async handleLogin(e, obj = { ttl: (60 * 60 * 5) }) {
         e.preventDefault();
 
         let email = this.refs.email.value;
@@ -36,7 +36,7 @@ class Login extends Component {
 
         this.setState({ isLoading: true });
 
-        let res = await Auth.login(email, pw);
+        let res = await Auth.login(email, pw, null, obj);
         // console.log("Auth.authenticate res", res);
 
         this.setState({ isLoading: false });
@@ -169,7 +169,7 @@ class Login extends Component {
             method: "POST",
             body: JSON.stringify({ email, origin: window.location.origin + (window.location.hash[0] === "#" ? "/#" : "") })
         })
-        if(err){
+        if (err) {
             console.log("err")
         }
         this.setState({
