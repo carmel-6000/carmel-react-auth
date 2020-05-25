@@ -70,8 +70,8 @@ const Auth = {
     }
   },
 
-  async superAuthFetch(url, payload = null, redirOnFailure = false) {
-    if (!navigator.onLine) return [null, 'NO_INTERNET'];
+  async superAuthFetch(url, payload = null, redirOnFailure = false, fetchOffline = false) {
+    if (!navigator.onLine && !fetchOffline) return [null, 'NO_INTERNET'];
 
     let [res, err] = await AsyncTools.superFetch(url, payload);
     if (err && err.error && err.error.statusCode === 401 && redirOnFailure === true) {
@@ -108,10 +108,9 @@ const Auth = {
 
   async authenticate(email, pw, cb, { ttl = (60 * 60 * 5) }) {
     let url = "/api/CustomUsers/elogin";
-
     if (await this.isHooksRepository()) {
       this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__BEFORE_LOGIN);
-      url = (this.hooksRepository.applyFilterHook && this.hooksRepository.applyFilterHook(consts.AUTH, consts.FILTER_HOOK__FETCH_URL, url)) ||  "/api/CustomUsers/elogin";
+      url = (this.hooksRepository.applyFilterHook && this.hooksRepository.applyFilterHook(consts.AUTH, consts.FILTER_HOOK__FETCH_URL, url)) || "/api/CustomUsers/elogin";
     }
     const [res, err] = await AsyncTools.superFetch(url, {
       method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
