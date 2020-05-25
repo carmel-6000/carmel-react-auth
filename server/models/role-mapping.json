@@ -27,6 +27,11 @@
       "type": "belongsTo",
       "model": "Role",
       "foreignKey": "roleId"
+    },
+    "user": {
+      "type": "belongsTo",
+      "model": "User",
+      "foreignKey": "principalId"
     }
   },
   "acls": [

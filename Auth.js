@@ -177,6 +177,9 @@ const Auth = {
     if (await this.isHooksRepository()) {
       this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__LOGOUT);
     }
+    Auth.superAuthFetch('/api/CustomUsers/logout', {
+     method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+   });
 
     if (GenericTools.isCordova()) {
       await Auth.superAuthFetch('/api/CustomUsers/deleteUserItems', {
