@@ -542,7 +542,7 @@ module.exports = function (User) {
 
     //check if user has login access
     let created = null;
-    if (alFindRes[0] || alFindRes[0].created && alFindRes[0].email === credentials.email) {
+    if (alFindRes[0] && alFindRes[0].created && alFindRes[0].email === credentials.email) {
       created = new Date(alFindRes[0].created);
       let diff = (now - created);
 
