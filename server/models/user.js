@@ -1654,7 +1654,7 @@ module.exports = function (User) {
       else if (!emailOptions.redirect) {
         let url = emailOptions.url || defaultEmailOptions.url;
         let protocol = emailOptions.protocol || defaultEmailOptions.protocol;
-        emailOptions.redirect = `${protocol}://${url}/#/login?popup=verifiedLogin`;
+        emailOptions.redirect = `${protocol}://${url}/login?popup=verifiedLogin`;
       }
 
       logUser("Verification email options are", emailOptions);

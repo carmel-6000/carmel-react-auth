@@ -51,12 +51,6 @@
             "principalId": "$everyone",
             "permission": "DENY",
             "property": "*"
-        },
-        {
-            "principalType": "ROLE",
-            "principalId": "$authenticated",
-            "permission": "ALLOW",
-            "property": "*"
         }
     ],
     "methods": {}
