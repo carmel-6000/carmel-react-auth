@@ -142,7 +142,7 @@ const Auth = {
       this.setItem('klk', res.klk, true, false);
       this.setItem('access_token', res.id, true, false);
     }
-
+    if (cb && typeof cb === "function") return cb({ success: true, user: res });
     return new Promise((resolve, rej) => { resolve({ success: true, user: res }) });
   },
 
@@ -174,12 +174,12 @@ const Auth = {
     return new Promise((res, rej) => { res({ success: true }) });
   },
   async logout(cb) {
+    Auth.superAuthFetch('/api/CustomUsers/logout', {
+      method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+    });
     if (await this.isHooksRepository()) {
       this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__LOGOUT);
     }
-    Auth.superAuthFetch('/api/CustomUsers/logout', {
-     method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-   });
 
     if (GenericTools.isCordova()) {
       await Auth.superAuthFetch('/api/CustomUsers/deleteUserItems', {
