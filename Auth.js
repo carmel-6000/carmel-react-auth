@@ -1,25 +1,25 @@
 import AsyncTools from '../tools/AsyncTools';
 import GenericTools from '../tools/GenericTools'
-import hooksFactory from "../tools/client/hooks/HooksFactory"
-import consts from "./../tools/client/hooks/consts.json"
+// import hooksFactory from "../tools/client/hooks/HooksFactory"
+// import consts from "./../tools/client/hooks/consts.json"
 import Authentication from './Authentication';
 
 const Auth = {
   _isAuthenticated: false,
-  async isHooksRepository() {
-    try {
-      if (!this.hooksRepository) {
-        // let hooksFactory = require(`./../tools/client/hooks/HooksFactory`).default
-        if (hooksFactory) {
-          this.hooksRepository = hooksFactory.getRepository()
-        }
-      }
-      return true;
-    } catch (err) {
-      console.log("Hooks factory error", err)
-      return false;
-    }
-  },
+  // async isHooksRepository() {
+  //   try {
+  //     if (!this.hooksRepository) {
+  //       // let hooksFactory = require(`./../tools/client/hooks/HooksFactory`).default
+  //       if (hooksFactory) {
+  //         this.hooksRepository = hooksFactory.getRepository()
+  //       }
+  //     }
+  //     return true;
+  //   } catch (err) {
+  //     console.log("Hooks factory error", err)
+  //     return false;
+  //   }
+  // },
 
   getKls() {
     let kls = { kl: this.getItem('kl'), klo: this.getItem('klo') };
@@ -108,10 +108,12 @@ const Auth = {
 
   async authenticate(email, pw, cb, { ttl = (60 * 60 * 5) }) {
     let url = "/api/CustomUsers/elogin";
-    if (await this.isHooksRepository()) {
-      this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__BEFORE_LOGIN);
-      url = (this.hooksRepository.applyFilterHook && this.hooksRepository.applyFilterHook(consts.AUTH, consts.FILTER_HOOK__FETCH_URL, url)) || "/api/CustomUsers/elogin";
-    }
+    //     if (await this.isHooksRepository()) {
+    //       this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__BEFORE_LOGIN);
+    //   //    url = (this.hooksRepository.applyFilterHook && this.hooksRepository.applyFilterHook(consts.AUTH, consts.FILTER_HOOK__FETCH_URL, url)) || 
+    // // 
+    //       url ="/api/CustomUsers/elogin";
+    //     }
     const [res, err] = await AsyncTools.superFetch(url, {
       method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email, password: pw, ttl })
@@ -128,11 +130,10 @@ const Auth = {
       return new Promise((res, rej) => { res({ success: false, msg: err }) });
     }
 
-    // console.log("Login res", res);
     this._isAuthenticated = true;
-    if (await this.isHooksRepository()) {
-      this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__AFTER_LOGIN, res);// HOOK__AFTER_LOGIN
-    }
+    // if (await this.isHooksRepository()) {
+    //   this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__AFTER_LOGIN, res);// HOOK__AFTER_LOGIN
+    // }
 
     if (GenericTools.isCordova()) {
       window.cordova && window.device && window.device.platform !== "iOS" && window.cordova.plugins.CookieManagementPlugin && window.cordova.plugins.CookieManagementPlugin.flush(); //in cordova Android, only after 30 sec the cookies are lunch. This plugin solved the problem: cordova plugin add https://github.com/surgeventures/cordova-plugin-cookie-manager
@@ -177,9 +178,9 @@ const Auth = {
     Auth.superAuthFetch('/api/CustomUsers/logout', {
       method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
     });
-    if (await this.isHooksRepository()) {
-      this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__LOGOUT);
-    }
+    // if (await this.isHooksRepository()) {
+    //   this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__LOGOUT);
+    // }
 
     if (GenericTools.isCordova()) {
       await Auth.superAuthFetch('/api/CustomUsers/deleteUserItems', {
@@ -199,9 +200,9 @@ const Auth = {
     // NtfFactory.getInstance().unsubscribe();
     this._isAuthenticated = false;
     cb && cb();
-    if (await this.isHooksRepository()) {
-      this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__REDIRECT_HOME);
-    }
+    // if (await this.isHooksRepository()) {
+    //   this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__REDIRECT_HOME);
+    // }
     GenericTools.safe_redirect('/');
     return;
   },
@@ -253,9 +254,9 @@ const Auth = {
 
     let url = "/api/CustomUsers";
 
-    if (await this.isHooksRepository()) {
-      url = (this.hooksRepository.applyFilterHook && this.hooksRepository.applyFilterHook(consts.AUTH, consts.FILTER_HOOK__FETCH_URL, url)) || "/api/CustomUsers";
-    }
+    // if (await this.isHooksRepository()) {
+    //   url = (this.hooksRepository.applyFilterHook && this.hooksRepository.applyFilterHook(consts.AUTH, consts.FILTER_HOOK__FETCH_URL, url)) || "/api/CustomUsers";
+    // }
     let res = await fetch(url, {
       headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
       method: "POST",
@@ -270,9 +271,9 @@ const Auth = {
           (res2.error.code ? Object.values(res2.error.code) : "REGISTRATION_ERROR"), ok: false
       };
     }
-    if (await this.isHooksRepository()) {
-      this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__AFTER_REGISTER, res);
-    }
+    // if (await this.isHooksRepository()) {
+    //   this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__AFTER_REGISTER, res);
+    // }
     return { ok: true };
   },
 
