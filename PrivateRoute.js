@@ -58,7 +58,6 @@ class PrivateRoute extends Component {
 
   constructor(props) {
     super(props);
-
     let kls = Auth.getKls();
     this.klsk = [];
     this.dhp = null;
@@ -75,7 +74,6 @@ class PrivateRoute extends Component {
 
   render() {
     const { compName, component: Component, defaultRedirectComp: Drc, ...rest } = this.props;
-
     return (
 
       <Route key={0} {...rest} render={props => {
@@ -142,14 +140,28 @@ class MultipleRoute extends Component {
 class HomeRoute extends Component {
   constructor(props) {
     super(props);
+    this.initKls();
+  }
+
+  shouldComponentUpdate() {
+
+    let oldDhp = this.dhp, oldAc = this.haveAccess;
+    this.haveAccess = Auth.isAuthenticated();
+    if (oldAc === this.haveAccess)
+      return false;
+    this.initKls(this.haveAccess)
+    return oldDhp !== this.dhp;
+  }
+
+  initKls = (isAuth = null) => {
     let kls = Auth.getKls();
     this.dhp = null;
     try {
       let klsk = JSON.parse(b.decode(kls.klo));
       this.dhp = klsk.b;
     } catch (err) { }
-
-    this.haveAccess = Auth.isAuthenticated();
+    if (isAuth != null)
+      this.haveAccess = Auth.isAuthenticated();
   }
 
   render() {
