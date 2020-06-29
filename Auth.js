@@ -175,7 +175,7 @@ const Auth = {
     return new Promise((res, rej) => { res({ success: true }) });
   },
   async logout(cb) {
-    Auth.superAuthFetch('/api/CustomUsers/logout', {
+    await Auth.superAuthFetch('/api/CustomUsers/logout', {
       method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
     });
     // if (await this.isHooksRepository()) {
