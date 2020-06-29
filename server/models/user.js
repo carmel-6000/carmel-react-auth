@@ -558,7 +558,7 @@ module.exports = function (User) {
     //check if user is blocked
     let [cuAccessErr, cuAccessRes] = await to(cuModel.findOne({
       where: { email: credentials.email, loginAccess: 1 },
-      fields: { loginAccess: true }
+      fields: { loginAccess: true, id: true }
     }));
     if (cuAccessErr) throw cuAccessErr;
 

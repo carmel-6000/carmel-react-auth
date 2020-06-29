@@ -199,7 +199,7 @@ const Auth = {
     GenericTools.deleteAllCookies();
     // NtfFactory.getInstance().unsubscribe();
     this._isAuthenticated = false;
-    cb && cb();
+    typeof cb === "function" && cb();
     // if (await this.isHooksRepository()) {
     //   this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__REDIRECT_HOME);
     // }
