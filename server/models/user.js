@@ -42,7 +42,8 @@ try {
 var DEFAULT_TTL = 1209600; // 2 weeks in seconds
 var DEFAULT_RESET_PW_TTL = 15 * 60; // 15 mins in seconds
 var DEFAULT_MAX_TTL = 31556926; // 1 year in seconds
-const HILMA_DEFAULT_MAX_AGE = 1000 * 60 * 60 * 5;
+const HILMA_DEFAULT_MAX_AGE = 18000000;//five hours ms 1000 * 60 * 60 * 5
+const HILMA_DEFAULT_TTL = HILMA_DEFAULT_MAX_AGE / 1000;//five hours seconds 60*60*5
 var assert = require('assert');
 
 var debug = require('debug')('loopback:user');
@@ -648,8 +649,8 @@ module.exports = function (User) {
         }
       }
 
+      credentials.ttl = authConfig && authConfig.login_ttl || HILMA_DEFAULT_TTL;
       this.login(credentials, include, async function (loginErr, loginToken) {
-
         if (loginErr) {
           if (authConfig && authConfig.access_logger_enabled) {
             try {

@@ -15,5 +15,6 @@
         "start": "",
         "click": "",
         "end": ""
-    }
+    },
+    "login_ttl": 18000
 }
