@@ -124,7 +124,9 @@ const Auth = {
       if (err.error) {
         err.error.msg = 'אחד או יותר מן הפרטים שהזנת אינם נכונים';
         if (err.error.statusCode === 500) {
-          err.error.msg = 'אין תגובה, בדוק את החיבור לרשת שלך'
+          if (err.error.code === "USER_BLOCKED")
+            err.error.msg = "נחסמת לכמה דקות, נסה שנית מאוחר יותר"
+          else err.error.msg = 'אין תגובה, בדוק את החיבור לרשת שלך'
         }
       }
       return new Promise((res, rej) => { res({ success: false, msg: err }) });
