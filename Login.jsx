@@ -42,8 +42,21 @@ class Login extends Component {
         this.setState({ isLoading: false });
 
         if (!res.success) {
-            console.log("login failed with error", res.msg);
+            // console.log("login failed with error", res.msg);
             this.setState({ loginMsg: res.msg.error.msg });
+            if (res.msg.error.remaining) {
+                this.count = res.msg.error.remaining;
+                if (this.interval) clearInterval(this.interval);
+                this.interval = setInterval(() => {
+                    this.count--;
+                    this.setState({ loginMsg: `נחסמת עקב יותר מדי נסיונות כניסה, נסה שוב בעוד ${this.count} דקות` });
+                    if (!this.count) {
+                        clearInterval(this.interval);
+                        this.setState({ loginMsg: "זמן ההמתנה תם, אתה יכול לנסות להתחבר מחדש" });
+
+                    }
+                }, 60000);
+            }
             return;
         }
         //if res.success is true

@@ -563,12 +563,15 @@ module.exports = function (User) {
     if (cuAccessErr) throw cuAccessErr;
 
     if (created && cuAccessRes) {
+
       const accessTime = TimeCalcs.getTimezoneDatetime((created.getTime() + block_time_ms_login), false);
+      const now = TimeCalcs.getTimezoneDateString();
       throw {
         callback: true,
         error: {
           code: USER_BLOCKED_ERROR_CODE,
-          access_time: accessTime
+          access_time: accessTime,
+          remaining: Math.ceil((accessTime.getTime() - now.getTime()) / (60000)),
         }
       };
     }

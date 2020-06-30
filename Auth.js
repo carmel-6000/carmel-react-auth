@@ -124,8 +124,14 @@ const Auth = {
       if (err.error) {
         err.error.msg = 'אחד או יותר מן הפרטים שהזנת אינם נכונים';
         if (err.error.statusCode === 500) {
-          if (err.error.code === "USER_BLOCKED")
-            err.error.msg = "נחסמת לכמה דקות, נסה שנית מאוחר יותר"
+          if (err.error.code === "USER_BLOCKED") {
+
+            if (err.error.remaining > 0) {
+              err.error.msg = `נחסמת עקב יותר מדי נסיונות כניסה, נסה שוב בעוד ${err.error.remaining} דקות`;
+            }
+            else err.error.msg = "נסה שנית";
+
+          }
           else err.error.msg = 'אין תגובה, בדוק את החיבור לרשת שלך'
         }
       }
