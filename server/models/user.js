@@ -9,10 +9,10 @@
  */
 
 'use strict';
-var g = require('../../../../../node_modules/loopback/lib/globalize');
+var g = require('loopback/lib/globalize');
 var isEmail = require('isemail');
 var loopback = require('loopback');
-var utils = require('../../../../../node_modules/loopback/lib/utils');
+var utils = require('loopback/lib/utils');
 const path = require('path');
 var qs = require('querystring');
 var SALT_WORK_FACTOR = 10;

@@ -5,7 +5,7 @@
 
 'use strict';
 var loopback = require('loopback');
-var utils = require('../../../../../node_modules/loopback/lib/utils');
+var utils = require('loopback/lib/utils');
 
 /**
  * The `RoleMapping` model extends from the built in `loopback.Model` type.
