@@ -102,12 +102,11 @@ const Auth = {
     return new Promise((resolve, rej) => { resolve({ success: true, user: res }) });
   },
 
-  async login(email, pw, cb, obj = {}) {
-    return this.authenticate(email, pw, cb, obj);
+  async login(email, pw, cb, obj = {}, url) {
+    return this.authenticate(email, pw, cb, obj, url);
   },
 
-  async authenticate(email, pw, cb, { ttl = (60 * 60 * 5) }) {
-    let url = "/api/CustomUsers/elogin";
+  async authenticate(email, pw, cb, { ttl = (60 * 60 * 5) }, url = "/api/CustomUsers/elogin") {
     //     if (await this.isHooksRepository()) {
     //       this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__BEFORE_LOGIN);
     //   //    url = (this.hooksRepository.applyFilterHook && this.hooksRepository.applyFilterHook(consts.AUTH, consts.FILTER_HOOK__FETCH_URL, url)) || 
