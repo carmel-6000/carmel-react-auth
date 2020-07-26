@@ -64,6 +64,8 @@ class Login extends Component {
         // console.log(this.props.redirectUrl, 'this.props.redirectUrl')
         let redirTo = this.props.redirectUrl || "/";
         if (pwdResetRequired) redirTo = "/new-password";
+	redirTo=this.props.basePath+"/"
+	console.log("REDIRTO:", redirTo);
         GenericTools.safe_redirect(redirTo);
     }
 

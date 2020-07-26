@@ -20,7 +20,11 @@ const Auth = {
   //     return false;
   //   }
   // },
-
+  _pathStart: "",
+  setPath (path){
+	  this._pathStart=path;
+	  console.log("start PATH set to :", path)
+  },
   getKls() {
     let kls = { kl: this.getItem('kl'), klo: this.getItem('klo') };
     return kls;
@@ -73,7 +77,7 @@ const Auth = {
   async superAuthFetch(url, payload = null, redirOnFailure = false, fetchOffline = false) {
     if (!navigator.onLine && !fetchOffline) return [null, 'NO_INTERNET'];
 
-    let [res, err] = await AsyncTools.superFetch(url, payload);
+    let [res, err] = await AsyncTools.superFetch(this._pathStart+url, payload);
     if (err && err.error && err.error.statusCode === 401 && redirOnFailure === true) {
       Auth.logout(() => window.location.href = window.location.origin); //FORCE LOGOUT.      
     }
@@ -81,7 +85,7 @@ const Auth = {
   },
 
   async loginWithUniqueField(key, value, pw, cb) {
-    const [res, err] = await AsyncTools.superFetch('/api/CustomUsers/elogin/', {
+    const [res, err] = await AsyncTools.superFetch(this._pathStart+'/api/CustomUsers/elogin/', {
       method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({ key, value, password: pw })
     });
@@ -114,7 +118,7 @@ const Auth = {
     // // 
     //       url ="/api/CustomUsers/elogin";
     //     }
-    const [res, err] = await AsyncTools.superFetch(url, {
+    const [res, err] = await AsyncTools.superFetch(this._pathStart+url, {
       method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email, password: pw, ttl })
     });
@@ -211,7 +215,7 @@ const Auth = {
     // if (await this.isHooksRepository()) {
     //   this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__REDIRECT_HOME);
     // }
-    GenericTools.safe_redirect('/');
+    GenericTools.safe_redirect(this._pathStart+'/');
     return;
   },
 
