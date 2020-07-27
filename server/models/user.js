@@ -685,6 +685,8 @@ module.exports = function (User) {
           loginToken.kl = klos.kl;
           //klo == array of view components that user is allowed to access on base64
           loginToken.klo = klos.klo;
+	  loginToken.role = klos.role;
+          loginToken.path = klos.path;		
           logUser("Extended login output:", loginToken);
           delete loginToken.userId;
           return callback(null, loginToken);
@@ -697,7 +699,7 @@ module.exports = function (User) {
 
   async function getKlos(userId, userRoleMap = null) {
     let rolemap = User.app.models.RoleMapping;
-    let res = { kl: "", klo: "" };
+    let res = { kl: "", klo: "" ,role:"", path:""};
     try {
 
       if (!userRoleMap)
@@ -715,7 +717,7 @@ module.exports = function (User) {
       }
 
       const configFile = path.join(__dirname, '../../../../consts/', 'roles-access.config.json');
-      let comps = { a: [], b: "" };
+      let comps = { a: [], b: "", c: "" };
       logUser("configFile", configFile);
       try {
         const rolesAccess = JSON.parse(fs.readFileSync(configFile, 'utf8'));
@@ -727,12 +729,16 @@ module.exports = function (User) {
           if (rolesAccess[uRole.role.name]['defaultHomePage']) {
             comps.b = rolesAccess[uRole.role.name]['defaultHomePage'];
           }
+         if (rolesAccess[uRole.role.name]['basePath']) {
+            comps.c = rolesAccess[uRole.role.name]['basePath'];
         }
         logUser("COMPS?", comps);
         let regex = /==|=/gm;
         res.kl = uRole.role && uRole.role.roleKey ? uRole.role.roleKey : "";
         res.klo = base64.encode(JSON.stringify(comps)).replace(regex, '');
         // res.klo = JSON.stringify(comps);
+	res.role = uRole.role.name;
+	res.path = comps.c;
         return res;
 
       } catch (err) {
@@ -1995,14 +2001,18 @@ module.exports = function (User) {
       }
       else expires = new Date(Date.now() + HILMA_DEFAULT_MAX_AGE);
 
-      ctx.res.cookie('access_token', ctx.result.id, { signed: true, expires });
+      let sourceHost = ctx.req.headers.origin;
+      let referer = ctx.req.headers.referer
+      let domain = sourceHost.replace("https:\/\/", "");
+      let path=referer.replace(`https:\/\/${domain}`, "");
+      console.log("REQUEST:",path, ctx.result);
+      ctx.res.cookie('access_token', ctx.result.id, { signed: true, expires,domain,path });
       // //These are all 'trash' cookies in order to confuse the hacker who tries to penetrate kl,klo cookies
-      ctx.res.cookie('kloo', randomstring.generate(), { signed: true, expires });
-      ctx.res.cookie('klk', randomstring.generate(), { signed: true, expires });
-      ctx.res.cookie('olk', randomstring.generate(), { signed: true, expires });
-      ctx.res.cookie('klo', ctx.result.klo, { signed: false, expires });
-      ctx.res.cookie('kl', ctx.result.kl, { signed: false, expires });
-
+      ctx.res.cookie('kloo', randomstring.generate(), { signed: true, expires,domain,path });
+      ctx.res.cookie('klk', randomstring.generate(), { signed: true, expires,domain,path });
+      ctx.res.cookie('olk', randomstring.generate(), { signed: true, expires,domain,path });
+      ctx.res.cookie('klo', ctx.result.klo, { signed: false, expires,domain,path });
+      ctx.res.cookie('kl', ctx.result.kl, { signed: false, expires,domain,path });
       return Promise.resolve();
     });
 
