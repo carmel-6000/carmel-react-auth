@@ -686,7 +686,7 @@ module.exports = function (User) {
           //klo == array of view components that user is allowed to access on base64
           loginToken.klo = klos.klo;
 	  loginToken.role = klos.role;
-          loginToken.path = klos.path;		
+          loginToken.cookiePath = klos.cookiePath;		
           logUser("Extended login output:", loginToken);
           delete loginToken.userId;
           return callback(null, loginToken);
@@ -699,7 +699,7 @@ module.exports = function (User) {
 
   async function getKlos(userId, userRoleMap = null) {
     let rolemap = User.app.models.RoleMapping;
-    let res = { kl: "", klo: "" ,role:"", path:""};
+    let res = { kl: "", klo: "" ,role:"", cookiePath:""};
     try {
 
       if (!userRoleMap)
@@ -729,8 +729,9 @@ module.exports = function (User) {
           if (rolesAccess[uRole.role.name]['defaultHomePage']) {
             comps.b = rolesAccess[uRole.role.name]['defaultHomePage'];
           }
-         if (rolesAccess[uRole.role.name]['basePath']) {
-            comps.c = rolesAccess[uRole.role.name]['basePath'];
+         if (rolesAccess[uRole.role.name]['cookiePath']) {
+            comps.c = rolesAccess[uRole.role.name]['cookiePath'];
+	 }
         }
         logUser("COMPS?", comps);
         let regex = /==|=/gm;
@@ -738,7 +739,7 @@ module.exports = function (User) {
         res.klo = base64.encode(JSON.stringify(comps)).replace(regex, '');
         // res.klo = JSON.stringify(comps);
 	res.role = uRole.role.name;
-	res.path = comps.c;
+	res.cookiePath = comps.c;
         return res;
 
       } catch (err) {
@@ -2005,6 +2006,11 @@ module.exports = function (User) {
       let referer = ctx.req.headers.referer
       let domain = sourceHost.replace("https:\/\/", "");
       let path=referer.replace(`https:\/\/${domain}`, "");
+	    console.log(path)
+      path=path.replace(new RegExp('\/' + '$'), "");
+	    console.log(path)
+      ctx.result.cookiePath ? path=path+ctx.result.cookiePath : path=path ;
+ 
       console.log("REQUEST:",path, ctx.result);
       ctx.res.cookie('access_token', ctx.result.id, { signed: true, expires,domain,path });
       // //These are all 'trash' cookies in order to confuse the hacker who tries to penetrate kl,klo cookies
