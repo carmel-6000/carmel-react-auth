@@ -95,7 +95,7 @@ const Auth = {
       return new Promise((res, rej) => { res({ success: false, msg: err }) });
     }
     this._isAuthenticated = true;
-    if (GenericTools.isCordova()) {
+    if (GenericTools.isCordova() || GenericTools.isCapacitor()) {
       window.cordova && window.device && window.device.platform !== "iOS" && window.cordova.plugins.CookieManagementPlugin && window.cordova.plugins.CookieManagementPlugin.flush(); //in cordova Android, only after 30 sec the cookies are lunch. This plugin solved the problem: cordova plugin add https://github.com/surgeventures/cordova-plugin-cookie-manager
       this.setItem('klo', res.klo, true, false);
       this.setItem('kl', res.kl, true, false);
@@ -147,7 +147,7 @@ const Auth = {
     //   this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__AFTER_LOGIN, res);// HOOK__AFTER_LOGIN
     // }
 
-    if (GenericTools.isCordova()) {
+    if (GenericTools.isCordova() || GenericTools.isCapacitor()) {
       window.cordova && window.device && window.device.platform !== "iOS" && window.cordova.plugins.CookieManagementPlugin && window.cordova.plugins.CookieManagementPlugin.flush(); //in cordova Android, only after 30 sec the cookies are lunch. This plugin solved the problem: cordova plugin add https://github.com/surgeventures/cordova-plugin-cookie-manager
       this.setItem('klo', res.klo, true, false);
       this.setItem('kl', res.kl, true, false);
@@ -175,7 +175,7 @@ const Auth = {
     console.log("Login res", at);
     this._isAuthenticated = true;
 
-    if (GenericTools.isCordova()) {
+    if (GenericTools.isCordova() || GenericTools.isCapacitor()) {
       window.cordova && window.device && window.device.platform !== "iOS" && window.cordova.plugins.CookieManagementPlugin && window.cordova.plugins.CookieManagementPlugin.flush(); //in cordova Android, only after 30 sec the cookies are lunch. This plugin solved the problem: cordova plugin add https://github.com/surgeventures/cordova-plugin-cookie-manager
       this.setItem('klo', at.klo, true, false);
       this.setItem('kl', at.kl, true, false);
@@ -194,7 +194,7 @@ const Auth = {
     //   this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__LOGOUT);
     // }
 
-    if (GenericTools.isCordova()) {
+    if (GenericTools.isCordova() || GenericTools.isCapacitor()) {
       await Auth.superAuthFetch('/api/CustomUsers/deleteUserItems', {
         method: 'POST',
         headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
