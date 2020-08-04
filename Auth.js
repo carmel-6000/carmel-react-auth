@@ -181,7 +181,7 @@ const Auth = {
 
     return new Promise((res, rej) => { res({ success: true }) });
   },
-  async logout(cb) {
+  async logout(cb, redirect = "/") {
     await Auth.superAuthFetch('/api/CustomUsers/logout', {
       method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
     });
@@ -210,7 +210,7 @@ const Auth = {
     // if (await this.isHooksRepository()) {
     //   this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__REDIRECT_HOME);
     // }
-    GenericTools.safe_redirect('/');
+    GenericTools.safe_redirect(redirect);
     return;
   },
 
