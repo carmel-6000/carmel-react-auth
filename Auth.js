@@ -183,10 +183,10 @@ const Auth = {
     // }
 
     if (GenericTools.isCordova()) {
-      await Auth.superAuthFetch('/api/CustomUsers/deleteUserItems', {
+   /*   await Auth.superAuthFetch('/api/CustomUsers/deleteUserItems', {
         method: 'POST',
         headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-      });
+      });*/
       this.removeItem('access_token');
       this.removeItem('kl');
       this.removeItem('klo');
