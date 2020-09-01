@@ -106,7 +106,7 @@ const Auth = {
     return this.authenticate(email, pw, cb, obj);
   },
 
-  async authenticate(email, pw, cb, { ttl = (60 * 60 * 5) }) {
+  async authenticate(email, pw, cb) {
     let url = "/api/CustomUsers/elogin";
     //     if (await this.isHooksRepository()) {
     //       this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__BEFORE_LOGIN);
@@ -116,7 +116,7 @@ const Auth = {
     //     }
     const [res, err] = await AsyncTools.superFetch(url, {
       method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email, password: pw, ttl })
+      body: JSON.stringify({ email: email, password: pw })
     });
 
     if (err) {
