@@ -20,7 +20,11 @@ const Auth = {
   //     return false;
   //   }
   // },
-
+  _pathStart: "",
+  setPath(path) {
+    this._pathStart = path;
+    console.log("start PATH set to :", path)
+  },
   getKls() {
     let kls = { kl: this.getItem('kl'), klo: this.getItem('klo') };
     return kls;
@@ -73,7 +77,7 @@ const Auth = {
   async superAuthFetch(url, payload = null, redirOnFailure = false, fetchOffline = false) {
     if (!navigator.onLine && !fetchOffline) return [null, 'NO_INTERNET'];
 
-    let [res, err] = await AsyncTools.superFetch(url, payload);
+    let [res, err] = await AsyncTools.superFetch(this._pathStart + url, payload);
     if (err && err.error && err.error.statusCode === 401 && redirOnFailure === true) {
       Auth.logout(() => window.location.href = window.location.origin); //FORCE LOGOUT.      
     }
@@ -81,7 +85,7 @@ const Auth = {
   },
 
   async loginWithUniqueField(key, value, pw, cb) {
-    const [res, err] = await AsyncTools.superFetch('/api/CustomUsers/elogin/', {
+    const [res, err] = await AsyncTools.superFetch(this._pathStart + '/api/CustomUsers/elogin/', {
       method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({ key, value, password: pw })
     });
@@ -91,7 +95,7 @@ const Auth = {
       return new Promise((res, rej) => { res({ success: false, msg: err }) });
     }
     this._isAuthenticated = true;
-    if (GenericTools.isCordova()) {
+    if (GenericTools.isCordova() || GenericTools.isCapacitor()) {
       window.cordova && window.device && window.device.platform !== "iOS" && window.cordova.plugins.CookieManagementPlugin && window.cordova.plugins.CookieManagementPlugin.flush(); //in cordova Android, only after 30 sec the cookies are lunch. This plugin solved the problem: cordova plugin add https://github.com/surgeventures/cordova-plugin-cookie-manager
       this.setItem('klo', res.klo, true, false);
       this.setItem('kl', res.kl, true, false);
@@ -114,7 +118,7 @@ const Auth = {
     // // 
     //       url ="/api/CustomUsers/elogin";
     //     }
-    const [res, err] = await AsyncTools.superFetch(url, {
+    const [res, err] = await AsyncTools.superFetch(this._pathStart + url, {
       method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: email, password: pw })
     });
@@ -143,7 +147,7 @@ const Auth = {
     //   this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__AFTER_LOGIN, res);// HOOK__AFTER_LOGIN
     // }
 
-    if (GenericTools.isCordova()) {
+    if (GenericTools.isCordova() || GenericTools.isCapacitor()) {
       window.cordova && window.device && window.device.platform !== "iOS" && window.cordova.plugins.CookieManagementPlugin && window.cordova.plugins.CookieManagementPlugin.flush(); //in cordova Android, only after 30 sec the cookies are lunch. This plugin solved the problem: cordova plugin add https://github.com/surgeventures/cordova-plugin-cookie-manager
       this.setItem('klo', res.klo, true, false);
       this.setItem('kl', res.kl, true, false);
@@ -171,7 +175,7 @@ const Auth = {
     console.log("Login res", at);
     this._isAuthenticated = true;
 
-    if (GenericTools.isCordova()) {
+    if (GenericTools.isCordova() || GenericTools.isCapacitor()) {
       window.cordova && window.device && window.device.platform !== "iOS" && window.cordova.plugins.CookieManagementPlugin && window.cordova.plugins.CookieManagementPlugin.flush(); //in cordova Android, only after 30 sec the cookies are lunch. This plugin solved the problem: cordova plugin add https://github.com/surgeventures/cordova-plugin-cookie-manager
       this.setItem('klo', at.klo, true, false);
       this.setItem('kl', at.kl, true, false);
@@ -182,7 +186,7 @@ const Auth = {
 
     return new Promise((res, rej) => { res({ success: true }) });
   },
-  async logout(cb) {
+  async logout(cb, redirect = "/") {
     await Auth.superAuthFetch('/api/CustomUsers/logout', {
       method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
     });
@@ -190,7 +194,7 @@ const Auth = {
     //   this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__LOGOUT);
     // }
 
-    if (GenericTools.isCordova()) {
+    if (GenericTools.isCordova() || GenericTools.isCapacitor()) {
       await Auth.superAuthFetch('/api/CustomUsers/deleteUserItems', {
         method: 'POST',
         headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
@@ -211,7 +215,7 @@ const Auth = {
     // if (await this.isHooksRepository()) {
     //   this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__REDIRECT_HOME);
     // }
-    GenericTools.safe_redirect('/');
+    GenericTools.safe_redirect(this._pathStart+redirect);
     return;
   },
 

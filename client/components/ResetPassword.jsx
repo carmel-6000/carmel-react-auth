@@ -14,7 +14,7 @@ class ResetPassword extends Component {
             this.token = params['?access_token'];
         }
         catch (err) {
-            GenericTools.safe_redirect('/');
+            GenericTools.safe_redirect(this.props.basePath+'/');
         }
     }
 
