@@ -103,6 +103,23 @@ class PrivateRoute extends Component {
 class MultipleRoute extends Component {
   constructor(props) {
     super(props);
+    this.initKls()
+  }
+
+  shouldComponentUpdate() {
+    if (!this.klsk)
+      this.initKls();
+    if (this.props.force)
+      return true;
+    let oldAc = this.haveAccess;
+    this.haveAccess = Auth.isAuthenticated();
+    if (oldAc === this.haveAccess)
+      return false;
+    this.initKls(this.haveAccess)
+    return true;
+  }
+
+  initKls = (isAuth = null) => {
     let kls = Auth.getKls();
     this.dhp = null;
     try {
@@ -133,7 +150,6 @@ class MultipleRoute extends Component {
     );
   }
 }
-
 
 class HomeRoute extends Component {
   constructor(props) {
