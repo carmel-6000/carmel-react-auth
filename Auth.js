@@ -153,7 +153,7 @@ const Auth = {
       this.setItem('kl', res.kl, true, false);
       this.setItem('kloo', res.kloo, true, false);
       this.setItem('klk', res.klk, true, false);
-      this.setItem('access_token', res.id, true, false);
+      this.setItem('access_token', res.acc, true, false);
     }
     if (cb && typeof cb === "function") return cb({ success: true, user: res });
     return new Promise((resolve, rej) => { resolve({ success: true, user: res }) });
