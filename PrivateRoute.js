@@ -142,7 +142,8 @@ class HomeRoute extends Component {
   }
 
   shouldComponentUpdate() {
-
+    if (this.props.force)
+      return true;
     let oldDhp = this.dhp, oldAc = this.haveAccess;
     this.haveAccess = Auth.isAuthenticated();
     if (oldAc === this.haveAccess)
