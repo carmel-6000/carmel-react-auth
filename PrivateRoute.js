@@ -112,16 +112,6 @@ class MultipleRoute extends Component {
   shouldComponentUpdate() {
     if (!this.klsk)
       this.initKls();
-<<<<<<< HEAD
-=======
-    else if (!Auth.isAuthenticated()) {
-      this.haveAccess = false;
-      this.klsk = null;
-      return true;
-    }
-    if (this.props.force)
-      return true;
->>>>>>> b4d51a1761f0cc6a42aeca200d682d01842f0d10
     let oldAc = this.haveAccess;
     this.haveAccess = Auth.isAuthenticated();
     if (this.props.force)
