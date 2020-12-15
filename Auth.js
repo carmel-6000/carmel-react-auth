@@ -215,7 +215,7 @@ const Auth = {
     // if (await this.isHooksRepository()) {
     //   this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__REDIRECT_HOME);
     // }
-    GenericTools.safe_redirect(this._pathStart+redirect);
+    GenericTools.safe_redirect(this._pathStart + redirect);
     return;
   },
 
@@ -294,7 +294,18 @@ const Auth = {
 
     function resetTimer() {
       clearTimeout(time);
-      time = setTimeout(() => Auth.logout(cb), 10 * 60 * 1000) //10 mins
+      time = setTimeout(() => {
+        if (Auth.isAuthenticated())
+          Auth.logout(cb)
+        else {
+          Auth.removeItem('access_token');
+          Auth.removeItem('kl');
+          Auth.removeItem('klo');
+          Auth.removeItem('klk');
+          Auth.removeItem('kloo');
+          Auth.removeItem('olk');
+        }
+      }, 10 * 60 * 1000) //10 mins
     }
 
     window.onload = resetTimer();

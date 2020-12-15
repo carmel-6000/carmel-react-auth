@@ -644,8 +644,9 @@ module.exports = function (User) {
         try {
           await User.checkAccessBeforeLogin(credentials, authConfig);
         } catch (error) {
-          console.log("Error checking login access or user is blocked. Please make sure access_logger table exists for security reasons.");
-          if (error && error.callback && error.error) return callback(error.error);
+          if (error && error.callback && error.error) { return callback(error.error) }
+          else
+            console.error("Error checking login access or user is blocked. Please make sure access_logger table exists for security reasons.", error);
         }
       }
 

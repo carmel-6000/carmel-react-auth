@@ -68,7 +68,10 @@ class PrivateRoute extends Component {
       this.klsk = klsk.a;
       this.dhp = klsk.b;
 
-    } catch (err) { }
+
+    } catch (err) {
+      console.log(err);
+    }
     this.haveAccess = Auth.isAuthenticated();
   }
 
@@ -78,7 +81,7 @@ class PrivateRoute extends Component {
 
       <Route key={0} {...rest} render={props => {
 
-        if (this.klsk.indexOf(compName) == -1 || !this.haveAccess) {
+        if (this.klsk.indexOf(compName) === -1 || !this.haveAccess) {
           return Drc ? <Drc {...props} /> : <Redirect to='/' />
         }
         return <Component {...props} />;
@@ -109,10 +112,10 @@ class MultipleRoute extends Component {
   shouldComponentUpdate() {
     if (!this.klsk)
       this.initKls();
-    if (this.props.force)
-      return true;
     let oldAc = this.haveAccess;
     this.haveAccess = Auth.isAuthenticated();
+    if (this.props.force)
+      return true;
     if (oldAc === this.haveAccess)
       return false;
     this.initKls(this.haveAccess)
