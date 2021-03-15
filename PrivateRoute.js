@@ -89,7 +89,6 @@ class PrivateRoute extends Component {
 }
 
 
-//TODO Shira - go over this explanation...
 // MultipleRoute purpose
 // This component aims to provide a distinct separation between two access modes:
 // (1) No access: either there's no authentication (anonymous user), or either there's no access according to roles-access.config.json
@@ -136,7 +135,6 @@ class MultipleRoute extends Component {
 }
 
 
-//TODO Shira - write an explanation about home route
 class HomeRoute extends Component {
   constructor(props) {
     super(props);
@@ -144,7 +142,8 @@ class HomeRoute extends Component {
   }
 
   shouldComponentUpdate() {
-
+    if (this.props.force)
+      return true;
     let oldDhp = this.dhp, oldAc = this.haveAccess;
     this.haveAccess = Auth.isAuthenticated();
     if (oldAc === this.haveAccess)
@@ -160,8 +159,9 @@ class HomeRoute extends Component {
       let klsk = JSON.parse(b.decode(kls.klo));
       this.dhp = klsk.b;
     } catch (err) { }
-    if (isAuth != null)
+    if (isAuth === null) {
       this.haveAccess = Auth.isAuthenticated();
+    }
   }
 
   render() {

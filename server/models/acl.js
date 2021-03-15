@@ -30,14 +30,14 @@
  Map to oAuth 2.0 scopes
  */
 
-var g = require('../../../../../node_modules/loopback/lib/globalize');
+var g = require('loopback/lib/globalize');
 var loopback = require('loopback');
-var utils = require('../../../../../node_modules/loopback/lib/utils');
+var utils = require('loopback/lib/utils');
 var async = require('async');
 var extend = require('util')._extend;
 var assert = require('assert');
 var debug = require('debug')('loopback:security:acl');
-var ctx = require('../../../../../node_modules/loopback/lib/access-context');
+var ctx = require('loopback/lib/access-context');
 var AccessContext = ctx.AccessContext;
 var Principal = ctx.Principal;
 var AccessRequest = ctx.AccessRequest;
