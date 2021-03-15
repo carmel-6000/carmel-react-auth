@@ -26,7 +26,7 @@ const Auth = {
     return kls;
   },
   getAccessToken() {
-    return this.getItem("access_token");
+    return this.getItem("klo");
   },
   isAuthenticated() {
     let at = this.getAccessToken();

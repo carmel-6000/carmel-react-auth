@@ -1990,13 +1990,13 @@ module.exports = function (User) {
       }
       else expires = new Date(Date.now() + HILMA_DEFAULT_MAX_AGE);
 
-      ctx.res.cookie('access_token', ctx.result.id, { signed: true, expires });
+      ctx.res.cookie('access_token', ctx.result.id, { signed: true, expires, httpOnly: true, secure: process.env.NODE_ENV === "production" ? true : false });
       // //These are all 'trash' cookies in order to confuse the hacker who tries to penetrate kl,klo cookies
-      ctx.res.cookie('kloo', randomstring.generate(), { signed: true, expires });
-      ctx.res.cookie('klk', randomstring.generate(), { signed: true, expires });
-      ctx.res.cookie('olk', randomstring.generate(), { signed: true, expires });
-      ctx.res.cookie('klo', ctx.result.klo, { signed: false, expires });
-      ctx.res.cookie('kl', ctx.result.kl, { signed: false, expires });
+      ctx.res.cookie('kloo', randomstring.generate(), { signed: true, expires, httpOnly: true, secure: process.env.NODE_ENV === "production" ? true : false });
+      ctx.res.cookie('klk', randomstring.generate(), { signed: true, expires, httpOnly: true, secure: process.env.NODE_ENV === "production" ? true : false });
+      ctx.res.cookie('olk', randomstring.generate(), { signed: true, expires, httpOnly: true, secure: process.env.NODE_ENV === "production" ? true : false });
+      ctx.res.cookie('klo', ctx.result.klo, { signed: false, expires, httpOnly: false, secure: process.env.NODE_ENV === "production" ? true : false });
+      ctx.res.cookie('kl', ctx.result.kl, { signed: false, expires, httpOnly: false, secure: process.env.NODE_ENV === "production" ? true : false });
 
       return Promise.resolve();
     });
@@ -2026,13 +2026,13 @@ module.exports = function (User) {
         expires = new Date(Date.now() + (ctx.result.ttl * 60));
       else expires = new Date(Date.now() + HILMA_DEFAULT_MAX_AGE);
 
-      ctx.res.cookie('access_token', ctx.result.accessToken, { signed: true, expires });
-      ctx.res.cookie('klo', ctx.result.klo, { signed: false, expires });
-      ctx.res.cookie('kl', ctx.result.kl, { signed: false, expires });
+      ctx.res.cookie('access_token', ctx.result.accessToken, { signed: true, expires, httpOnly: true, secure: process.env.NODE_ENV === "production" ? true : false });
+      ctx.res.cookie('klo', ctx.result.klo, { signed: false, expires, httpOnly: false, secure: process.env.NODE_ENV === "production" ? true : false });
+      ctx.res.cookie('kl', ctx.result.kl, { signed: false, expires, httpOnly: false, secure: process.env.NODE_ENV === "production" ? true : false });
       // //These are all 'trash' cookies in order to confuse the hacker who tries to penetrate kl,klo cookies
-      ctx.res.cookie('kloo', randomstring.generate(), { signed: true, expires });
-      ctx.res.cookie('klk', randomstring.generate(), { signed: true, expires });
-      ctx.res.cookie('olk', randomstring.generate(), { signed: true, expires });
+      ctx.res.cookie('kloo', randomstring.generate(), { signed: true, expires, httpOnly: true, secure: process.env.NODE_ENV === "production" ? true : false });
+      ctx.res.cookie('klk', randomstring.generate(), { signed: true, expires, httpOnly: true, secure: process.env.NODE_ENV === "production" ? true : false });
+      ctx.res.cookie('olk', randomstring.generate(), { signed: true, expires, httpOnly: true, secure: process.env.NODE_ENV === "production" ? true : false });
       return ctx;
     }
 
