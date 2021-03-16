@@ -1424,10 +1424,18 @@ module.exports = function (User) {
         return cb(err);
       }
       if (!user) {
-        err = new Error(g.f('Email not found'));
-        err.statusCode = 404;
-        err.code = 'EMAIL_NOT_FOUND';
-        return cb(err);
+        cb();
+        UserModel.emit('resetPasswordRequest', {
+          email: options.email,
+          accessToken: null,
+          user: user,
+          options: options
+        });
+        return;
+        // err = new Error(g.f('Email not found'));
+        // err.statusCode = 404;
+        // err.code = 'EMAIL_NOT_FOUND';
+        // return cb(err);
       }
       // create a short lived access token for temp login to change password
       // TODO(ritch) - eventually this should only allow password change
@@ -1726,6 +1734,23 @@ module.exports = function (User) {
 
     UserModel.on('resetPasswordRequest', function (info) {
       let origin = info.options.origin;
+      const modulesConfig = UserModel.app.get("modules");
+      const authConfig = modulesConfig && modulesConfig.auth;
+
+      if (!info.user || !info.accessToken) {
+        let html = authConfig.reset_password_email_text.error || "You never registered this site, so you cannot reset your password. Please sign up first :)"
+        UserModel.app.models.Email.send({
+          to: info.email,
+          subject: (authConfig.reset_password_email_text && authConfig.reset_password_email_text.subject) || 'Password Reset',
+          html: html
+        }, function (err) {
+          if (err) return console.log('> error sending: ERROR password reset email', err);
+          console.log('> sending *error* password reset email to:', info.email);
+        });
+        return;
+      }
+
+
       logUser(info.email); // the email of the requested user
       logUser(info.accessToken.id); // the temp access token to allow password reset
 
@@ -1734,8 +1759,7 @@ module.exports = function (User) {
       let url = origin + '/reset-password';
 
       //get auth config from config.json
-      const modulesConfig = UserModel.app.get("modules");
-      const authConfig = modulesConfig && modulesConfig.auth;
+
       if (!authConfig) console.log("Your config doesn't include module auth. A deafult reset password email will be sent.");
       logUser("Auth config is: ", authConfig);
 
