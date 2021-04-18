@@ -1746,6 +1746,7 @@ module.exports = function (User) {
         ('Click <a href="' + url + '?access_token=' + info.accessToken.id + '">here</a> to reset your password');
 
       UserModel.app.models.Email.send({
+        from: process.env.EMAIL_FROM,
         to: info.email,
         subject: (authConfig.reset_password_email_text && authConfig.reset_password_email_text.subject) || 'Password Reset',
         html: html
