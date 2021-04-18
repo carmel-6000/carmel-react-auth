@@ -9,10 +9,10 @@
  */
 
 'use strict';
-var g = require('../../../../../node_modules/loopback/lib/globalize');
+var g = require('loopback/lib/globalize');
 var isEmail = require('isemail');
 var loopback = require('loopback');
-var utils = require('../../../../../node_modules/loopback/lib/utils');
+var utils = require('loopback/lib/utils');
 const path = require('path');
 var qs = require('querystring');
 var SALT_WORK_FACTOR = 10;
@@ -42,7 +42,8 @@ try {
 var DEFAULT_TTL = 1209600; // 2 weeks in seconds
 var DEFAULT_RESET_PW_TTL = 15 * 60; // 15 mins in seconds
 var DEFAULT_MAX_TTL = 31556926; // 1 year in seconds
-const HILMA_DEFAULT_MAX_AGE = 1000 * 60 * 60 * 5;
+const HILMA_DEFAULT_MAX_AGE = 18000000;//five hours ms 1000 * 60 * 60 * 5
+const HILMA_DEFAULT_TTL = HILMA_DEFAULT_MAX_AGE / 1000;//five hours seconds 60*60*5
 var assert = require('assert');
 
 var debug = require('debug')('loopback:user');
@@ -558,17 +559,20 @@ module.exports = function (User) {
     //check if user is blocked
     let [cuAccessErr, cuAccessRes] = await to(cuModel.findOne({
       where: { email: credentials.email, loginAccess: 1 },
-      fields: { loginAccess: true }
+      fields: { loginAccess: true, id: true }
     }));
     if (cuAccessErr) throw cuAccessErr;
 
     if (created && cuAccessRes) {
+
       const accessTime = TimeCalcs.getTimezoneDatetime((created.getTime() + block_time_ms_login), false);
+      const now = TimeCalcs.getTimezoneDateString();
       throw {
         callback: true,
         error: {
           code: USER_BLOCKED_ERROR_CODE,
-          access_time: accessTime
+          access_time: accessTime,
+          remaining: Math.ceil((accessTime.getTime() - now.getTime()) / (60000)),
         }
       };
     }
@@ -645,8 +649,8 @@ module.exports = function (User) {
         }
       }
 
+      credentials.ttl = authConfig && authConfig.login_ttl || HILMA_DEFAULT_TTL;
       this.login(credentials, include, async function (loginErr, loginToken) {
-
         if (loginErr) {
           if (authConfig && authConfig.access_logger_enabled) {
             try {
@@ -1729,15 +1733,16 @@ module.exports = function (User) {
       logUser(info.email); // the email of the requested user
       logUser(info.accessToken.id); // the temp access token to allow password reset
 
-      if (origin.indexOf("http") != 0)
-        origin = "http://" + origin;
-      let url = origin + '/reset-password';
-
       //get auth config from config.json
       const modulesConfig = UserModel.app.get("modules");
       const authConfig = modulesConfig && modulesConfig.auth;
       if (!authConfig) console.log("Your config doesn't include module auth. A deafult reset password email will be sent.");
       logUser("Auth config is: ", authConfig);
+
+      if (origin.indexOf("http") != 0)
+        origin = "http://" + origin;
+      let url = origin + (authConfig.reset_password_redirect_path || '/reset-password');
+
 
       let html = (authConfig && authConfig.reset_password_email_text && authConfig.reset_password_email_text.start) ?
         (authConfig.reset_password_email_text.start +

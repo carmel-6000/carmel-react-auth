@@ -28,7 +28,7 @@ class Login extends Component {
         this.handleLogin = this.handleLogin.bind(this);
     }
 
-    async handleLogin(e, obj = { ttl: (60 * 60 * 5) }) {
+    async handleLogin(e) {
         e.preventDefault();
 
         let email = this.refs.email.value;
@@ -36,14 +36,27 @@ class Login extends Component {
 
         this.setState({ isLoading: true });
 
-        let res = await Auth.login(email, pw, null, obj);
+        let res = await Auth.login(email, pw, null);
         // console.log("Auth.authenticate res", res);
 
         this.setState({ isLoading: false });
 
         if (!res.success) {
-            console.log("login failed with error", res.msg);
+            // console.log("login failed with error", res.msg);
             this.setState({ loginMsg: res.msg.error.msg });
+            if (res.msg.error.remaining) {
+                this.count = res.msg.error.remaining;
+                if (this.interval) clearInterval(this.interval);
+                this.interval = setInterval(() => {
+                    this.count--;
+                    this.setState({ loginMsg: `נחסמת עקב יותר מדי נסיונות כניסה, נסה שוב בעוד ${this.count} דקות` });
+                    if (!this.count) {
+                        clearInterval(this.interval);
+                        this.setState({ loginMsg: "זמן ההמתנה תם, אתה יכול לנסות להתחבר מחדש" });
+
+                    }
+                }, 60000);
+            }
             return;
         }
         //if res.success is true
@@ -51,6 +64,7 @@ class Login extends Component {
         // console.log(this.props.redirectUrl, 'this.props.redirectUrl')
         let redirTo = this.props.redirectUrl || "/";
         if (pwdResetRequired) redirTo = "/new-password";
+        if (this.props.basePath) redirTo = this.props.basePath + redirTo;
         GenericTools.safe_redirect(redirTo);
     }
 
