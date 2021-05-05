@@ -1736,10 +1736,11 @@ module.exports = function (User) {
       let origin = info.options.origin;
       const modulesConfig = UserModel.app.get("modules");
       const authConfig = modulesConfig && modulesConfig.auth;
-
+      const from = authConfig && authConfig.email_from;
       if (!info.user || !info.accessToken) {
         let html = authConfig.reset_password_email_text.error || "You never registered this site, so you cannot reset your password. Please sign up first :)"
         UserModel.app.models.Email.send({
+          from: from || undefined,
           to: info.email,
           subject: (authConfig.reset_password_email_text && authConfig.reset_password_email_text.subject) || 'Password Reset',
           html: html
@@ -1770,6 +1771,7 @@ module.exports = function (User) {
         ('Click <a href="' + url + '?access_token=' + info.accessToken.id + '">here</a> to reset your password');
 
       UserModel.app.models.Email.send({
+        from: from || undefined,
         to: info.email,
         subject: (authConfig.reset_password_email_text && authConfig.reset_password_email_text.subject) || 'Password Reset',
         html: html

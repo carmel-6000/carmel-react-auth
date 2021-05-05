@@ -15,6 +15,7 @@
         "start": "",
         "click": "",
         "end": "",
-        "error":""
-    }
+        "error": ""
+    },
+    "email_from": "name of me <myMailAddd@fake.com>"
 }
