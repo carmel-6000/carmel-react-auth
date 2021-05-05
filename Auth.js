@@ -189,6 +189,7 @@ const Auth = {
   async logout(cb, redirect = "/") {
     await Auth.superAuthFetch('/api/CustomUsers/logout', {
       method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
     });
     // if (await this.isHooksRepository()) {
     //   this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__LOGOUT);
@@ -215,7 +216,7 @@ const Auth = {
     // if (await this.isHooksRepository()) {
     //   this.hooksRepository.applyHook(consts.AUTH, consts.HOOK__REDIRECT_HOME);
     // }
-    GenericTools.safe_redirect(this._pathStart+redirect);
+    GenericTools.safe_redirect(this._pathStart + redirect);
     return;
   },
 
