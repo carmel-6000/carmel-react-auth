@@ -15,7 +15,9 @@
         "subject": "",
         "start": "",
         "click": "",
-        "end": ""
+        "end": "",
+        "login_ttl": 18000,
+        "error": ""
     },
-    "login_ttl": 18000
+    "email_from": "name of me <myMailAddd@fake.com>"
 }

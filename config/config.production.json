@@ -15,7 +15,8 @@
         "subject": "",
         "start": "",
         "click": "",
-        "end": ""
-    },
-    "login_ttl": 18000
+        "login_ttl": 18000,
+        "end": "",
+        "error": ""
+    }
 }

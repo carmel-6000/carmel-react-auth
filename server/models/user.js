@@ -1428,10 +1428,18 @@ module.exports = function (User) {
         return cb(err);
       }
       if (!user) {
-        err = new Error(g.f('Email not found'));
-        err.statusCode = 404;
-        err.code = 'EMAIL_NOT_FOUND';
-        return cb(err);
+        cb();
+        UserModel.emit('resetPasswordRequest', {
+          email: options.email,
+          accessToken: null,
+          user: user,
+          options: options
+        });
+        return;
+        // err = new Error(g.f('Email not found'));
+        // err.statusCode = 404;
+        // err.code = 'EMAIL_NOT_FOUND';
+        // return cb(err);
       }
       // create a short lived access token for temp login to change password
       // TODO(ritch) - eventually this should only allow password change
@@ -1730,12 +1738,29 @@ module.exports = function (User) {
 
     UserModel.on('resetPasswordRequest', function (info) {
       let origin = info.options.origin;
+      const modulesConfig = UserModel.app.get("modules");
+      const authConfig = modulesConfig && modulesConfig.auth;
+      const from = authConfig && authConfig.email_from;
+      if (!info.user || !info.accessToken) {
+        let html = authConfig.reset_password_email_text.error || "You never registered this site, so you cannot reset your password. Please sign up first :)"
+        UserModel.app.models.Email.send({
+          from: from || undefined,
+          to: info.email,
+          subject: (authConfig.reset_password_email_text && authConfig.reset_password_email_text.subject) || 'Password Reset',
+          html: html
+        }, function (err) {
+          if (err) return console.log('> error sending: ERROR password reset email', err);
+          console.log('> sending *error* password reset email to:', info.email);
+        });
+        return;
+      }
+
+
       logUser(info.email); // the email of the requested user
       logUser(info.accessToken.id); // the temp access token to allow password reset
 
       //get auth config from config.json
-      const modulesConfig = UserModel.app.get("modules");
-      const authConfig = modulesConfig && modulesConfig.auth;
+
       if (!authConfig) console.log("Your config doesn't include module auth. A deafult reset password email will be sent.");
       logUser("Auth config is: ", authConfig);
 
@@ -1751,6 +1776,7 @@ module.exports = function (User) {
         ('Click <a href="' + url + '?access_token=' + info.accessToken.id + '">here</a> to reset your password');
 
       UserModel.app.models.Email.send({
+        from: from || undefined,
         to: info.email,
         subject: (authConfig.reset_password_email_text && authConfig.reset_password_email_text.subject) || 'Password Reset',
         html: html
@@ -1995,13 +2021,13 @@ module.exports = function (User) {
       }
       else expires = new Date(Date.now() + HILMA_DEFAULT_MAX_AGE);
 
-      ctx.res.cookie('access_token', ctx.result.id, { signed: true, expires });
+      ctx.res.cookie('access_token', ctx.result.id, { signed: true, expires, httpOnly: true, secure: process.env.NODE_ENV === "production" ? true : false });
       // //These are all 'trash' cookies in order to confuse the hacker who tries to penetrate kl,klo cookies
-      ctx.res.cookie('kloo', randomstring.generate(), { signed: true, expires });
-      ctx.res.cookie('klk', randomstring.generate(), { signed: true, expires });
-      ctx.res.cookie('olk', randomstring.generate(), { signed: true, expires });
-      ctx.res.cookie('klo', ctx.result.klo, { signed: false, expires });
-      ctx.res.cookie('kl', ctx.result.kl, { signed: false, expires });
+      ctx.res.cookie('kloo', randomstring.generate(), { signed: true, expires, httpOnly: true, secure: process.env.NODE_ENV === "production" ? true : false });
+      ctx.res.cookie('klk', randomstring.generate(), { signed: true, expires, httpOnly: true, secure: process.env.NODE_ENV === "production" ? true : false });
+      ctx.res.cookie('olk', randomstring.generate(), { signed: true, expires, httpOnly: true, secure: process.env.NODE_ENV === "production" ? true : false });
+      ctx.res.cookie('klo', ctx.result.klo, { signed: false, expires, httpOnly: false, secure: process.env.NODE_ENV === "production" ? true : false });
+      ctx.res.cookie('kl', ctx.result.kl, { signed: false, expires, httpOnly: false, secure: process.env.NODE_ENV === "production" ? true : false });
 
       return Promise.resolve();
     });
@@ -2031,13 +2057,13 @@ module.exports = function (User) {
         expires = new Date(Date.now() + (ctx.result.ttl * 60));
       else expires = new Date(Date.now() + HILMA_DEFAULT_MAX_AGE);
 
-      ctx.res.cookie('access_token', ctx.result.accessToken, { signed: true, expires });
-      ctx.res.cookie('klo', ctx.result.klo, { signed: false, expires });
-      ctx.res.cookie('kl', ctx.result.kl, { signed: false, expires });
+      ctx.res.cookie('access_token', ctx.result.accessToken, { signed: true, expires, httpOnly: true, secure: process.env.NODE_ENV === "production" ? true : false });
+      ctx.res.cookie('klo', ctx.result.klo, { signed: false, expires, httpOnly: false, secure: process.env.NODE_ENV === "production" ? true : false });
+      ctx.res.cookie('kl', ctx.result.kl, { signed: false, expires, httpOnly: false, secure: process.env.NODE_ENV === "production" ? true : false });
       // //These are all 'trash' cookies in order to confuse the hacker who tries to penetrate kl,klo cookies
-      ctx.res.cookie('kloo', randomstring.generate(), { signed: true, expires });
-      ctx.res.cookie('klk', randomstring.generate(), { signed: true, expires });
-      ctx.res.cookie('olk', randomstring.generate(), { signed: true, expires });
+      ctx.res.cookie('kloo', randomstring.generate(), { signed: true, expires, httpOnly: true, secure: process.env.NODE_ENV === "production" ? true : false });
+      ctx.res.cookie('klk', randomstring.generate(), { signed: true, expires, httpOnly: true, secure: process.env.NODE_ENV === "production" ? true : false });
+      ctx.res.cookie('olk', randomstring.generate(), { signed: true, expires, httpOnly: true, secure: process.env.NODE_ENV === "production" ? true : false });
       return ctx;
     }
 
