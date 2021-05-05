@@ -2080,6 +2080,9 @@ module.exports = function (User) {
     UserModel.afterRemote('logout', function (ctx) {
       console.log("After remote logout is launched");
       ctx.res.clearCookie('access_token');
+      ctx.res.clearCookie('klo');
+      ctx.res.clearCookie('kloo');
+      ctx.res.clearCookie('klk');
       return Promise.resolve();
     });
 
