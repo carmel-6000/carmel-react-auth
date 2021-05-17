@@ -42,7 +42,6 @@ class Login extends Component {
         this.setState({ isLoading: false });
 
         if (res.success === false) {
-            console.log("login failed with error", res.msg);
             return;
         }
         if (res.success === true) {

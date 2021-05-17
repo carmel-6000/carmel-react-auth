@@ -9,7 +9,6 @@ const Auth = {
 
   getKls() {
     let kls = { kl: this.getItem('kl'), klo: this.getItem('klo') };
-    //console.log("KLS? (auth.js)",kls);
     return kls;
   },
   getAccessToken() {
@@ -36,7 +35,6 @@ const Auth = {
 
   getItem(id) {
     let cookie = GenericTools.getCookieByKey(id);
-    //console.log("COOKIE by id (%s)",id,cookie);
     if (cookie) return cookie;
     return localStorage.getItem(id);
   },
@@ -44,14 +42,12 @@ const Auth = {
   removeItem(id) {
     localStorage.removeItem(id);
     GenericTools.deleteCookieByKey(id);
-    // console.log("deleted?", this.getItem(id))
   },
 
   jsonify(res) {
     if (res && res.ok) {
       return res.json();
     } else {
-      //console.log("Could not fetch data from server, make sure your server is running? (2)");
       return new Promise((resolve, reject) => {
         reject([]);
       });
@@ -103,7 +99,6 @@ const Auth = {
       return new Promise((res, rej) => { res({ success: false, msg: err }) });
     }
 
-    console.log("Login res", res);
     this._isAuthenticated = true;
     let user = res;
     if (GenericTools.isCordova()) {
@@ -131,7 +126,6 @@ const Auth = {
       return new Promise((res, rej) => { res({ success: false, msg: err }) });
     }
 
-    console.log("Login res", at);
     this._isAuthenticated = true;
 
     // this.setItem("access_token", at.accessToken);
@@ -170,8 +164,6 @@ const Auth = {
     }).then((res => res.json()))
       .then(res => {
         if (!res.error) {
-          // console.log("User registered!!", res);
-          // console.log(message)
           return false;
         }
         else {

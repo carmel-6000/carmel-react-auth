@@ -1627,11 +1627,11 @@ module.exports = function (User) {
 
     UserModel.afterRemote('extendedLogin', function (ctx) {
       console.log("After remote extendedlogin is launched");
-      ctx.res.cookie('access_token', ctx.result.id, { signed: true, maxAge: 1000 * 60 * 60 * 5 });
+      ctx.res.cookie('access_token', ctx.result.id, { signed: true, maxAge: DEFAULT_MAX_TTL*1000 });
       // //These are all 'trash' cookies in order to confuse the hacker who tries to penetrate kl,klo cookies
-      ctx.res.cookie('kloo', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
-      ctx.res.cookie('klk', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
-      ctx.res.cookie('olk', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
+      ctx.res.cookie('kloo', randomstring.generate(), { signed: true, maxAge: DEFAULT_MAX_TTL*1000 });
+      ctx.res.cookie('klk', randomstring.generate(), { signed: true, maxAge: DEFAULT_MAX_TTL*1000 });
+      ctx.res.cookie('olk', randomstring.generate(), { signed: true, maxAge: DEFAULT_MAX_TTL*1000 });
       ctx.res.cookie('klo', ctx.result.klo);
       ctx.res.cookie('kl', ctx.result.kl);
 
