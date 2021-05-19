@@ -1,4 +1,3 @@
-
 // Copyright IBM Corp. 2014,2019. All Rights Reserved.
 // Node module: loopback
 // This file is licensed under the MIT License.
@@ -8,20 +7,19 @@
  * Module Dependencies.
  */
 
-'use strict';
-var g = require('../../../../../node_modules/loopback/lib/globalize');
-var isEmail = require('isemail');
-var loopback = require('loopback');
-var utils = require('../../../../../node_modules/loopback/lib/utils');
-const path = require('path');
-var qs = require('querystring');
+"use strict";
+var g = require("../../../../../node_modules/loopback/lib/globalize");
+var isEmail = require("isemail");
+var loopback = require("loopback");
+var utils = require("../../../../../node_modules/loopback/lib/utils");
+const path = require("path");
+var qs = require("querystring");
 var SALT_WORK_FACTOR = 10;
-var crypto = require('crypto');
-var logUser = require('debug')('model:user');
-const fs = require('fs');
-const base64 = require('base-64');
+var crypto = require("crypto");
+var logUser = require("debug")("model:user");
+const fs = require("fs");
+const base64 = require("base-64");
 const randomstring = require("randomstring");
-
 
 // bcrypt's max length is 72 bytes;
 
@@ -30,24 +28,22 @@ var MAX_PASSWORD_LENGTH = 72;
 var bcrypt;
 try {
   // Try the native module first
-  bcrypt = require('bcrypt');
+  bcrypt = require("bcrypt");
   // Browserify returns an empty object
-  if (bcrypt && typeof bcrypt.compare !== 'function') {
-    bcrypt = require('bcryptjs');
+  if (bcrypt && typeof bcrypt.compare !== "function") {
+    bcrypt = require("bcryptjs");
   }
 } catch (err) {
   // Fall back to pure JS impl
-  bcrypt = require('bcryptjs');
+  bcrypt = require("bcryptjs");
 }
 
 var DEFAULT_TTL = 1209600; // 2 weeks in seconds
 var DEFAULT_RESET_PW_TTL = 15 * 60; // 15 mins in seconds
-var DEFAULT_MAX_TTL = 31556926; // 1 year in seconds
-var assert = require('assert');
+var DEFAULT_MAX_TTL = 15770000; // 1 year in seconds & 8 hours in milliseconds
+var assert = require("assert");
 
-var debug = require('debug')('loopback:user');
-
-
+var debug = require("debug")("loopback:user");
 
 /**
  * Built-in User model.
@@ -113,7 +109,7 @@ module.exports = function (User) {
    *
    */
   User.prototype.createAccessToken = function (ttl, options, cb) {
-    if (cb === undefined && typeof options === 'function') {
+    if (cb === undefined && typeof options === "function") {
       // createAccessToken(ttl, cb)
       cb = options;
       options = undefined;
@@ -122,7 +118,7 @@ module.exports = function (User) {
     cb = cb || utils.createPromiseCallback();
 
     let tokenData;
-    if (typeof ttl !== 'object') {
+    if (typeof ttl !== "object") {
       // createAccessToken(ttl[, options], cb)
       tokenData = { ttl };
     } else if (options) {
@@ -134,7 +130,10 @@ module.exports = function (User) {
     }
 
     var userSettings = this.constructor.settings;
-    tokenData.ttl = Math.min(tokenData.ttl || userSettings.ttl, userSettings.maxTTL);
+    tokenData.ttl = Math.min(
+      tokenData.ttl || userSettings.ttl,
+      userSettings.maxTTL
+    );
     this.accessTokens.create(tokenData, options, cb);
     return cb.promise;
   };
@@ -159,7 +158,11 @@ module.exports = function (User) {
    * @param {String} realmDelimiter The realm delimiter, if not set, no realm is needed
    * @returns {Object} The normalized credential object
    */
-  User.normalizeCredentials = function (credentials, realmRequired, realmDelimiter) {
+  User.normalizeCredentials = function (
+    credentials,
+    realmRequired,
+    realmDelimiter
+  ) {
     var query = {};
     credentials = credentials || {};
     if (!realmRequired) {
@@ -216,14 +219,14 @@ module.exports = function (User) {
 
   User.login = function (credentials, include, fn) {
     var self = this;
-    if (typeof include === 'function') {
+    if (typeof include === "function") {
       fn = include;
       include = undefined;
     }
 
     fn = fn || utils.createPromiseCallback();
 
-    include = (include || '');
+    include = include || "";
     if (Array.isArray(include)) {
       include = include.map(function (val) {
         return val.toLowerCase();
@@ -234,59 +237,66 @@ module.exports = function (User) {
 
     var realmDelimiter;
     // Check if realm is required
-    var realmRequired = !!(self.settings.realmRequired ||
-      self.settings.realmDelimiter);
+    var realmRequired = !!(
+      self.settings.realmRequired || self.settings.realmDelimiter
+    );
     if (realmRequired) {
       realmDelimiter = self.settings.realmDelimiter;
     }
-    var query = self.normalizeCredentials(credentials, realmRequired,
-      realmDelimiter);
+    var query = self.normalizeCredentials(
+      credentials,
+      realmRequired,
+      realmDelimiter
+    );
 
     if (realmRequired) {
       if (!query.realm) {
-        var err1 = new Error(g.f('{{realm}} is required'));
+        var err1 = new Error(g.f("{{realm}} is required"));
         err1.statusCode = 400;
-        err1.code = 'REALM_REQUIRED';
+        err1.code = "REALM_REQUIRED";
         fn(err1);
         return fn.promise;
-      } else if (typeof query.realm !== 'string') {
-        var err5 = new Error(g.f('Invalid realm'));
+      } else if (typeof query.realm !== "string") {
+        var err5 = new Error(g.f("Invalid realm"));
         err5.statusCode = 400;
-        err5.code = 'INVALID_REALM';
+        err5.code = "INVALID_REALM";
         fn(err5);
         return fn.promise;
       }
     }
     if (!query.email && !query.username) {
-      var err2 = new Error(g.f('{{username}} or {{email}} is required'));
+      var err2 = new Error(g.f("{{username}} or {{email}} is required"));
       err2.statusCode = 400;
-      err2.code = 'USERNAME_EMAIL_REQUIRED';
+      err2.code = "USERNAME_EMAIL_REQUIRED";
       fn(err2);
       return fn.promise;
     }
-    if (query.username && typeof query.username !== 'string') {
-      var err3 = new Error(g.f('Invalid username'));
+    if (query.username && typeof query.username !== "string") {
+      var err3 = new Error(g.f("Invalid username"));
       err3.statusCode = 400;
-      err3.code = 'INVALID_USERNAME';
+      err3.code = "INVALID_USERNAME";
       fn(err3);
       return fn.promise;
-    } else if (query.email && typeof query.email !== 'string') {
-      var err4 = new Error(g.f('Invalid email'));
+    } else if (query.email && typeof query.email !== "string") {
+      var err4 = new Error(g.f("Invalid email"));
       err4.statusCode = 400;
-      err4.code = 'INVALID_EMAIL';
+      err4.code = "INVALID_EMAIL";
       fn(err4);
       return fn.promise;
     }
 
-
     self.findOne({ where: query }, function (err, user) {
-      var defaultError = new Error(g.f('login failed'));
+      var defaultError = new Error(g.f("login failed"));
       defaultError.statusCode = 401;
-      defaultError.code = 'LOGIN_FAILED';
+      defaultError.code = "LOGIN_FAILED";
 
       function tokenHandler(err, token) {
         if (err) return fn(err);
-        if (Array.isArray(include) ? include.indexOf('user') !== -1 : include === 'user') {
+        if (
+          Array.isArray(include)
+            ? include.indexOf("user") !== -1
+            : include === "user"
+        ) {
           // NOTE(bajtos) We can't set token.user here:
           //  1. token.user already exists, it's a function injected by
           //     "AccessToken belongsTo User" relation
@@ -299,20 +309,25 @@ module.exports = function (User) {
       }
 
       if (err) {
-        debug('An error is reported from User.findOne: %j', err);
+        debug("An error is reported from User.findOne: %j", err);
         fn(defaultError);
       } else if (user) {
         user.hasPassword(credentials.password, function (err, isMatch) {
           if (err) {
-            debug('An error is reported from User.hasPassword: %j', err);
+            debug("An error is reported from User.hasPassword: %j", err);
             fn(defaultError);
           } else if (isMatch) {
-            if (self.settings.emailVerificationRequired && !user.emailVerified) {
+            if (
+              self.settings.emailVerificationRequired &&
+              !user.emailVerified
+            ) {
               // Fail to log in if email verification is not done yet
-              debug('User email has not been verified');
-              err = new Error(g.f('login failed as the email has not been verified'));
+              debug("User email has not been verified");
+              err = new Error(
+                g.f("login failed as the email has not been verified")
+              );
               err.statusCode = 401;
-              err.code = 'LOGIN_FAILED_EMAIL_NOT_VERIFIED';
+              err.code = "LOGIN_FAILED_EMAIL_NOT_VERIFIED";
               err.details = {
                 userId: user.id,
               };
@@ -321,33 +336,47 @@ module.exports = function (User) {
               if (user.createAccessToken.length === 2) {
                 user.createAccessToken(credentials.ttl, tokenHandler);
               } else {
-                user.createAccessToken(credentials.ttl, credentials, tokenHandler);
+                user.createAccessToken(
+                  credentials.ttl,
+                  credentials,
+                  tokenHandler
+                );
               }
             }
           } else {
-            debug('The password is invalid for user %s', query.email || query.username);
+            debug(
+              "The password is invalid for user %s",
+              query.email || query.username
+            );
             fn(defaultError);
           }
         });
       } else {
-        debug('No matching record is found for user %s', query.email || query.username);
+        debug(
+          "No matching record is found for user %s",
+          query.email || query.username
+        );
         fn(defaultError);
       }
     });
     return fn.promise;
   };
 
-
-
-
-  User.registerOrLoginByUniqueField = function (uField, uData, roleId, cb, ctx = null, updateCustomFields = []) {
+  User.registerOrLoginByUniqueField = function (
+    uField,
+    uData,
+    roleId,
+    cb,
+    ctx = null,
+    updateCustomFields = []
+  ) {
     /**
      * @param {String} uField Unique field that identifies the user.
      * @param {Object} uData  User data to create.
      * @param {Number} roleId Role number to save in case that the user dosent exists.
      * @param {function} cb Callback (obviously)
      * @param ctx OPTIONAL if you have ctx, send it and your cookies will be filled with accessToken, kl, klo.
-     * @param {Array} updateCustomFields OPTIONAL, array of fields names to compare and update if there is a diff betweem uData and what we have in DB.  
+     * @param {Array} updateCustomFields OPTIONAL, array of fields names to compare and update if there is a diff betweem uData and what we have in DB.
      */
 
     (async () => {
@@ -364,8 +393,12 @@ module.exports = function (User) {
         logUser(`found by ${uField}`, res);
         let dataToUpdate = {};
 
-        updateCustomFields.forEach(field_name => {
-          if (typeof uData[field_name] !== 'undefined' && uData[field_name] != res[field_name]) {//I used != because some fields gets a string and saved as number.
+        updateCustomFields.forEach((field_name) => {
+          if (
+            typeof uData[field_name] !== "undefined" &&
+            uData[field_name] != res[field_name]
+          ) {
+            //I used != because some fields gets a string and saved as number.
             dataToUpdate[field_name] = uData[field_name];
           }
         });
@@ -393,8 +426,8 @@ module.exports = function (User) {
         let roleMapData = {
           principalType: "USER",
           principalId: newUser.id,
-          roleId
-        }
+          roleId,
+        };
         let [error, newRole] = await to(RoleMapping.create(roleMapData));
         if (error) {
           return cb(error);
@@ -404,11 +437,9 @@ module.exports = function (User) {
 
       return this.directLoginAs(newUser.id, roleId, cb, ctx); //creates accessToken for user
     })();
-  }
-
+  };
 
   User.loginAs = function (uid, ctx, cb) {
-
     const token = ctx && ctx.accessToken;
     const userId = token && token.userId;
 
@@ -417,90 +448,95 @@ module.exports = function (User) {
       return cb({}, null);
     }
 
-
     logUser("User.loginAs is launched with uid", uid);
 
     this.directLoginAs(uid, null, (err, at) => {
       logUser("err?", err);
       logUser("Returning Access token (only id)?", at);
 
-
       cb(null, { accessToken: at.id, kl: at.__data.kl, klo: at.__data.klo });
-
-    })
-
-  }
-
-
+    });
+  };
 
   User.directLoginAs = function (userId, roleId = null, fn, ctx = null) {
     // const { CustomUser } = User.app.models;
     logUser("User.directLoginAs is launched with userId", userId);
 
     userId = parseInt(userId);
-    if (typeof roleId == "function") { //make roleid optional 
+    if (typeof roleId == "function") {
+      //make roleid optional
       if (!fn) fn = roleId;
       roleId = null;
     }
     fn = fn || utils.createPromiseCallback();
     var realmDelimiter;
-    var realmRequired = false;//!!(self.settings.realmRequired || self.settings.realmDelimiter); 
+    var realmRequired = false; //!!(self.settings.realmRequired || self.settings.realmDelimiter);
     var query = { id: userId };
     logUser("query?", query, this);
-    this.findOne({ where: query, include: { "roleMapping": 'role' } }, (err, user) => {
-      logUser("User.findOne results", user);
-      var defaultError = new Error('login failed');
-      defaultError.statusCode = 401;
+    this.findOne(
+      { where: query, include: { roleMapping: "role" } },
+      (err, user) => {
+        logUser("User.findOne results", user);
+        var defaultError = new Error("login failed");
+        defaultError.statusCode = 401;
 
-      defaultError.code = 'LOGIN_FAILED';
-      var credentials = { ttl: 60 * 60, password: 'wrong-one', email: user.email };
-      async function tokenHandler(err, token) {
-        if (err) return fn(err);
-        token.__data.user = user;
-        if (!user.roleMapping || !user.roleMapping) {
-          token.__data.roleCode = null;
-          token.__data.klo = "";
-          token.__data.kl = "";
-          return fn(err, token);
+        defaultError.code = "LOGIN_FAILED";
+        var credentials = {
+          ttl: 60 * 60,
+          password: "wrong-one",
+          email: user.email,
+        };
+        async function tokenHandler(err, token) {
+          if (err) return fn(err);
+          token.__data.user = user;
+          if (!user.roleMapping || !user.roleMapping) {
+            token.__data.roleCode = null;
+            token.__data.klo = "";
+            token.__data.kl = "";
+            return fn(err, token);
+          }
+
+          getKlos(userId, user.roleMapping()).then((klos) => {
+            token.__data.klo = klos.klo;
+            token.__data.kl = klos.kl;
+            return fn(null, token);
+          });
         }
 
-        getKlos(userId, user.roleMapping()).then(klos => {
-          token.__data.klo = klos.klo;
-          token.__data.kl = klos.kl;
-          return fn(null, token);
-        })
+        if (err) {
+          logUser("An error is reported from User.findOne: %j", err);
+          return fn(defaultError);
+        }
+
+        if (!user) {
+          logUser(
+            "No matching record is found for user %s",
+            query.email || query.username
+          );
+          return fn(defaultError);
+        }
+
+        if (user.createAccessToken.length === 2) {
+          logUser(
+            "user.createAccessToken.length is 2 ?",
+            user.createAccessToken.length
+          );
+          user.createAccessToken(credentials.ttl, tokenHandler);
+        } else {
+          logUser(
+            "user.createAccessToken.length is NOT 2 ?",
+            user.createAccessToken.length
+          );
+          user.createAccessToken(credentials.ttl, credentials, tokenHandler);
+        }
+
+        if (ctx) {
+          // setAuthCookies(ctx)
+        }
       }
-
-
-      if (err) {
-        logUser('An error is reported from User.findOne: %j', err);
-        return fn(defaultError);
-      }
-
-      if (!user) {
-        logUser('No matching record is found for user %s', query.email || query.username);
-        return fn(defaultError);
-      }
-
-      if (user.createAccessToken.length === 2) {
-        logUser("user.createAccessToken.length is 2 ?", user.createAccessToken.length);
-        user.createAccessToken(credentials.ttl, tokenHandler);
-      } else {
-
-        logUser("user.createAccessToken.length is NOT 2 ?", user.createAccessToken.length);
-        user.createAccessToken(credentials.ttl, credentials, tokenHandler);
-      }
-
-      if (ctx) {
-        // setAuthCookies(ctx)
-      }
-    });
+    );
     return fn.promise;
-  }
-
-
-
-
+  };
 
   User.extendedLogin = function (credentials, include, callback) {
     const { isTV } = credentials;
@@ -517,7 +553,7 @@ module.exports = function (User) {
       logUser("User is logged in with loginToken", loginToken);
       loginToken = loginToken.toObject();
 
-      getKlos(loginToken.userId, isTV).then(klos => {
+      getKlos(loginToken.userId, isTV).then((klos) => {
         //kl == role key, that represents user role
         loginToken.kl = klos.kl;
         //klo == array of view components that user is allowed to access on base64
@@ -535,14 +571,15 @@ module.exports = function (User) {
     let rolemap = User.app.models.RoleMapping;
     let res = { kl: "", klo: "" };
     try {
-
       if (!userRoleMap)
-        userRoleMap = await rolemap.findOne({ include: ['role'], where: { principalId: userId } });
-
+        userRoleMap = await rolemap.findOne({
+          include: ["role"],
+          where: { principalId: userId },
+        });
 
       let uRole = {};
       try {
-        console.log("user role map", userRoleMap)
+        console.log("user role map", userRoleMap);
         uRole = JSON.parse(JSON.stringify(userRoleMap));
         uRole = uRole == null || !uRole ? {} : uRole;
       } catch (err) {
@@ -550,42 +587,50 @@ module.exports = function (User) {
         return res;
       }
 
-      const configFile = path.join(__dirname, '../../../../consts/', 'roles-access.config.json');
+      const configFile = path.join(
+        __dirname,
+        "../../../../consts/",
+        "roles-access.config.json"
+      );
       let comps = { a: [], b: "" };
       logUser("configFile", configFile);
       try {
-        const rolesAccess = JSON.parse(fs.readFileSync(configFile, 'utf8'));
+        const rolesAccess = JSON.parse(fs.readFileSync(configFile, "utf8"));
         //if (rolesAccess[])
         logUser("uRole", uRole);
         if (isTV && uRole.role.name === "MEMBER") uRole.role.name = "MEMBERTV";
-        if (uRole.role && uRole.role.name && uRole.role.name !== '' && rolesAccess.hasOwnProperty(uRole.role.name) && rolesAccess[uRole.role.name]['comps']) {
-          comps.a = rolesAccess[uRole.role.name]['comps'];
+        if (
+          uRole.role &&
+          uRole.role.name &&
+          uRole.role.name !== "" &&
+          rolesAccess.hasOwnProperty(uRole.role.name) &&
+          rolesAccess[uRole.role.name]["comps"]
+        ) {
+          comps.a = rolesAccess[uRole.role.name]["comps"];
           logUser("Valid comps for role %s", uRole.role.name, comps);
-          if (rolesAccess[uRole.role.name]['defaultHomePage']) {
-            comps.b = rolesAccess[uRole.role.name]['defaultHomePage'];
+          if (rolesAccess[uRole.role.name]["defaultHomePage"]) {
+            comps.b = rolesAccess[uRole.role.name]["defaultHomePage"];
           }
         }
         logUser("COMPS?", comps);
         let regex = /==|=/gm;
         res.kl = uRole.role && uRole.role.roleKey ? uRole.role.roleKey : "";
-        res.klo = base64.encode(JSON.stringify(comps)).replace(regex, '');
+        res.klo = base64.encode(JSON.stringify(comps)).replace(regex, "");
         // res.klo = JSON.stringify(comps);
         return res;
-
       } catch (err) {
-        logUser("Could not fetch /src/consts/roles-access.config.json and parse it");
-        return { kl: "", klo: "" }
+        logUser(
+          "Could not fetch /src/consts/roles-access.config.json and parse it"
+        );
+        return { kl: "", klo: "" };
       }
     } catch (err) {
       console.log("ERROR on get klos:", err);
-      return { kl: "", klo: "" }
+      return { kl: "", klo: "" };
     }
   }
 
-
-
   User.authenticate = function (options, cb) {
-
     //console.log("authenticate is launched?!");
 
     const token = options && options.accessToken;
@@ -598,17 +643,15 @@ module.exports = function (User) {
       //console.log("Authenticated");
       return cb(null, { isAuthenticated: true });
     }
-
-  }
-
+  };
 
   /**
    * Logout a user with the given accessToken id.
    *
    * ```js
    *    User.logout('asd0a9f8dsj9s0s3223mk', function (err) {
-  *      console.log(err || 'Logged out');
-  *    });
+   *      console.log(err || 'Logged out');
+   *    });
    * ```
    *
    * @param {String} accessTokenID
@@ -622,41 +665,49 @@ module.exports = function (User) {
 
     var err;
     if (!tokenId) {
-      err = new Error(g.f('{{accessToken}} is required to logout'));
+      err = new Error(g.f("{{accessToken}} is required to logout"));
       err.statusCode = 401;
       process.nextTick(fn, err);
       return fn.promise;
     }
 
-    this.relations.accessTokens.modelTo.destroyById(tokenId, function (err, info) {
-      if (err) {
-        fn(err);
-      } else if ('count' in info && info.count === 0) {
-        err = new Error(g.f('Could not find {{accessToken}}'));
-        err.statusCode = 401;
-        fn(err);
-      } else {
-        fn();
+    this.relations.accessTokens.modelTo.destroyById(
+      tokenId,
+      function (err, info) {
+        if (err) {
+          fn(err);
+        } else if ("count" in info && info.count === 0) {
+          err = new Error(g.f("Could not find {{accessToken}}"));
+          err.statusCode = 401;
+          fn(err);
+        } else {
+          fn();
+        }
       }
-    });
+    );
     return fn.promise;
   };
 
-  User.observe('before delete', function (ctx, next) {
+  User.observe("before delete", function (ctx, next) {
     // Do nothing when the access control was disabled for this user model.
     if (!ctx.Model.relations.accessTokens) return next();
 
     var AccessToken = ctx.Model.relations.accessTokens.modelTo;
-    var pkName = ctx.Model.definition.idName() || 'id';
-    ctx.Model.find({ where: ctx.where, fields: [pkName] }, function (err, list) {
-      if (err) return next(err);
+    var pkName = ctx.Model.definition.idName() || "id";
+    ctx.Model.find(
+      { where: ctx.where, fields: [pkName] },
+      function (err, list) {
+        if (err) return next(err);
 
-      var ids = list.map(function (u) { return u[pkName]; });
-      ctx.where = {};
-      ctx.where[pkName] = { inq: ids };
+        var ids = list.map(function (u) {
+          return u[pkName];
+        });
+        ctx.where = {};
+        ctx.where[pkName] = { inq: ids };
 
-      AccessToken.destroyAll({ userId: { inq: ids } }, next);
-    });
+        AccessToken.destroyAll({ userId: { inq: ids } }, next);
+      }
+    );
   });
 
   /**
@@ -694,8 +745,14 @@ module.exports = function (User) {
    * @param {Error} err Error object
    * @promise
    */
-  User.changePassword = function (userId, oldPassword, newPassword, options, cb) {
-    if (cb === undefined && typeof options === 'function') {
+  User.changePassword = function (
+    userId,
+    oldPassword,
+    newPassword,
+    options,
+    cb
+  ) {
+    if (cb === undefined && typeof options === "function") {
       cb = options;
       options = undefined;
     }
@@ -709,7 +766,7 @@ module.exports = function (User) {
       if (!inst) {
         const err = new Error(`User ${userId} not found`);
         Object.assign(err, {
-          code: 'USER_NOT_FOUND',
+          code: "USER_NOT_FOUND",
           statusCode: 401,
         });
         return cb(err);
@@ -732,8 +789,13 @@ module.exports = function (User) {
    * @param {Error} err Error object
    * @promise
    */
-  User.prototype.changePassword = function (oldPassword, newPassword, options, cb) {
-    if (cb === undefined && typeof options === 'function') {
+  User.prototype.changePassword = function (
+    oldPassword,
+    newPassword,
+    options,
+    cb
+  ) {
+    if (cb === undefined && typeof options === "function") {
       cb = options;
       options = undefined;
     }
@@ -742,9 +804,9 @@ module.exports = function (User) {
     this.hasPassword(oldPassword, (err, isMatch) => {
       if (err) return cb(err);
       if (!isMatch) {
-        const err = new Error('Invalid current password');
+        const err = new Error("Invalid current password");
         Object.assign(err, {
-          code: 'INVALID_PASSWORD',
+          code: "INVALID_PASSWORD",
           statusCode: 400,
         });
         return cb(err);
@@ -766,10 +828,10 @@ module.exports = function (User) {
    * @promise
    */
   User.setPassword = function (userId, newPassword, options, cb) {
-    assert(userId != null && userId !== '', 'userId is a required argument');
-    assert(!!newPassword, 'newPassword is a required argument');
+    assert(userId != null && userId !== "", "userId is a required argument");
+    assert(!!newPassword, "newPassword is a required argument");
 
-    if (cb === undefined && typeof options === 'function') {
+    if (cb === undefined && typeof options === "function") {
       cb = options;
       options = undefined;
     }
@@ -783,7 +845,7 @@ module.exports = function (User) {
       if (!inst) {
         const err = new Error(`User ${userId} not found`);
         Object.assign(err, {
-          code: 'USER_NOT_FOUND',
+          code: "USER_NOT_FOUND",
           statusCode: 401,
         });
         return cb(err);
@@ -808,9 +870,9 @@ module.exports = function (User) {
    * @promise
    */
   User.prototype.setPassword = function (newPassword, options, cb) {
-    assert(!!newPassword, 'newPassword is a required argument');
+    assert(!!newPassword, "newPassword is a required argument");
 
-    if (cb === undefined && typeof options === 'function') {
+    if (cb === undefined && typeof options === "function") {
       cb = options;
       options = undefined;
     }
@@ -904,8 +966,8 @@ module.exports = function (User) {
 
   User.getVerifyOptions = function () {
     const defaultOptions = {
-      type: 'email',
-      from: 'noreply@example.com',
+      type: "email",
+      from: "noreply@example.com",
     };
     return Object.assign({}, this.settings.verifyOptions || defaultOptions);
   };
@@ -990,7 +1052,7 @@ module.exports = function (User) {
    */
 
   User.prototype.verify = function (verifyOptions, options, cb) {
-    if (cb === undefined && typeof options === 'function') {
+    if (cb === undefined && typeof options === "function") {
       cb = options;
       options = undefined;
     }
@@ -1001,48 +1063,64 @@ module.exports = function (User) {
     var registry = userModel.registry;
     verifyOptions = Object.assign({}, verifyOptions);
     // final assertion is performed once all options are assigned
-    assert(typeof verifyOptions === 'object',
-      'verifyOptions object param required when calling user.verify()');
+    assert(
+      typeof verifyOptions === "object",
+      "verifyOptions object param required when calling user.verify()"
+    );
 
     // Shallow-clone the options object so that we don't override
     // the global default options object
     verifyOptions = Object.assign({}, verifyOptions);
 
     // Set a default template generation function if none provided
-    verifyOptions.templateFn = verifyOptions.templateFn || createVerificationEmailBody;
+    verifyOptions.templateFn =
+      verifyOptions.templateFn || createVerificationEmailBody;
 
     // Set a default token generation function if none provided
-    verifyOptions.generateVerificationToken = verifyOptions.generateVerificationToken ||
-      User.generateVerificationToken;
+    verifyOptions.generateVerificationToken =
+      verifyOptions.generateVerificationToken || User.generateVerificationToken;
 
     // Set a default mailer function if none provided
-    verifyOptions.mailer = verifyOptions.mailer || userModel.email ||
+    verifyOptions.mailer =
+      verifyOptions.mailer ||
+      userModel.email ||
       registry.getModelByType(loopback.Email);
 
-    var pkName = userModel.definition.idName() || 'id';
-    verifyOptions.redirect = verifyOptions.redirect || '/';
-    var defaultTemplate = path.join(__dirname, '..', '..', 'templates', 'verify.ejs');
-    verifyOptions.template = path.resolve(verifyOptions.template || defaultTemplate);
+    var pkName = userModel.definition.idName() || "id";
+    verifyOptions.redirect = verifyOptions.redirect || "/";
+    var defaultTemplate = path.join(
+      __dirname,
+      "..",
+      "..",
+      "templates",
+      "verify.ejs"
+    );
+    verifyOptions.template = path.resolve(
+      verifyOptions.template || defaultTemplate
+    );
     verifyOptions.user = user;
-    verifyOptions.protocol = verifyOptions.protocol || 'http';
+    verifyOptions.protocol = verifyOptions.protocol || "http";
 
     var app = userModel.app;
-    verifyOptions.host = verifyOptions.host || (app && app.get('host')) || 'localhost';
-    verifyOptions.port = verifyOptions.port || (app && app.get('port')) || 3000;
-    verifyOptions.restApiRoot = verifyOptions.restApiRoot || (app && app.get('restApiRoot')) || '/api';
+    verifyOptions.host =
+      verifyOptions.host || (app && app.get("host")) || "localhost";
+    verifyOptions.port = verifyOptions.port || (app && app.get("port")) || 3000;
+    verifyOptions.restApiRoot =
+      verifyOptions.restApiRoot || (app && app.get("restApiRoot")) || "/api";
 
-    var displayPort = (
-      (verifyOptions.protocol === 'http' && verifyOptions.port == '80') ||
-      (verifyOptions.protocol === 'https' && verifyOptions.port == '443')
-    ) ? '' : ':' + verifyOptions.port;
+    var displayPort =
+      (verifyOptions.protocol === "http" && verifyOptions.port == "80") ||
+      (verifyOptions.protocol === "https" && verifyOptions.port == "443")
+        ? ""
+        : ":" + verifyOptions.port;
 
     if (!verifyOptions.verifyHref) {
-      const confirmMethod = userModel.sharedClass.findMethodByName('confirm');
+      const confirmMethod = userModel.sharedClass.findMethodByName("confirm");
       if (!confirmMethod) {
         throw new Error(
-          'Cannot build user verification URL, ' +
-          'the default confirm method is not public. ' +
-          'Please provide the URL in verifyOptions.verifyHref.'
+          "Cannot build user verification URL, " +
+            "the default confirm method is not public. " +
+            "Please provide the URL in verifyOptions.verifyHref."
         );
       }
 
@@ -1054,18 +1132,20 @@ module.exports = function (User) {
 
       verifyOptions.verifyHref =
         verifyOptions.protocol +
-        '://' +
+        "://" +
         verifyOptions.host +
         displayPort +
         urlPath +
-        '?' + qs.stringify({
-          uid: '' + verifyOptions.user[pkName],
+        "?" +
+        qs.stringify({
+          uid: "" + verifyOptions.user[pkName],
           redirect: verifyOptions.redirect,
         });
     }
 
     verifyOptions.to = verifyOptions.to || user.email;
-    verifyOptions.subject = verifyOptions.subject || g.f('Thanks for Registering');
+    verifyOptions.subject =
+      verifyOptions.subject || g.f("Thanks for Registering");
     verifyOptions.headers = verifyOptions.headers || {};
 
     // assert the verifyOptions params that might have been badly defined
@@ -1091,13 +1171,21 @@ module.exports = function (User) {
     // TODO - support more verification types
     function sendEmail(user) {
       verifyOptions.verifyHref +=
-        verifyOptions.verifyHref.indexOf('?') === -1 ? '?' : '&';
-      verifyOptions.verifyHref += 'token=' + user.verificationToken;
+        verifyOptions.verifyHref.indexOf("?") === -1 ? "?" : "&";
+      verifyOptions.verifyHref += "token=" + user.verificationToken;
 
       verifyOptions.verificationToken = user.verificationToken;
-      verifyOptions.text = verifyOptions.text || g.f('Please verify your email by opening ' +
-        'this link in a web browser:\n\t%s', verifyOptions.verifyHref);
-      verifyOptions.text = verifyOptions.text.replace(/\{href\}/g, verifyOptions.verifyHref);
+      verifyOptions.text =
+        verifyOptions.text ||
+        g.f(
+          "Please verify your email by opening " +
+            "this link in a web browser:\n\t%s",
+          verifyOptions.verifyHref
+        );
+      verifyOptions.text = verifyOptions.text.replace(
+        /\{href\}/g,
+        verifyOptions.verifyHref
+      );
 
       // argument "options" is passed depending on templateFn function requirements
       var templateFn = verifyOptions.templateFn;
@@ -1126,7 +1214,11 @@ module.exports = function (User) {
 
         function handleAfterSend(err, email) {
           if (err) return cb(err);
-          cb(null, { email: email, token: user.verificationToken, uid: user[pkName] });
+          cb(null, {
+            email: email,
+            token: user.verificationToken,
+            uid: user[pkName],
+          });
         }
       }
     }
@@ -1135,17 +1227,33 @@ module.exports = function (User) {
   };
 
   function assertVerifyOptions(verifyOptions) {
-    assert(verifyOptions.type, 'You must supply a verification type (verifyOptions.type)');
-    assert(verifyOptions.type === 'email', 'Unsupported verification type');
-    assert(verifyOptions.to, 'Must include verifyOptions.to when calling user.verify() ' +
-      'or the user must have an email property');
-    assert(verifyOptions.from, 'Must include verifyOptions.from when calling user.verify()');
-    assert(typeof verifyOptions.templateFn === 'function',
-      'templateFn must be a function');
-    assert(typeof verifyOptions.generateVerificationToken === 'function',
-      'generateVerificationToken must be a function');
-    assert(verifyOptions.mailer, 'A mailer function must be provided');
-    assert(typeof verifyOptions.mailer.send === 'function', 'mailer.send must be a function ');
+    assert(
+      verifyOptions.type,
+      "You must supply a verification type (verifyOptions.type)"
+    );
+    assert(verifyOptions.type === "email", "Unsupported verification type");
+    assert(
+      verifyOptions.to,
+      "Must include verifyOptions.to when calling user.verify() " +
+        "or the user must have an email property"
+    );
+    assert(
+      verifyOptions.from,
+      "Must include verifyOptions.from when calling user.verify()"
+    );
+    assert(
+      typeof verifyOptions.templateFn === "function",
+      "templateFn must be a function"
+    );
+    assert(
+      typeof verifyOptions.generateVerificationToken === "function",
+      "generateVerificationToken must be a function"
+    );
+    assert(verifyOptions.mailer, "A mailer function must be provided");
+    assert(
+      typeof verifyOptions.mailer.send === "function",
+      "mailer.send must be a function "
+    );
   }
 
   function createVerificationEmailBody(verifyOptions, options, cb) {
@@ -1167,7 +1275,7 @@ module.exports = function (User) {
    */
   User.generateVerificationToken = function (user, options, cb) {
     crypto.randomBytes(64, function (err, buf) {
-      cb(err, buf && buf.toString('hex'));
+      cb(err, buf && buf.toString("hex"));
     });
   };
 
@@ -1199,13 +1307,13 @@ module.exports = function (User) {
           });
         } else {
           if (user) {
-            err = new Error(g.f('Invalid token: %s', token));
+            err = new Error(g.f("Invalid token: %s", token));
             err.statusCode = 400;
-            err.code = 'INVALID_TOKEN';
+            err.code = "INVALID_TOKEN";
           } else {
-            err = new Error(g.f('User not found: %s', uid));
+            err = new Error(g.f("User not found: %s", uid));
             err.statusCode = 404;
-            err.code = 'USER_NOT_FOUND';
+            err.code = "USER_NOT_FOUND";
           }
           fn(err);
         }
@@ -1231,10 +1339,10 @@ module.exports = function (User) {
     var UserModel = this;
     var ttl = UserModel.settings.resetPasswordTokenTTL || DEFAULT_RESET_PW_TTL;
     options = options || {};
-    if (typeof options.email !== 'string') {
-      var err = new Error(g.f('Email is required'));
+    if (typeof options.email !== "string") {
+      var err = new Error(g.f("Email is required"));
       err.statusCode = 400;
-      err.code = 'EMAIL_REQUIRED';
+      err.code = "EMAIL_REQUIRED";
       cb(err);
       return cb.promise;
     }
@@ -1257,24 +1365,24 @@ module.exports = function (User) {
         return cb(err);
       }
       if (!user) {
-        err = new Error(g.f('Email not found'));
+        err = new Error(g.f("Email not found"));
         err.statusCode = 404;
-        err.code = 'EMAIL_NOT_FOUND';
+        err.code = "EMAIL_NOT_FOUND";
         return cb(err);
       }
       // create a short lived access token for temp login to change password
       // TODO(ritch) - eventually this should only allow password change
       if (UserModel.settings.emailVerificationRequired && !user.emailVerified) {
-        err = new Error(g.f('Email has not been verified'));
+        err = new Error(g.f("Email has not been verified"));
         err.statusCode = 401;
-        err.code = 'RESET_FAILED_EMAIL_NOT_VERIFIED';
+        err.code = "RESET_FAILED_EMAIL_NOT_VERIFIED";
         return cb(err);
       }
 
       if (UserModel.settings.restrictResetPasswordTokenScope) {
         const tokenData = {
           ttl: ttl,
-          scopes: ['reset-password'],
+          scopes: ["reset-password"],
         };
         user.createAccessToken(tokenData, options, onTokenCreated);
       } else {
@@ -1290,7 +1398,7 @@ module.exports = function (User) {
           return cb(err);
         }
         cb();
-        UserModel.emit('resetPasswordRequest', {
+        UserModel.emit("resetPasswordRequest", {
           email: options.email,
           accessToken: accessToken,
           user: user,
@@ -1307,54 +1415,59 @@ module.exports = function (User) {
    */
   User.hashPassword = function (plain) {
     this.validatePassword(plain);
-    var salt = bcrypt.genSaltSync(this.settings.saltWorkFactor || SALT_WORK_FACTOR);
+    var salt = bcrypt.genSaltSync(
+      this.settings.saltWorkFactor || SALT_WORK_FACTOR
+    );
     return bcrypt.hashSync(plain, salt);
   };
 
   User.validatePassword = function (plain) {
     var err;
-    if (!plain || typeof plain !== 'string') {
-      err = new Error(g.f('Invalid password.'));
-      err.code = 'INVALID_PASSWORD';
+    if (!plain || typeof plain !== "string") {
+      err = new Error(g.f("Invalid password."));
+      err.code = "INVALID_PASSWORD";
       err.statusCode = 422;
       throw err;
     }
 
     // Bcrypt only supports up to 72 bytes; the rest is silently dropped.
-    var len = Buffer.byteLength(plain, 'utf8');
+    var len = Buffer.byteLength(plain, "utf8");
     if (len > MAX_PASSWORD_LENGTH) {
-      err = new Error(g.f('The password entered was too long. Max length is %d (entered %d)',
-        MAX_PASSWORD_LENGTH, len));
-      err.code = 'PASSWORD_TOO_LONG';
+      err = new Error(
+        g.f(
+          "The password entered was too long. Max length is %d (entered %d)",
+          MAX_PASSWORD_LENGTH,
+          len
+        )
+      );
+      err.code = "PASSWORD_TOO_LONG";
       err.statusCode = 422;
       throw err;
     }
   };
 
   User._invalidateAccessTokensOfUsers = function (userIds, options, cb) {
-    if (typeof options === 'function' && cb === undefined) {
+    if (typeof options === "function" && cb === undefined) {
       cb = options;
       options = {};
     }
 
-    if (!Array.isArray(userIds) || !userIds.length)
-      return process.nextTick(cb);
+    if (!Array.isArray(userIds) || !userIds.length) return process.nextTick(cb);
 
     var accessTokenRelation = this.relations.accessTokens;
-    if (!accessTokenRelation)
-      return process.nextTick(cb);
+    if (!accessTokenRelation) return process.nextTick(cb);
 
     var AccessToken = accessTokenRelation.modelTo;
     var query = { userId: { inq: userIds } };
-    var tokenPK = AccessToken.definition.idName() || 'id';
+    var tokenPK = AccessToken.definition.idName() || "id";
     if (options.accessToken && tokenPK in options.accessToken) {
       query[tokenPK] = { neq: options.accessToken[tokenPK] };
     }
     // add principalType in AccessToken.query if using polymorphic relations
     // between AccessToken and User
     var relatedUser = AccessToken.relations.user;
-    var isRelationPolymorphic = relatedUser && relatedUser.polymorphic &&
-      !relatedUser.modelTo;
+    var isRelationPolymorphic =
+      relatedUser && relatedUser.polymorphic && !relatedUser.modelTo;
     if (isRelationPolymorphic) {
       query.principalType = this.modelName;
     }
@@ -1375,7 +1488,7 @@ module.exports = function (User) {
     this.settings.ttl = this.settings.ttl || DEFAULT_TTL;
 
     UserModel.setter.email = function (value) {
-      if (!UserModel.settings.caseSensitiveEmail && typeof value === 'string') {
+      if (!UserModel.settings.caseSensitiveEmail && typeof value === "string") {
         this.$email = value.toLowerCase();
       } else {
         this.$email = value;
@@ -1383,10 +1496,13 @@ module.exports = function (User) {
     };
 
     UserModel.setter.password = function (plain) {
-      if (typeof plain !== 'string') {
+      if (typeof plain !== "string") {
         return;
       }
-      if ((plain.indexOf('$2a$') === 0 || plain.indexOf('$2b$') === 0) && plain.length === 60) {
+      if (
+        (plain.indexOf("$2a$") === 0 || plain.indexOf("$2b$") === 0) &&
+        plain.length === 60
+      ) {
         // The password is already hashed. It can be the case
         // when the instance is loaded from DB
         this.$password = plain;
@@ -1396,7 +1512,7 @@ module.exports = function (User) {
     };
 
     // Make sure emailVerified is not set by creation
-    UserModel.beforeRemote('create', function (ctx, user, next) {
+    UserModel.beforeRemote("create", function (ctx, user, next) {
       var body = ctx.req.body;
       if (body && body.emailVerified) {
         body.emailVerified = false;
@@ -1404,209 +1520,238 @@ module.exports = function (User) {
       next();
     });
 
-
-    UserModel.beforeRemote('resetPassword', function (ctx, model, next) {
-      ctx.req.body.origin = ctx.req.body.origin || ctx.req.headers['x-forwarded-host'];
+    UserModel.beforeRemote("resetPassword", function (ctx, model, next) {
+      ctx.req.body.origin =
+        ctx.req.body.origin || ctx.req.headers["x-forwarded-host"];
       next();
     });
 
-    UserModel.on('resetPasswordRequest', function (info) {
+    UserModel.on("resetPasswordRequest", function (info) {
       let origin = info.options.origin;
       logUser(info.email); // the email of the requested user
       logUser(info.accessToken.id); // the temp access token to allow password reset
 
-      if (origin.indexOf("http") != 0)
-        origin = "http://" + origin;
-      var url = origin + '/reset-password';
+      if (origin.indexOf("http") != 0) origin = "http://" + origin;
+      var url = origin + "/reset-password";
 
-      var html = 'Click <a href="' + url + '?access_token=' + info.accessToken.id + '">here</a> to reset your password';
+      var html =
+        'Click <a href="' +
+        url +
+        "?access_token=" +
+        info.accessToken.id +
+        '">here</a> to reset your password';
 
-      UserModel.app.models.Email.send({
-        to: info.email,
-        subject: 'Password reset',
-        html: html
-      }, function (err) {
-        if (err) return console.log('> error sending password reset email', err);
-        console.log('> sending password reset email to:', info.email);
-      });
+      UserModel.app.models.Email.send(
+        {
+          to: info.email,
+          subject: "Password reset",
+          html: html,
+        },
+        function (err) {
+          if (err)
+            return console.log("> error sending password reset email", err);
+          console.log("> sending password reset email to:", info.email);
+        }
+      );
     });
 
-
-
-
-    UserModel.remoteMethod(
-      'login',
-      {
-        description: 'Login a user with username/email and password.',
-        accepts: [
-          { arg: 'credentials', type: 'object', required: true, http: { source: 'body' } },
-          {
-            arg: 'include', type: ['string'], http: { source: 'query' },
-            description: 'Related objects to include in the response. ' +
-              'See the description of return value for more details.'
-          },
-        ],
-        returns: {
-          arg: 'accessToken', type: 'object', root: true,
-          description:
-            g.f('The response body contains properties of the {{AccessToken}} created on login.\n' +
-              'Depending on the value of `include` parameter, the body may contain ' +
-              'additional properties:\n\n' +
-              '  - `user` - `U+007BUserU+007D` - Data of the currently logged in user. ' +
-              '{{(`include=user`)}}\n\n'),
+    UserModel.remoteMethod("login", {
+      description: "Login a user with username/email and password.",
+      accepts: [
+        {
+          arg: "credentials",
+          type: "object",
+          required: true,
+          http: { source: "body" },
         },
-        http: { verb: 'post' },
-      }
-    );
+        {
+          arg: "include",
+          type: ["string"],
+          http: { source: "query" },
+          description:
+            "Related objects to include in the response. " +
+            "See the description of return value for more details.",
+        },
+      ],
+      returns: {
+        arg: "accessToken",
+        type: "object",
+        root: true,
+        description: g.f(
+          "The response body contains properties of the {{AccessToken}} created on login.\n" +
+            "Depending on the value of `include` parameter, the body may contain " +
+            "additional properties:\n\n" +
+            "  - `user` - `U+007BUserU+007D` - Data of the currently logged in user. " +
+            "{{(`include=user`)}}\n\n"
+        ),
+      },
+      http: { verb: "post" },
+    });
 
     UserModel.remoteMethod("loginAs", {
-      description: 'Carmel: Enables to login as another user by user id',
-      'http': {
-        path: '/login-as',
-        'verb': 'post'
+      description: "Carmel: Enables to login as another user by user id",
+      http: {
+        path: "/login-as",
+        verb: "post",
       },
-      'accepts': [
-        { arg: 'uid', type: 'number', required: true },
-        { arg: 'options', type: 'object', http: 'optionsFromRequest' }
+      accepts: [
+        { arg: "uid", type: "number", required: true },
+        { arg: "options", type: "object", http: "optionsFromRequest" },
       ],
-      'returns': [
-        { arg: 'accessToken', type: 'string', root: true }
-      ]
-
+      returns: [{ arg: "accessToken", type: "string", root: true }],
     });
 
-    UserModel.remoteMethod('extendedLogin', {
-      description: 'Carmel: This login matches also user roles',
-      'http': {
-        'path': '/elogin',
-        'verb': 'post'
+    UserModel.remoteMethod("extendedLogin", {
+      description: "Carmel: This login matches also user roles",
+      http: {
+        path: "/elogin",
+        verb: "post",
       },
-      'accepts': [
+      accepts: [
         {
-          'arg': 'credentials',
-          'type': 'object',
-          'description': 'Login credentials',
-          'required': true,
-          'http': {
-            'source': 'body'
-          }
+          arg: "credentials",
+          type: "object",
+          description: "Login credentials",
+          required: true,
+          http: {
+            source: "body",
+          },
         },
         {
-          'arg': 'include',
-          'type': 'string',
-          'description': 'Related objects to include in the response. See the description of return value for more details.',
-          'http': {
-            'source': 'query'
-          }
-        }
+          arg: "include",
+          type: "string",
+          description:
+            "Related objects to include in the response. See the description of return value for more details.",
+          http: {
+            source: "query",
+          },
+        },
       ],
-      'returns': [
+      returns: [
         {
-          'arg': 'token',
-          'type': 'object',
-          'root': true
-        }
-      ]
+          arg: "token",
+          type: "object",
+          root: true,
+        },
+        {
+          arg: "credentials",
+          type: "object",
+          required: true,
+          http: { source: "body" },
+        },
+      ],
     });
 
+    UserModel.remoteMethod("logout", {
+      description: "Logout a user with access token.",
+      accepts: [
+        {
+          arg: "access_token",
+          type: "string",
+          http: function (ctx) {
+            var req = ctx && ctx.req;
+            var accessToken = req && req.accessToken;
+            var tokenID = accessToken ? accessToken.id : undefined;
 
-    UserModel.remoteMethod(
-      'logout',
-      {
-        description: 'Logout a user with access token.',
-        accepts: [
-          {
-            arg: 'access_token', type: 'string', http: function (ctx) {
-              var req = ctx && ctx.req;
-              var accessToken = req && req.accessToken;
-              var tokenID = accessToken ? accessToken.id : undefined;
-
-              return tokenID;
-            }, description: 'Do not supply this argument, it is automatically extracted ' +
-              'from request headers.',
+            return tokenID;
           },
-        ],
-        http: { verb: 'all' },
-      }
-    );
+          description:
+            "Do not supply this argument, it is automatically extracted " +
+            "from request headers.",
+        },
+      ],
+      http: { verb: "all" },
+    });
 
-    UserModel.remoteMethod(
-      'prototype.verify',
-      {
-        description: 'Trigger user\'s identity verification with configured verifyOptions',
-        accepts: [
-          { arg: 'verifyOptions', type: 'object', http: ctx => this.getVerifyOptions() },
-          { arg: 'options', type: 'object', http: 'optionsFromRequest' },
-        ],
-        http: { verb: 'post' },
-      }
-    );
+    UserModel.remoteMethod("prototype.verify", {
+      description:
+        "Trigger user's identity verification with configured verifyOptions",
+      accepts: [
+        {
+          arg: "verifyOptions",
+          type: "object",
+          http: (ctx) => this.getVerifyOptions(),
+        },
+        { arg: "options", type: "object", http: "optionsFromRequest" },
+      ],
+      http: { verb: "post" },
+    });
 
-    UserModel.remoteMethod(
-      'confirm',
-      {
-        description: 'Confirm a user registration with identity verification token.',
-        accepts: [
-          { arg: 'uid', type: 'string', required: true },
-          { arg: 'token', type: 'string', required: true },
-          { arg: 'redirect', type: 'string' },
-        ],
-        http: { verb: 'get', path: '/confirm' },
-      }
-    );
+    UserModel.remoteMethod("confirm", {
+      description:
+        "Confirm a user registration with identity verification token.",
+      accepts: [
+        { arg: "uid", type: "string", required: true },
+        { arg: "token", type: "string", required: true },
+        { arg: "redirect", type: "string" },
+      ],
+      http: { verb: "get", path: "/confirm" },
+    });
 
-    UserModel.remoteMethod(
-      'resetPassword',
-      {
-        description: 'Reset password for a user with email.',
-        accepts: [
-          { arg: 'options', type: 'object', required: true, http: { source: 'body' } },
-        ],
-        http: { verb: 'post', path: '/reset' },
-      }
-    );
+    UserModel.remoteMethod("resetPassword", {
+      description: "Reset password for a user with email.",
+      accepts: [
+        {
+          arg: "options",
+          type: "object",
+          required: true,
+          http: { source: "body" },
+        },
+      ],
+      http: { verb: "post", path: "/reset" },
+    });
 
-    UserModel.remoteMethod(
-      'changePassword',
-      {
-        description: 'Change a user\'s password.',
-        accepts: [
-          { arg: 'id', type: 'any', http: getUserIdFromRequestContext },
-          { arg: 'oldPassword', type: 'string', required: true, http: { source: 'form' } },
-          { arg: 'newPassword', type: 'string', required: true, http: { source: 'form' } },
-          { arg: 'options', type: 'object', http: 'optionsFromRequest' },
-        ],
-        http: { verb: 'POST', path: '/change-password' },
-      }
-    );
+    UserModel.remoteMethod("changePassword", {
+      description: "Change a user's password.",
+      accepts: [
+        { arg: "id", type: "any", http: getUserIdFromRequestContext },
+        {
+          arg: "oldPassword",
+          type: "string",
+          required: true,
+          http: { source: "form" },
+        },
+        {
+          arg: "newPassword",
+          type: "string",
+          required: true,
+          http: { source: "form" },
+        },
+        { arg: "options", type: "object", http: "optionsFromRequest" },
+      ],
+      http: { verb: "POST", path: "/change-password" },
+    });
 
-    const setPasswordScopes = UserModel.settings.restrictResetPasswordTokenScope ?
-      ['reset-password'] : undefined;
+    const setPasswordScopes = UserModel.settings.restrictResetPasswordTokenScope
+      ? ["reset-password"]
+      : undefined;
 
-    UserModel.remoteMethod(
-      'setPassword',
-      {
-        description: 'Reset user\'s password via a password-reset token.',
-        accepts: [
-          { arg: 'id', type: 'any', http: getUserIdFromRequestContext },
-          { arg: 'newPassword', type: 'string', required: true, http: { source: 'form' } },
-          { arg: 'options', type: 'object', http: 'optionsFromRequest' },
-        ],
-        accessScopes: setPasswordScopes,
-        http: { verb: 'POST', path: '/reset-password' },
-      }
-    );
+    UserModel.remoteMethod("setPassword", {
+      description: "Reset user's password via a password-reset token.",
+      accepts: [
+        { arg: "id", type: "any", http: getUserIdFromRequestContext },
+        {
+          arg: "newPassword",
+          type: "string",
+          required: true,
+          http: { source: "form" },
+        },
+        { arg: "options", type: "object", http: "optionsFromRequest" },
+      ],
+      accessScopes: setPasswordScopes,
+      http: { verb: "POST", path: "/reset-password" },
+    });
 
     function getUserIdFromRequestContext(ctx) {
       const token = ctx.req.accessToken;
       if (!token) return;
 
-      const hasPrincipalType = 'principalType' in token;
+      const hasPrincipalType = "principalType" in token;
       if (hasPrincipalType && token.principalType !== UserModel.modelName) {
         // We have multiple user models related to the same access token model
         // and the token used to authorize reset-password request was created
         // for a different user model.
-        const err = new Error(g.f('Access Denied'));
+        const err = new Error(g.f("Access Denied"));
         err.statusCode = 403;
         throw err;
       }
@@ -1614,10 +1759,12 @@ module.exports = function (User) {
       return token.userId;
     }
 
-    UserModel.afterRemote('confirm', function (ctx, inst, next) {
+    UserModel.afterRemote("confirm", function (ctx, inst, next) {
       if (ctx.args.redirect !== undefined) {
         if (!ctx.res) {
-          return next(new Error(g.f('The transport does not support HTTP redirects.')));
+          return next(
+            new Error(g.f("The transport does not support HTTP redirects."))
+          );
         }
         ctx.res.location(ctx.args.redirect);
         ctx.res.status(302);
@@ -1625,83 +1772,136 @@ module.exports = function (User) {
       next();
     });
 
-    UserModel.afterRemote('extendedLogin', function (ctx) {
-      console.log("After remote extendedlogin is launched");
-      ctx.res.cookie('access_token', ctx.result.id, { signed: true, maxAge: DEFAULT_MAX_TTL*1000 });
-      // //These are all 'trash' cookies in order to confuse the hacker who tries to penetrate kl,klo cookies
-      ctx.res.cookie('kloo', randomstring.generate(), { signed: true, maxAge: DEFAULT_MAX_TTL*1000 });
-      ctx.res.cookie('klk', randomstring.generate(), { signed: true, maxAge: DEFAULT_MAX_TTL*1000 });
-      ctx.res.cookie('olk', randomstring.generate(), { signed: true, maxAge: DEFAULT_MAX_TTL*1000 });
-      ctx.res.cookie('klo', ctx.result.klo);
-      ctx.res.cookie('kl', ctx.result.kl);
+    UserModel.afterRemote("extendedLogin", function (ctx, i) {
+      let isTVLogin = ctx.res.req.body.isTV;
+      if (isTVLogin) {
+        console.log("After remote extended TV login is launched");
+        ctx.res.cookie("access_token", ctx.result.id, {
+          signed: true,
+          maxAge: DEFAULT_MAX_TTL * 1000,
+        });
+        ctx.res.cookie("kloo", randomstring.generate(), {
+          signed: true,
+          maxAge: DEFAULT_MAX_TTL * 1000,
+        });
+        ctx.res.cookie("klk", randomstring.generate(), {
+          signed: true,
+          maxAge: DEFAULT_MAX_TTL * 1000,
+        });
+        ctx.res.cookie("olk", randomstring.generate(), {
+          signed: true,
+          maxAge: DEFAULT_MAX_TTL * 1000,
+        });
+        ctx.res.cookie("klo", ctx.result.klo);
+        ctx.res.cookie("kl", ctx.result.kl);
+      } else {
+        console.log("After remote extendedlogin is launched");
+        ctx.res.cookie("access_token", ctx.result.id, {
+          signed: true,
+          maxAge: 28800000,
+        });
+         ctx.res.cookie("kloo", randomstring.generate(), {
+          signed: true,
+          maxAge: 28800000,
+        });
+        ctx.res.cookie("klk", randomstring.generate(), {
+          signed: true,
+          maxAge: 28800000,
+        });
+        ctx.res.cookie("olk", randomstring.generate(), {
+          signed: true,
+          maxAge: 28800000,
+        });
+        ctx.res.cookie("klo", ctx.result.klo);
+        ctx.res.cookie("kl", ctx.result.kl);
+      }
 
       return Promise.resolve();
     });
 
-    UserModel.afterRemote('loginAs', (ctx, model, next) => {
+    UserModel.afterRemote("loginAs", (ctx, model, next) => {
       console.log("After remote loginAs is launched");
       ctx = setAuthCookies(ctx);
       next();
     });
 
-    UserModel.afterRemote('registerOrLoginByUniqueField', (ctx, model, next) => {
-      console.log("After remote registerOrLoginByUniqueField is launched");
-      ctx = setAuthCookies(ctx);
-      next();
-    });
+    UserModel.afterRemote(
+      "registerOrLoginByUniqueField",
+      (ctx, model, next) => {
+        console.log("After remote registerOrLoginByUniqueField is launched");
+        ctx = setAuthCookies(ctx);
+        next();
+      }
+    );
 
     function setAuthCookies(ctx) {
-      ctx.res.cookie('access_token', ctx.result.accessToken, { signed: true, maxAge: 1000 * 60 * 60 * 5 });
-      ctx.res.cookie('klo', ctx.result.klo);
-      ctx.res.cookie('kl', ctx.result.kl);
+      ctx.res.cookie("access_token", ctx.result.accessToken, {
+        signed: true,
+        maxAge: 1000 * 60 * 60 * 5,
+      });
+      ctx.res.cookie("klo", ctx.result.klo);
+      ctx.res.cookie("kl", ctx.result.kl);
       // //These are all 'trash' cookies in order to confuse the hacker who tries to penetrate kl,klo cookies
-      ctx.res.cookie('kloo', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
-      ctx.res.cookie('klk', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
-      ctx.res.cookie('olk', randomstring.generate(), { signed: true, maxAge: 1000 * 60 * 60 * 5 });
+      ctx.res.cookie("kloo", randomstring.generate(), {
+        signed: true,
+        maxAge: 1000 * 60 * 60 * 5,
+      });
+      ctx.res.cookie("klk", randomstring.generate(), {
+        signed: true,
+        maxAge: 1000 * 60 * 60 * 5,
+      });
+      ctx.res.cookie("olk", randomstring.generate(), {
+        signed: true,
+        maxAge: 1000 * 60 * 60 * 5,
+      });
       return ctx;
     }
 
-    UserModel.afterRemote('logout', function (ctx) {
+    UserModel.afterRemote("logout", function (ctx) {
       console.log("After remote logout is launched");
-      ctx.res.clearCookie('access_token');
+      ctx.res.clearCookie("access_token");
       return Promise.resolve();
     });
 
-    UserModel.remoteMethod('authenticate', {
-      http: { verb: 'get' },
-      description: 'Carmel:Confirm a user authentication',
-      accepts: [
-        { arg: "options", type: "object", http: "optionsFromRequest" }
-      ],
-      returns: { type: 'object', root: true }
-    }
-    );
+    UserModel.remoteMethod("authenticate", {
+      http: { verb: "get" },
+      description: "Carmel:Confirm a user authentication",
+      accepts: [{ arg: "options", type: "object", http: "optionsFromRequest" }],
+      returns: { type: "object", root: true },
+    });
 
     // default models
-    assert(loopback.Email, 'Email model must be defined before User model');
+    assert(loopback.Email, "Email model must be defined before User model");
     UserModel.email = loopback.Email;
 
-    assert(loopback.AccessToken, 'AccessToken model must be defined before User model');
+    assert(
+      loopback.AccessToken,
+      "AccessToken model must be defined before User model"
+    );
     UserModel.accessToken = loopback.AccessToken;
 
-    UserModel.validate('email', emailValidator, {
-      message: g.f('Must provide a valid email'),
+    UserModel.validate("email", emailValidator, {
+      message: g.f("Must provide a valid email"),
     });
 
     // Realm users validation
     if (UserModel.settings.realmRequired && UserModel.settings.realmDelimiter) {
-      UserModel.validatesUniquenessOf('email', {
-        message: 'Email already exists',
-        scopedTo: ['realm'],
+      UserModel.validatesUniquenessOf("email", {
+        message: "Email already exists",
+        scopedTo: ["realm"],
       });
-      UserModel.validatesUniquenessOf('username', {
-        message: 'User already exists',
-        scopedTo: ['realm'],
+      UserModel.validatesUniquenessOf("username", {
+        message: "User already exists",
+        scopedTo: ["realm"],
       });
     } else {
       // Regular(Non-realm) users validation
-      UserModel.validatesUniquenessOf('email', { message: 'Email already exists' });
-      UserModel.validatesUniquenessOf('username', { message: 'User already exists' });
+      UserModel.validatesUniquenessOf("email", {
+        message: "Email already exists",
+      });
+      UserModel.validatesUniquenessOf("username", {
+        message: "User already exists",
+      });
     }
 
     return UserModel;
@@ -1719,15 +1919,19 @@ module.exports = function (User) {
   // therefore they must be registered outside of setup() function
 
   // Access token to normalize email credentials
-  User.observe('access', function normalizeEmailCase(ctx, next) {
-    if (!ctx.Model.settings.caseSensitiveEmail && ctx.query.where &&
-      ctx.query.where.email && typeof (ctx.query.where.email) === 'string') {
+  User.observe("access", function normalizeEmailCase(ctx, next) {
+    if (
+      !ctx.Model.settings.caseSensitiveEmail &&
+      ctx.query.where &&
+      ctx.query.where.email &&
+      typeof ctx.query.where.email === "string"
+    ) {
       ctx.query.where.email = ctx.query.where.email.toLowerCase();
     }
     next();
   });
 
-  User.observe('before save', function rejectInsecurePasswordChange(ctx, next) {
+  User.observe("before save", function rejectInsecurePasswordChange(ctx, next) {
     const UserModel = ctx.Model;
     if (!UserModel.settings.rejectPasswordChangesViaPatchOrReplace) {
       // In legacy password flow, any DAO method can change the password
@@ -1739,7 +1943,7 @@ module.exports = function (User) {
       return next();
     }
     const data = ctx.data || ctx.instance;
-    const isPasswordChange = 'password' in data;
+    const isPasswordChange = "password" in data;
 
     // This is the option set by `setPassword()` API
     // when calling `this.patchAttritubes()` to change user's password
@@ -1747,10 +1951,12 @@ module.exports = function (User) {
       // Verify that only the password is changed and nothing more or less.
       if (Object.keys(data).length > 1 || !isPasswordChange) {
         // This is a programmer's error, use the default status code 500
-        return next(new Error(
-          'Invalid use of "options.setPassword". Only "password" can be ' +
-          'changed when using this option.'
-        ));
+        return next(
+          new Error(
+            'Invalid use of "options.setPassword". Only "password" can be ' +
+              "changed when using this option."
+          )
+        );
       }
 
       return next();
@@ -1761,65 +1967,70 @@ module.exports = function (User) {
     }
 
     const err = new Error(
-      'Changing user password via patch/replace API is not allowed. ' +
-      'Use changePassword() or setPassword() instead.'
+      "Changing user password via patch/replace API is not allowed. " +
+        "Use changePassword() or setPassword() instead."
     );
     err.statusCode = 401;
-    err.code = 'PASSWORD_CHANGE_NOT_ALLOWED';
+    err.code = "PASSWORD_CHANGE_NOT_ALLOWED";
     next(err);
   });
 
-  User.observe('before save', function prepareForTokenInvalidation(ctx, next) {
+  User.observe("before save", function prepareForTokenInvalidation(ctx, next) {
     if (ctx.isNewInstance) return next();
     if (!ctx.where && !ctx.instance) return next();
 
-    var pkName = ctx.Model.definition.idName() || 'id';
+    var pkName = ctx.Model.definition.idName() || "id";
     var where = ctx.where;
     if (!where) {
       where = {};
       where[pkName] = ctx.instance[pkName];
     }
 
-    ctx.Model.find({ where: where }, ctx.options, function (err, userInstances) {
-      if (err) return next(err);
-      ctx.hookState.originalUserData = userInstances.map(function (u) {
-        var user = {};
-        user[pkName] = u[pkName];
-        user.email = u.email;
-        user.password = u.password;
-        return user;
-      });
-      var emailChanged;
-      if (ctx.instance) {
-        // Check if map does not return an empty array
-        // Fix server crashes when try to PUT a non existent id
-        if (ctx.hookState.originalUserData.length > 0) {
-          emailChanged = ctx.instance.email !== ctx.hookState.originalUserData[0].email;
-        } else {
-          emailChanged = true;
-        }
-
-        if (emailChanged && ctx.Model.settings.emailVerificationRequired) {
-          ctx.instance.emailVerified = false;
-        }
-      } else if (ctx.data.email) {
-        emailChanged = ctx.hookState.originalUserData.some(function (data) {
-          return data.email != ctx.data.email;
+    ctx.Model.find(
+      { where: where },
+      ctx.options,
+      function (err, userInstances) {
+        if (err) return next(err);
+        ctx.hookState.originalUserData = userInstances.map(function (u) {
+          var user = {};
+          user[pkName] = u[pkName];
+          user.email = u.email;
+          user.password = u.password;
+          return user;
         });
-        if (emailChanged && ctx.Model.settings.emailVerificationRequired) {
-          ctx.data.emailVerified = false;
-        }
-      }
+        var emailChanged;
+        if (ctx.instance) {
+          // Check if map does not return an empty array
+          // Fix server crashes when try to PUT a non existent id
+          if (ctx.hookState.originalUserData.length > 0) {
+            emailChanged =
+              ctx.instance.email !== ctx.hookState.originalUserData[0].email;
+          } else {
+            emailChanged = true;
+          }
 
-      next();
-    });
+          if (emailChanged && ctx.Model.settings.emailVerificationRequired) {
+            ctx.instance.emailVerified = false;
+          }
+        } else if (ctx.data.email) {
+          emailChanged = ctx.hookState.originalUserData.some(function (data) {
+            return data.email != ctx.data.email;
+          });
+          if (emailChanged && ctx.Model.settings.emailVerificationRequired) {
+            ctx.data.emailVerified = false;
+          }
+        }
+
+        next();
+      }
+    );
   });
 
-  User.observe('after save', function invalidateOtherTokens(ctx, next) {
+  User.observe("after save", function invalidateOtherTokens(ctx, next) {
     if (!ctx.instance && !ctx.data) return next();
     if (!ctx.hookState.originalUserData) return next();
 
-    var pkName = ctx.Model.definition.idName() || 'id';
+    var pkName = ctx.Model.definition.idName() || "id";
     var newEmail = (ctx.instance || ctx.data).email;
     var newPassword = (ctx.instance || ctx.data).password;
 
@@ -1827,44 +2038,47 @@ module.exports = function (User) {
 
     if (ctx.options.preserveAccessTokens) return next();
 
-    var userIdsToExpire = ctx.hookState.originalUserData.filter(function (u) {
-      return (newEmail && u.email !== newEmail) ||
-        (newPassword && u.password !== newPassword);
-    }).map(function (u) {
-      return u[pkName];
-    });
-    ctx.Model._invalidateAccessTokensOfUsers(userIdsToExpire, ctx.options, next);
+    var userIdsToExpire = ctx.hookState.originalUserData
+      .filter(function (u) {
+        return (
+          (newEmail && u.email !== newEmail) ||
+          (newPassword && u.password !== newPassword)
+        );
+      })
+      .map(function (u) {
+        return u[pkName];
+      });
+    ctx.Model._invalidateAccessTokensOfUsers(
+      userIdsToExpire,
+      ctx.options,
+      next
+    );
   });
-
-
-
-
-
 };
 
 function emailValidator(err, done) {
   var value = this.email;
-  if (value == null)
-    return;
-  if (typeof value !== 'string')
-    return err('string');
-  if (value === '') return;
-  if (!isEmail.validate(value))
-    return err('email');
+  if (value == null) return;
+  if (typeof value !== "string") return err("string");
+  if (value === "") return;
+  if (!isEmail.validate(value)) return err("email");
 }
 
 function joinUrlPath(args) {
   var result = arguments[0];
   for (var ix = 1; ix < arguments.length; ix++) {
     var next = arguments[ix];
-    result += result[result.length - 1] === '/' && next[0] === '/' ?
-      next.slice(1) : next;
+    result +=
+      result[result.length - 1] === "/" && next[0] === "/"
+        ? next.slice(1)
+        : next;
   }
   return result;
 }
 
 function generatePassword(length = 8) {
-  var charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#$",
+  var charset =
+      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#$",
     retVal = "";
   for (var i = 0, n = charset.length; i < length; ++i) {
     retVal += charset.charAt(Math.floor(Math.random() * n));
@@ -1873,8 +2087,9 @@ function generatePassword(length = 8) {
 }
 
 function to(promise) {
-  return promise.then(data => {
-    return [null, data];
-  })
-    .catch(err => [err]);
+  return promise
+    .then((data) => {
+      return [null, data];
+    })
+    .catch((err) => [err]);
 }
