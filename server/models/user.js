@@ -579,7 +579,6 @@ module.exports = function (User) {
 
       let uRole = {};
       try {
-        console.log("user role map", userRoleMap);
         uRole = JSON.parse(JSON.stringify(userRoleMap));
         uRole = uRole == null || !uRole ? {} : uRole;
       } catch (err) {
@@ -1795,7 +1794,7 @@ module.exports = function (User) {
         ctx.res.cookie("klo", ctx.result.klo);
         ctx.res.cookie("kl", ctx.result.kl);
       } else {
-        console.log("After remote extendedlogin is launched");
+        // console.log("After remote extendedlogin is launched");
         ctx.res.cookie("access_token", ctx.result.id, {
           signed: true,
           maxAge: 28800000,
