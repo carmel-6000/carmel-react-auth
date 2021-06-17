@@ -70,7 +70,7 @@ const Auth = {
     }
   },
 
-  async superAuthFetch(url, payload = null, redirOnFailure = false) {
+  async superAuthFetch(url, payload = null, redirOnFailure = true) {
     if (!navigator.onLine) return [null, 'NO_INTERNET'];
 
     let [res, err] = await AsyncTools.superFetch(url, payload);
