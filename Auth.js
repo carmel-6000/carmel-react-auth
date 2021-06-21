@@ -74,7 +74,7 @@ const Auth = {
       return new Promise((res, rej) => { res({ success: false, msg: err }) });
     }
     this._isAuthenticated = true;
-    if (GenericTools.isCordova()) {
+    if (GenericTools.isCapacitor()) {
       this.setItem('klo', res.klo, false, true);
       this.setItem('kl', res.kl, false, true);
       this.setItem('access_token', res.id);
@@ -101,7 +101,7 @@ const Auth = {
 
     this._isAuthenticated = true;
     let user = res;
-    if (GenericTools.isCordova()) {
+    if (GenericTools.isCapacitor()) {
       this.setItem('klo', res.klo, false, true);
       this.setItem('kl', res.kl, false, true);
       this.setItem('kloo', res.kloo, false, true);
