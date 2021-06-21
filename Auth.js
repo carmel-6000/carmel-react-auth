@@ -55,6 +55,10 @@ const Auth = {
   },
 
   async superAuthFetch(url, payload = null, redirOnFailure = false) {
+    if(GenericTools.isCapacitor()){
+      if (url.includes("?")) url += `&access_token=${this.getItem("access_token")}`
+      else url += `?access_token=${this.getItem("access_token")}`
+    }
     let [res, err] = await AsyncTools.superFetch(url, payload);
     if (err && err.error && err.error.statusCode === 401 && redirOnFailure === true) {
       Auth.logout(() => window.location.href = window.location.origin); //FORCE LOGOUT.      
